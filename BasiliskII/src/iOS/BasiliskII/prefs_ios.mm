@@ -40,7 +40,8 @@ void PrefsInit(const char *vmdir, int &argc, char **&argv)
         AddPrefsDefaults();
         
         // override defaults
-        NSDictionary *layoutForLanguage = @{@"en": @"British.nfkeyboardlayout",
+        NSDictionary *layoutForLanguage = @{@"de": @"German.nfkeyboardlayout",
+                                            @"en": @"British.nfkeyboardlayout",
                                             @"es": @"Spanish (ISO).nfkeyboardlayout",
                                             @"en-US": @"US.nfkeyboardlayout"};
         NSString *firstLanguage = [NSBundle preferredLocalizationsFromArray:layoutForLanguage.allKeys].firstObject;
