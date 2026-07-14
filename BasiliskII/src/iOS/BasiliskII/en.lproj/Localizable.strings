@@ -71,6 +71,12 @@
 "settings.input.mouse.type.touchscreen" = "Touch Screen";
 "settings.input.keyboard.layout.header" = "Keyboard Layout";
 "settings.input.keyboard.layout.footer" = "This sets the look of the keyboard UI, use the emulated Mac's Keyboard control panel to choose a matching layout.\n\nShow the keyboard by swiping up with two fingers or by swiping inward from either side edge with one finger or Apple Pencil.";
+"settings.input.keyboard.layout.British" = "British";
+"settings.input.keyboard.layout.French" = "French";
+"settings.input.keyboard.layout.German" = "German";
+"settings.input.keyboard.layout.Spanish" = "Spanish";
+"settings.input.keyboard.layout.Spanish (ISO)" = "Spanish (ISO)";
+"settings.input.keyboard.layout.US" = "U.S.";
 
 "settings.net.interface" = "Ethernet Interface";
 "settings.net.interface.slirp" = "slirp";

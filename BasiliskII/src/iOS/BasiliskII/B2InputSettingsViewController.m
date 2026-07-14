@@ -62,6 +62,13 @@ typedef enum : NSInteger {
     return nil;
 }
 
+- (NSString *)localizedNameForKeyboardLayout:(NSString *)layout {
+    NSString *layoutName = layout.lastPathComponent.stringByDeletingPathExtension;
+    NSString *localizationKey = [@"settings.input.keyboard.layout." stringByAppendingString:layoutName];
+    NSString *localizedName = [[NSBundle mainBundle] localizedStringForKey:localizationKey value:@"" table:nil];
+    return [localizedName isEqualToString:localizationKey] ? layoutName : localizedName;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:@"basic" forIndexPath:indexPath];
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
@@ -74,7 +81,7 @@ typedef enum : NSInteger {
         cell.accessoryView = segmentedControl;
     } else if (indexPath.section == B2InputSectionKeyboardLayout) {
         NSString *layout = keyboardLayouts[indexPath.row];
-        cell.textLabel.text = layout.lastPathComponent.stringByDeletingPathExtension;
+        cell.textLabel.text = [self localizedNameForKeyboardLayout:layout];
         BOOL selected = [[defaults stringForKey:@"keyboardLayout"] isEqualToString:layout.lastPathComponent];
         cell.accessoryType = selected ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
     }

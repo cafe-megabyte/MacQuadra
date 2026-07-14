@@ -29,6 +29,18 @@ static NSUserDefaults *defaults = nil;
 static NSMutableDictionary *defaultPrefs = nil;
 static NSMutableDictionary *cachedPrefsStrings = nil;
 
+static NSString *DefaultKeyboardLayoutName(void)
+{
+    NSDictionary<NSString *, NSString *> *layoutForLanguage = @{@"de": @"German.nfkeyboardlayout",
+                                                                @"en-GB": @"British.nfkeyboardlayout",
+                                                                @"en": @"British.nfkeyboardlayout",
+                                                                @"es": @"Spanish (ISO).nfkeyboardlayout",
+                                                                @"en-US": @"US.nfkeyboardlayout"};
+    NSString *firstLanguage = [NSBundle preferredLocalizationsFromArray:layoutForLanguage.allKeys].firstObject;
+    NSString *languageCode = [firstLanguage componentsSeparatedByString:@"-"].firstObject;
+    return layoutForLanguage[firstLanguage] ?: layoutForLanguage[languageCode] ?: @"US.nfkeyboardlayout";
+}
+
 void PrefsInit(const char *vmdir, int &argc, char **&argv)
 {
     @autoreleasepool {
@@ -40,18 +52,13 @@ void PrefsInit(const char *vmdir, int &argc, char **&argv)
         AddPrefsDefaults();
         
         // override defaults
-        NSDictionary *layoutForLanguage = @{@"de": @"German.nfkeyboardlayout",
-                                            @"en": @"British.nfkeyboardlayout",
-                                            @"es": @"Spanish (ISO).nfkeyboardlayout",
-                                            @"en-US": @"US.nfkeyboardlayout"};
-        NSString *firstLanguage = [NSBundle preferredLocalizationsFromArray:layoutForLanguage.allKeys].firstObject;
         [defaultPrefs addEntriesFromDictionary:@{@"extfs": @(vmdir),
                                                  @"idlewait": @YES,
                                                  @"ether": @"slirp",
                                                  @"rom": @"ROM",
                                                  @"frameskip": @2,
                                                  @"trackpad": @([UIDevice currentDevice].userInterfaceIdiom != UIUserInterfaceIdiomPad),
-                                                 @"keyboardLayout": layoutForLanguage[firstLanguage],
+                                                 @"keyboardLayout": DefaultKeyboardLayoutName(),
                                                  @"videoDepth": @(8),
                                                  @"screenFilter": kCAFilterLinear,
                                                  }];

@@ -71,6 +71,12 @@
 "settings.input.mouse.type.touchscreen" = "Touchscreen";
 "settings.input.keyboard.layout.header" = "Tastaturbelegung";
 "settings.input.keyboard.layout.footer" = "Dies legt das Aussehen der Tastatur-Oberfläche fest. Verwenden Sie im emulierten Mac das Kontrollfeld \"Tastatur\", um eine passende Belegung auszuwählen.\n\nDie Tastatur erscheint, wenn Sie mit zwei Fingern nach oben wischen oder mit einem Finger bzw. Stift von einem seitlichen Bildschirmrand nach innen wischen.";
+"settings.input.keyboard.layout.British" = "Britisch";
+"settings.input.keyboard.layout.French" = "Französisch";
+"settings.input.keyboard.layout.German" = "Deutsch";
+"settings.input.keyboard.layout.Spanish" = "Spanisch";
+"settings.input.keyboard.layout.Spanish (ISO)" = "Spanisch (ISO)";
+"settings.input.keyboard.layout.US" = "US-Englisch";
 
 "settings.net.interface" = "Ethernet-Schnittstelle";
 "settings.net.interface.slirp" = "slirp";
