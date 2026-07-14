@@ -45,6 +45,7 @@ using std::vector;
 #include "prefs.h"
 #include "sony.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -263,7 +264,7 @@ int16 SonyOpen(uint32 pb, uint32 dce)
 
 	// Set up DCE
 	WriteMacInt32(dce + dCtlPosition, 0);
-	WriteMacInt16(dce + dCtlQHdr + qFlags, ReadMacInt16(dce + dCtlQHdr + qFlags) & 0xff00 | 3);	// Version number, must be >=3 or System 8 will replace us
+	WriteMacInt16(dce + dCtlQHdr + qFlags, (ReadMacInt16(dce + dCtlQHdr + qFlags) & 0xff00) | 3);	// Version number, must be >=3 or System 8 will replace us
 	acc_run_called = false;
 
 	// Install driver again with refnum -2 (HD20)
@@ -370,8 +371,8 @@ int16 SonyPrime(uint32 pb, uint32 dce)
 	}
 
 	// Update ParamBlock and DCE
-	WriteMacInt32(pb + ioActCount, actual);
-	WriteMacInt32(dce + dCtlPosition, ReadMacInt32(dce + dCtlPosition) + actual);
+	WriteMacInt32(pb + ioActCount, (uint32)actual);
+	WriteMacInt32(dce + dCtlPosition, ReadMacInt32(dce + dCtlPosition) + (uint32)actual);
 	return set_dsk_err(noErr);
 }
 
@@ -520,7 +521,7 @@ int16 SonyStatus(uint32 pb, uint32 dce)
 			break;
 
 		case 10:		// Get disk type and MFM info
-			WriteMacInt32(pb + csParam, ReadMacInt32(info->status + dsMFMDrive) & 0xffffff00 | 0xfe);	// 0xfe = SWIM2 controller
+			WriteMacInt32(pb + csParam, (ReadMacInt32(info->status + dsMFMDrive) & 0xffffff00) | 0xfe);	// 0xfe = SWIM2 controller
 			break;
 
 //		case 0x4350:	// Measure disk speed at a given track ('CP') (not supported)

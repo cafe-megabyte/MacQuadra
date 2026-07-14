@@ -26,6 +26,8 @@
 #include "audio_defs.h"
 #include "audio_ios_impl.h"
 
+#undef DEBUG
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -61,9 +63,9 @@ void AudioInit(void)
 	audio_sample_rates.push_back(44100 << 16);
     
 	// Default to highest supported values
-	audio_sample_rate_index   = audio_sample_rates.size() - 1;
-	audio_sample_size_index   = audio_sample_sizes.size() - 1;
-	audio_channel_count_index = audio_channel_counts.size() - 1;
+	audio_sample_rate_index   = static_cast<int>(audio_sample_rates.size() - 1);
+	audio_sample_size_index   = static_cast<int>(audio_sample_sizes.size() - 1);
+	audio_channel_count_index = static_cast<int>(audio_channel_counts.size() - 1);
     
 	AudioStatus.mixer = 0;
 	AudioStatus.num_sources = 0;

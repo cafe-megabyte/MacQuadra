@@ -16,13 +16,17 @@ using std::string;
 #include "version.h"
 #include "main.h"
 #include "vm_alloc.h"
+#undef DEBUG
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 #import "B2AppDelegate.h"
 
 // Constants
 const char ROM_FILE_NAME[] = "ROM";
+#if USE_SCRATCHMEM_SUBTERFUGE
 const int SCRATCH_MEM_SIZE = 0x10000;	// Size of scratch memory area
+#endif
 
 
 // CPU and FPU type, addressing mode
@@ -56,11 +60,6 @@ static bool lm_area_mapped = false;	// Flag: Low Memory area mmap()ped
 void *vm_acquire_mac(size_t size)
 {
 	return vm_acquire(size, VM_MAP_DEFAULT | VM_MAP_32BIT);
-}
-
-static int vm_acquire_mac_fixed(void *addr, size_t size)
-{
-	return vm_acquire_fixed(addr, size, VM_MAP_DEFAULT | VM_MAP_32BIT);
 }
 
 #define QuitEmulator()	{ QuitEmuNoExit() ; return NO; }
@@ -177,12 +176,13 @@ bool InitEmulator (void)
 		ErrorAlert(STR_NO_ROM_FILE_ERR);
 		QuitEmulator();
 	}
-	ROMSize = lseek(rom_fd, 0, SEEK_END);
-	if (ROMSize != 64*1024 && ROMSize != 128*1024 && ROMSize != 256*1024 && ROMSize != 512*1024 && ROMSize != 1024*1024) {
+	off_t rom_size = lseek(rom_fd, 0, SEEK_END);
+	if (rom_size != 64*1024 && rom_size != 128*1024 && rom_size != 256*1024 && rom_size != 512*1024 && rom_size != 1024*1024) {
 		ErrorAlert(STR_ROM_SIZE_ERR);
 		close(rom_fd);
 		QuitEmulator();
 	}
+	ROMSize = (uint32)rom_size;
 	lseek(rom_fd, 0, SEEK_SET);
 	if (read(rom_fd, ROMBaseHost, ROMSize) != (ssize_t)ROMSize) {
 		ErrorAlert(STR_ROM_FILE_READ_ERR);
@@ -461,11 +461,6 @@ void WarningAlert(const char *text)
 
 bool ChoiceAlert(const char *text, const char *pos, const char *neg)
 {
-	NSString *title   = [NSString stringWithCString:
-                         GetString(STR_WARNING_ALERT_TITLE) ];
-	NSString *warning = [NSString stringWithCString: text];
-	NSString *yes	  = [NSString stringWithCString: pos];
-	NSString *no	  = [NSString stringWithCString: neg];
-    
-	return no;//NSRunInformationalAlertPanel(title, warning, yes, no, nil);
+	NSString *no = [NSString stringWithCString:neg encoding:NSUTF8StringEncoding];
+	return no != nil;
 }

@@ -259,7 +259,8 @@ data[(4*(px+(py*size)))+3] = (srgb & 0xFF)
     // create image
     CGDataProviderRef provider = CGDataProviderCreateWithCFData(pixels);
     CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-    CGImageRef image = CGImageCreate(size, size, 8, 32, size * 4, colorSpace, kCGImageAlphaFirst | kCGBitmapByteOrder32Big, provider, NULL, false, kCGRenderingIntentDefault);
+    CGBitmapInfo bitmapInfo = (CGBitmapInfo)kCGImageAlphaFirst | kCGBitmapByteOrder32Big;
+    CGImageRef image = CGImageCreate(size, size, 8, 32, size * 4, colorSpace, bitmapInfo, provider, NULL, false, kCGRenderingIntentDefault);
     CGDataProviderRelease(provider);
     CGColorSpaceRelease(colorSpace);
     CFRelease(pixels);

@@ -32,6 +32,7 @@
 #include "macos_util.h"
 #undef noErr
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 

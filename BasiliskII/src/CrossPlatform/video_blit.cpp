@@ -25,8 +25,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#if REAL_ADDRESSING || DIRECT_ADDRESSING
 // Format of the target visual
 static VisualFormat visualFormat;
+#endif
 
 // This holds the pixels values of the palette colors for 8->16/32-bit expansion
 uint32 ExpandMap[256];
@@ -47,6 +49,8 @@ static void Blit_Copy_Raw(uint8 * dest, const uint8 * source, uint32 length)
 /* -------------------------------------------------------------------------- */
 /* --- RGB 555                                                            --- */
 /* -------------------------------------------------------------------------- */
+
+#if REAL_ADDRESSING || DIRECT_ADDRESSING
 
 #ifdef WORDS_BIGENDIAN
 # define FB_FUNC_NAME Blit_RGB555_OBO
@@ -301,6 +305,8 @@ static void Blit_Copy_Raw(uint8 * dest, const uint8 * source, uint32 length)
 #define FB_DEPTH 24
 #include "video_blit.h"
 
+#endif
+
 /* -------------------------------------------------------------------------- */
 /* --- 1-bit indexed to 8-bit color mode conversion                       --- */
 /* -------------------------------------------------------------------------- */
@@ -324,6 +330,7 @@ static void Blit_Expand_1_To_8_Color(uint8 * dest, const uint8 * p, uint32 lengt
 }
 #endif
 
+#if REAL_ADDRESSING || DIRECT_ADDRESSING
 /* -------------------------------------------------------------------------- */
 /* --- 1/2/4-bit indexed to 8-bit mode conversion                         --- */
 /* -------------------------------------------------------------------------- */
@@ -463,6 +470,7 @@ static void Blit_Expand_8_To_32(uint8 * dest, const uint8 * p, uint32 length)
 	for (uint32 i=0; i<length; i++)
 		*q++ = ExpandMap[*p++];
 }
+#endif
 
 /* -------------------------------------------------------------------------- */
 /* --- Blitters to the host frame buffer, or XImage buffer                --- */
@@ -473,6 +481,7 @@ static void Blit_Expand_8_To_32(uint8 * dest, const uint8 * p, uint32 length)
 typedef void (*Screen_blit_func)(uint8 * dest, const uint8 * source, uint32 length);
 Screen_blit_func Screen_blit = 0;
 
+#if REAL_ADDRESSING || DIRECT_ADDRESSING
 // Structure used to match the adequate framebuffer update function
 struct Screen_blit_func_info {
 	int					depth;			// Screen depth
@@ -510,6 +519,7 @@ static Screen_blit_func_info Screen_blitters[] = {
 #endif
 	{ 32, 0xff00, 0xff0000, 0xff000000, Blit_Copy_Raw   , Blit_Copy_Raw     }   // OK
 };
+#endif
 
 // Initialize the framebuffer update function
 // Returns FALSE, if the function was to be reduced to a simple memcpy()

@@ -93,7 +93,7 @@ int tcp_output(register struct tcpcb *tp)
 		tp->snd_cwnd = tp->t_maxseg;
 again:
 	sendalot = 0;
-	off = tp->snd_nxt - tp->snd_una;
+		off = (int)(tp->snd_nxt - tp->snd_una);
 	win = min(tp->snd_wnd, tp->snd_cwnd);
 
 	flags = tcp_outflags[tp->t_state];
@@ -175,8 +175,7 @@ again:
 	if (len) {
 		if (len == tp->t_maxseg)
 			goto send;
-		if ((1 || idle || tp->t_flags & TF_NODELAY) &&
-		    len + off >= so->so_snd.sb_cc)
+		if (len + off >= so->so_snd.sb_cc)
 			goto send;
 		if (tp->t_force)
 			goto send;
@@ -515,8 +514,8 @@ send:
 			}
 		}
 	} else
-		if (SEQ_GT(tp->snd_nxt + len, tp->snd_max))
-			tp->snd_max = tp->snd_nxt + len;
+			if (SEQ_GT(tp->snd_nxt + (tcp_seq)len, tp->snd_max))
+				tp->snd_max = tp->snd_nxt + (tcp_seq)len;
 
 	/*
 	 * Fill in IP length and desired time to live and
@@ -524,7 +523,7 @@ send:
 	 * to handle ttl and tos; we could keep them in
 	 * the template, but need a way to checksum without them.
 	 */
-	m->m_len = hdrlen + len; /* XXX Needed? m_len should be correct */
+	m->m_len = (int)(hdrlen + len); /* XXX Needed? m_len should be correct */
 	
     {
 	    
@@ -570,7 +569,7 @@ out:
 	 * Any pending ACK has now been sent.
 	 */
 	if (win > 0 && SEQ_GT(tp->rcv_nxt+win, tp->rcv_adv))
-		tp->rcv_adv = tp->rcv_nxt + win;
+		tp->rcv_adv = tp->rcv_nxt + (tcp_seq)win;
 	tp->last_ack_sent = tp->rcv_nxt;
 	tp->t_flags &= ~(TF_ACKNOW|TF_DELACK);
 	if (sendalot)

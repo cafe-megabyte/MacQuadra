@@ -185,7 +185,7 @@ static __inline__ uaecptr m68k_getpc (void)
 #if REAL_ADDRESSING || DIRECT_ADDRESSING
 	return get_virtual_address(regs.pc_p);
 #else
-	return regs.pc + ((char *)regs.pc_p - (char *)regs.pc_oldp);
+	return regs.pc + (uaecptr)((char *)regs.pc_p - (char *)regs.pc_oldp);
 #endif
 }
 

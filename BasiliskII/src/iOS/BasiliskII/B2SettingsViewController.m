@@ -18,7 +18,7 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.splitViewController.delegate = self;
-    self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeAllVisible;
+    self.splitViewController.preferredDisplayMode = UISplitViewControllerDisplayModeOneBesideSecondary;
     if (_selectedSetting != nil) {
         [self openSetting:_selectedSetting];
     }

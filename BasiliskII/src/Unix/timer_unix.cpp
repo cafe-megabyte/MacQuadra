@@ -24,6 +24,7 @@
 
 #include <errno.h>
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -71,7 +72,7 @@ void Microseconds(uint32 &hi, uint32 &lo)
 	uint64 tl = (uint64)t.tv_sec * 1000000 + t.tv_usec;
 #endif
 	hi = tl >> 32;
-	lo = tl;
+	lo = (uint32)(tl & 0xffffffff);
 }
 
 
@@ -216,9 +217,9 @@ int32 timer_host2mac_time(tm_time_t hosttime)
 		uint64 t = (uint64)hosttime.tv_sec * 1000000 + hosttime.tv_usec;
 #endif
 		if (t > 0x7fffffff)
-			return t / 1000;	// Time in milliseconds
+			return (int32)(t / 1000);	// Time in milliseconds
 		else
-			return -t;			// Time in negative microseconds
+			return -(int32)t;			// Time in negative microseconds
 	}
 }
 

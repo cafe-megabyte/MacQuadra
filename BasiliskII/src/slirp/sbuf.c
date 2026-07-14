@@ -6,6 +6,7 @@
  */
 
 #include <stdlib.h>
+#include <stddef.h>
 #include <slirp.h>
 
 /* Done as a macro in socket.h */
@@ -17,16 +18,13 @@
  */
 
 void
-sbfree(sb)
-	struct sbuf *sb;
+sbfree(struct sbuf *sb)
 {
 	free(sb->sb_data);
 }
 
 void
-sbdrop(sb, num)
-	struct sbuf *sb;
-	int num; 
+sbdrop(struct sbuf *sb, int num)
 {
 	/* 
 	 * We can only drop how much we have
@@ -42,9 +40,7 @@ sbdrop(sb, num)
 }
 
 void
-sbreserve(sb, size)
-	struct sbuf *sb;
-	int size;
+sbreserve(struct sbuf *sb, int size)
 {
 	if (sb->sb_data) {
 		/* Already alloced, realloc if necessary */
@@ -73,16 +69,14 @@ sbreserve(sb, size)
  * (the socket is non-blocking, so we won't hang)
  */
 void
-sbappend(so, m)
-	struct socket *so;
-	struct mbuf *m;
+sbappend(struct socket *so, struct mbuf *m)
 {
-	int ret = 0;
+	ssize_t ret = 0;
 	
 	DEBUG_CALL("sbappend");
 	DEBUG_ARG("so = %lx", (long)so);
 	DEBUG_ARG("m = %lx", (long)m);
-	DEBUG_ARG("m->m_len = %zu", m->m_len);
+	DEBUG_ARG("m->m_len = %d", m->m_len);
 	
 	/* Shouldn't happen, but...  e.g. foreign host closes connection */
 	if (m->m_len <= 0) {
@@ -135,11 +129,10 @@ sbappend(so, m)
  * The caller is responsible to make sure there's enough room
  */
 void
-sbappendsb(sb, m)
-	 struct sbuf *sb;
-	 struct mbuf *m;
+sbappendsb(struct sbuf *sb, struct mbuf *m)
 {
-	int len, n,  nn;
+	int len;
+	ptrdiff_t n, nn;
 	
 	len = m->m_len;
 
@@ -174,11 +167,7 @@ sbappendsb(sb, m)
  * done in sbdrop when the data is acked
  */
 void
-sbcopy(sb, off, len, to)
-	struct sbuf *sb;
-	int off;
-	int len;
-	char *to;
+sbcopy(struct sbuf *sb, int off, int len, char *to)
 {
 	char *from;
 	
@@ -191,7 +180,7 @@ sbcopy(sb, off, len, to)
 		memcpy(to,from,len);
 	} else {
 		/* re-use off */
-		off = (sb->sb_data + sb->sb_datalen) - from;
+		off = (int)((sb->sb_data + sb->sb_datalen) - from);
 		if (off > len) off = len;
 		memcpy(to,from,off);
 		len -= off;

@@ -36,6 +36,7 @@
 
 #include "emul_op.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 

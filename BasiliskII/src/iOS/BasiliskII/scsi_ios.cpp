@@ -21,6 +21,7 @@
 #include "sysdeps.h"
 #include "scsi.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 

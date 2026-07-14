@@ -37,6 +37,7 @@
 #include "video.h"
 #include "video_defs.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 

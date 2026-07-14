@@ -28,7 +28,6 @@ const NSUInteger KBKeyEventStickyKey = 1 << 24;
         }
         [self setTitleColor:labelColor forState:UIControlStateNormal];
         self.tintColor = labelColor;
-        self.contentEdgeInsets = UIEdgeInsetsMake(4, 4, 6, 4);
         self.contentMode = UIViewContentModeScaleAspectFit;
     }
     return self;
@@ -72,7 +71,6 @@ const NSUInteger KBKeyEventStickyKey = 1 << 24;
         } else {
             [super setImage:[UIImage imageNamed:components.firstObject] forState:state];
         }
-        self.imageEdgeInsets = UIEdgeInsetsMake(-2, 0, 0, 0);
     } else if ((id)title != [NSNull null]) {
         [super setTitle:title forState:state];
         [super setImage:nil forState:state];

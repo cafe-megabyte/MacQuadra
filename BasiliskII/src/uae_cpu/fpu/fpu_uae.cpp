@@ -215,7 +215,6 @@ PRIVATE inline fpu_register FFPU round_to_nearest(fpu_register const & x)
 
 #ifndef HAVE_ISNAN
 #define isnan(x) do_isnan((x))
-#endif
 
 PRIVATE inline bool FFPU do_isnan(fpu_register const & r)
 {
@@ -228,10 +227,10 @@ PRIVATE inline bool FFPU do_isnan(fpu_register const & r)
 	}
 	return false;
 }
+#endif
 
 #ifndef HAVE_ISINF
 #define isinf(x) do_isinf((x))
-#endif
 
 PRIVATE inline bool FFPU do_isinf(fpu_register const & r)
 {
@@ -241,6 +240,7 @@ PRIVATE inline bool FFPU do_isinf(fpu_register const & r)
 	}
 	return false;
 }
+#endif
 
 #ifndef HAVE_ISNEG
 #define isneg(x) do_isneg((x))
@@ -801,7 +801,7 @@ PRIVATE inline void FFPU extract_packed(fpu_register const & src, uae_u32 * wrd1
 	char *cp;
 	char str[100];
 
-	sprintf(str, "%.16e", src);
+	snprintf(str, sizeof(str), "%.16e", src);
 
 	fpu_debug(("extract_packed(%.04f,%s)\n",(double)src,str));
 
@@ -2166,13 +2166,13 @@ void FFPU fpuop_arithmetic(uae_u32 opcode, uae_u32 extra)
 				FPU registers[reg] *= src;
 			}
 			else if (fl_dest.nan || fl_source.nan || 
-					fl_dest.zero && fl_source.infinity || 
-					fl_dest.infinity && fl_source.zero ) {
+					(fl_dest.zero && fl_source.infinity) || 
+					(fl_dest.infinity && fl_source.zero) ) {
 				make_nan( FPU registers[reg] );
 			}
 			else if (fl_dest.zero || fl_source.zero ) {
-				if (fl_dest.negative && !fl_source.negative ||
-					!fl_dest.negative && fl_source.negative)  {
+				if ((fl_dest.negative && !fl_source.negative) ||
+					(!fl_dest.negative && fl_source.negative))  {
 					make_zero_negative(FPU registers[reg]);
 				}
 				else {
@@ -2180,8 +2180,8 @@ void FFPU fpuop_arithmetic(uae_u32 opcode, uae_u32 extra)
 				}
 			}
 			else {
-				if( fl_dest.negative && !fl_source.negative ||
-				!fl_dest.negative && fl_source.negative)  {
+				if( (fl_dest.negative && !fl_source.negative) ||
+				(!fl_dest.negative && fl_source.negative))  {
 					make_inf_negative(FPU registers[reg]);
 				}
 				else {

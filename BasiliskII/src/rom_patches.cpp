@@ -39,6 +39,7 @@
 
 #include "rom_patches.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -946,12 +947,12 @@ static bool patch_rom_classic(void)
 	*wp++ = htons(M68K_EMUL_OP_PRIMETIME);
 	*wp++ = htons(0x46df);		// move	(sp)+,sr
 	*wp++ = htons(M68K_RTS);
-	microseconds_offset = (uint8 *)wp - ROMBaseHost;
+		microseconds_offset = (uint32)((uint8 *)wp - ROMBaseHost);
 	*wp++ = htons(M68K_EMUL_OP_MICROSECONDS);
 	*wp++ = htons(M68K_RTS);
 
 	// Replace DebugUtil
-	debugutil_offset = (uint8 *)wp - ROMBaseHost;
+		debugutil_offset = (uint32)((uint8 *)wp - ROMBaseHost);
 	*wp++ = htons(M68K_EMUL_OP_DEBUGUTIL);
 	*wp = htons(M68K_RTS);
 
@@ -1758,12 +1759,12 @@ static bool patch_rom_32(void)
 	*wp++ = htons(M68K_EMUL_OP_PRIMETIME);
 	*wp++ = htons(0x46df);		// move	(sp)+,sr
 	*wp++ = htons(M68K_RTS);
-	microseconds_offset = (uint8 *)wp - ROMBaseHost;
+		microseconds_offset = (uint32)((uint8 *)wp - ROMBaseHost);
 	*wp++ = htons(M68K_EMUL_OP_MICROSECONDS);
 	*wp++ = htons(M68K_RTS);
 
 	// Replace DebugUtil
-	debugutil_offset = (uint8 *)wp - ROMBaseHost;
+		debugutil_offset = (uint32)((uint8 *)wp - ROMBaseHost);
 	*wp++ = htons(M68K_EMUL_OP_DEBUGUTIL);
 	*wp = htons(M68K_RTS);
 

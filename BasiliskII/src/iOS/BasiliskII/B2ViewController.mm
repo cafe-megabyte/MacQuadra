@@ -31,7 +31,7 @@ static B2ViewController *_sharedB2ViewController = nil;
     UISwipeGestureRecognizer *showKeyboardGesture, *hideKeyboardGesture;
     UIControl *pointingDeviceView;
     #ifdef __IPHONE_13_4
-    UIPointerInteraction *pointerInteraction;
+    id pointerInteraction;
     #endif
     
     // interactive screen resizing
@@ -286,7 +286,7 @@ static B2ViewController *_sharedB2ViewController = nil;
         if (animated) {
             keyboardView.frame = CGRectOffset(finalFrame, 0.0, finalFrame.size.height);
             [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionCurveEaseOut animations:^{
-                keyboardView.frame = finalFrame;
+                self->keyboardView.frame = finalFrame;
             } completion:nil];
         } else {
             keyboardView.frame = finalFrame;
@@ -296,10 +296,10 @@ static B2ViewController *_sharedB2ViewController = nil;
         if (animated) {
             CGRect finalFrame = CGRectMake(0.0, self.view.bounds.size.height, keyboardView.bounds.size.width, keyboardView.bounds.size.height);
             [UIView animateWithDuration:0.3 delay:0.0 options:UIViewAnimationOptionCurveEaseOut animations:^{
-                keyboardView.frame = finalFrame;
+                self->keyboardView.frame = finalFrame;
             } completion:^(BOOL finished) {
                 if (finished) {
-                    keyboardView.hidden = YES;
+                    self->keyboardView.hidden = YES;
                 }
             }];
         } else {

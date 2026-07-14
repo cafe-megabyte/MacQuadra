@@ -26,8 +26,8 @@
 
 #include <sys/types.h>
 #include <unistd.h>
-#include <libkern/OSAtomic.h>
 #include <libkern/OSByteOrder.h>
+#include <os/lock.h>
 #include <netinet/in.h>
 #include <assert.h>
 #include <stdio.h>
@@ -109,13 +109,13 @@ extern uint64 GetTicks_usec(void);
 extern void Delay_usec(uint32 usec);
 
 /* Spinlocks */
-typedef OSSpinLock spinlock_t;
-static const spinlock_t SPIN_LOCK_UNLOCKED = OS_SPINLOCK_INIT;
+typedef os_unfair_lock spinlock_t;
+static const spinlock_t SPIN_LOCK_UNLOCKED = OS_UNFAIR_LOCK_INIT;
 
 #define HAVE_SPINLOCKS 1
-#define spin_lock(lock) OSSpinLockLock(lock)
-#define spin_unlock(lock) OSSpinLockUnlock(lock)
-#define spin_trylock(lock) OSSpinLockTry(lock)
+#define spin_lock(lock) os_unfair_lock_lock(lock)
+#define spin_unlock(lock) os_unfair_lock_unlock(lock)
+#define spin_trylock(lock) os_unfair_lock_trylock(lock)
 
 /* Centralized pthread attribute setup */
 void Set_pthread_attr(pthread_attr_t *attr, int priority);

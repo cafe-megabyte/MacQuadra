@@ -100,12 +100,12 @@
         textField.keyboardType = UIKeyboardTypeNumberPad;
         textField.delegate = self;
         [textField addTarget:self action:@selector(validateUDPPortInput:) forControlEvents:UIControlEventAllEditingEvents];
-        udpPortField = textField;
+        self->udpPortField = textField;
     }];
     
     [alertController addAction:[UIAlertAction actionWithTitle:L(@"misc.cancel") style:UIAlertActionStyleCancel handler:nil]];
     udpPortSaveAction = [UIAlertAction actionWithTitle:L(@"misc.ok") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        NSInteger port = udpPortField.text.integerValue;
+        NSInteger port = self->udpPortField.text.integerValue;
         [defaults setInteger:port forKey:@"udpport"];
         [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:0] withRowAnimation:UITableViewRowAnimationAutomatic];
     }];

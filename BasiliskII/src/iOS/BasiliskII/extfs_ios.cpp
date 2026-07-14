@@ -46,6 +46,8 @@
 #undef Point
 #undef noErr
 
+#undef DEBUG
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -88,7 +90,7 @@ void extfs_exit(void)
 
 void add_path_component(char *path, const char *component)
 {
-	int l = strlen(path);
+	size_t l = strlen(path);
 	if (l < MAX_PATH_LENGTH-1 && path[l-1] != '/') {
 		path[l] = '/';
 		path[l+1] = 0;

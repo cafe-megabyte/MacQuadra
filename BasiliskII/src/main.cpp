@@ -39,6 +39,7 @@
 #include "prefs.h"
 #include "main.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 

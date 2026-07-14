@@ -15,19 +15,14 @@
 #endif
 
 void
-so_init()
+so_init(void)
 {
 	/* Nothing yet */
 }
 
 
 struct socket *
-solookup(head, laddr, lport, faddr, fport)
-	struct socket *head;
-	struct in_addr laddr;
-	u_int lport;
-	struct in_addr faddr;
-	u_int fport;
+solookup(struct socket *head, struct in_addr laddr, u_int lport, struct in_addr faddr, u_int fport)
 {
 	struct socket *so;
 	
@@ -51,7 +46,7 @@ solookup(head, laddr, lport, faddr, fport)
  * insque() it into the correct linked-list
  */
 struct socket *
-socreate()
+socreate(void)
 {
   struct socket *so;
 	
@@ -68,8 +63,7 @@ socreate()
  * remque and free a socket, clobber cache
  */
 void
-sofree(so)
-	struct socket *so;
+sofree(struct socket *so)
 {
   if (so->so_emu==EMU_RSH && so->extra) {
 	sofree(so->extra);
@@ -94,10 +88,10 @@ sofree(so)
  * a read() of 0 (or less) means it's disconnected
  */
 int
-soread(so)
-	struct socket *so;
+soread(struct socket *so)
 {
-	int n, nn, lss, total;
+	int n, lss, total;
+	ssize_t nn;
 	struct sbuf *sb = &so->so_snd;
 	int len = sb->sb_datalen - sb->sb_cc;
 	struct iovec iov[2];
@@ -132,7 +126,7 @@ soread(so)
 			iov[1].iov_len = sb->sb_rptr - sb->sb_data;
 			if(iov[1].iov_len > len)
 			   iov[1].iov_len = len;
-			total = iov[0].iov_len + iov[1].iov_len;
+			total = (int)(iov[0].iov_len + iov[1].iov_len);
 			if (total > mss) {
 				lss = total%mss;
 				if (iov[1].iov_len > lss) {
@@ -154,7 +148,7 @@ soread(so)
 	
 #ifdef HAVE_READV
 	nn = readv(so->s, (struct iovec *)iov, n);
-	DEBUG_MISC((dfd, " ... read nn = %d bytes\n", nn));
+	DEBUG_MISC((dfd, " ... read nn = %zd bytes\n", nn));
 #else
 	nn = recv(so->s, iov[0].iov_base, iov[0].iov_len,0);
 #endif	
@@ -162,7 +156,7 @@ soread(so)
 		if (nn < 0 && (errno == EINTR || errno == EAGAIN))
 			return 0;
 		else {
-			DEBUG_MISC((dfd, " --- soread() disconnected, nn = %d, errno = %d-%s\n", nn, errno,strerror(errno)));
+			DEBUG_MISC((dfd, " --- soread() disconnected, nn = %zd, errno = %d-%s\n", nn, errno,strerror(errno)));
 			sofcantrcvmore(so);
 			tcp_sockclosed(sototcpcb(so));
 			return -1;
@@ -180,21 +174,21 @@ soread(so)
 	 * A return of -1 wont (shouldn't) happen, since it didn't happen above
 	 */
 	if (n == 2 && nn == iov[0].iov_len) {
-            int ret;
+            ssize_t ret;
             ret = recv(so->s, iov[1].iov_base, iov[1].iov_len,0);
             if (ret > 0)
                 nn += ret;
         }
 	
-	DEBUG_MISC((dfd, " ... read nn = %d bytes\n", nn));
+	DEBUG_MISC((dfd, " ... read nn = %zd bytes\n", nn));
 #endif
 	
 	/* Update fields */
-	sb->sb_cc += nn;
+	sb->sb_cc += (int)nn;
 	sb->sb_wptr += nn;
 	if (sb->sb_wptr >= (sb->sb_data + sb->sb_datalen))
 		sb->sb_wptr -= sb->sb_datalen;
-	return nn;
+	return (int)nn;
 }
 	
 /*
@@ -205,8 +199,7 @@ soread(so)
  * in the send buffer is sent as urgent data
  */
 void
-sorecvoob(so)
-	struct socket *so;
+sorecvoob(struct socket *so)
 {
 	struct tcpcb *tp = sototcpcb(so);
 
@@ -233,8 +226,7 @@ sorecvoob(so)
  * There's a lot duplicated code here, but...
  */
 int
-sosendoob(so)
-	struct socket *so;
+sosendoob(struct socket *so)
 {
 	struct sbuf *sb = &so->so_rcv;
 	char buff[2048]; /* XXX Shouldn't be sending more oob data than this */
@@ -250,7 +242,7 @@ sosendoob(so)
 	
 	if (sb->sb_rptr < sb->sb_wptr) {
 		/* We can send it directly */
-		n = send(so->s, sb->sb_rptr, so->so_urgc, (MSG_OOB)); /* |MSG_DONTWAIT)); */
+		n = (int)send(so->s, sb->sb_rptr, so->so_urgc, (MSG_OOB)); /* |MSG_DONTWAIT)); */
 		so->so_urgc -= n;
 		
 		DEBUG_MISC((dfd, " --- sent %d bytes urgent data, %d urgent bytes left\n", n, so->so_urgc));
@@ -260,18 +252,18 @@ sosendoob(so)
 		 * we must copy all data to a linear buffer then
 		 * send it all
 		 */
-		len = (sb->sb_data + sb->sb_datalen) - sb->sb_rptr;
+		len = (int)((sb->sb_data + sb->sb_datalen) - sb->sb_rptr);
 		if (len > so->so_urgc) len = so->so_urgc;
 		memcpy(buff, sb->sb_rptr, len);
 		so->so_urgc -= len;
 		if (so->so_urgc) {
-			n = sb->sb_wptr - sb->sb_data;
+			n = (int)(sb->sb_wptr - sb->sb_data);
 			if (n > so->so_urgc) n = so->so_urgc;
 			memcpy((buff + len), sb->sb_data, n);
 			so->so_urgc -= n;
 			len += n;
 		}
-		n = send(so->s, buff, len, (MSG_OOB)); /* |MSG_DONTWAIT)); */
+		n = (int)send(so->s, buff, len, (MSG_OOB)); /* |MSG_DONTWAIT)); */
 #ifdef DEBUG
 		if (n != len)
 		   DEBUG_ERROR((dfd, "Didn't send all data urgently XXXXX\n"));
@@ -292,10 +284,10 @@ sosendoob(so)
  * updating all sbuf field as necessary
  */
 int
-sowrite(so)
-	struct socket *so;
+sowrite(struct socket *so)
 {
-	int  n,nn;
+	int  n;
+	ssize_t nn;
 	struct sbuf *sb = &so->so_rcv;
 	int len = sb->sb_cc;
 	struct iovec iov[2];
@@ -339,7 +331,7 @@ sowrite(so)
 #ifdef HAVE_READV
 	nn = writev(so->s, (const struct iovec *)iov, n);
 	
-	DEBUG_MISC((dfd, "  ... wrote nn = %d bytes\n", nn));
+	DEBUG_MISC((dfd, "  ... wrote nn = %zd bytes\n", nn));
 #else
 	nn = send(so->s, iov[0].iov_base, iov[0].iov_len,0);
 #endif
@@ -357,16 +349,16 @@ sowrite(so)
 	
 #ifndef HAVE_READV
 	if (n == 2 && nn == iov[0].iov_len) {
-            int ret;
+            ssize_t ret;
             ret = send(so->s, iov[1].iov_base, iov[1].iov_len,0);
             if (ret > 0)
                 nn += ret;
         }
-        DEBUG_MISC((dfd, "  ... wrote nn = %d bytes\n", nn));
+        DEBUG_MISC((dfd, "  ... wrote nn = %zd bytes\n", nn));
 #endif
 	
 	/* Update sbuf */
-	sb->sb_cc -= nn;
+	sb->sb_cc -= (int)nn;
 	sb->sb_rptr += nn;
 	if (sb->sb_rptr >= (sb->sb_data + sb->sb_datalen))
 		sb->sb_rptr -= sb->sb_datalen;
@@ -378,15 +370,14 @@ sowrite(so)
 	if ((so->so_state & SS_FWDRAIN) && sb->sb_cc == 0)
 		sofcantsendmore(so);
 	
-	return nn;
+		return (int)nn;
 }
 
 /*
  * recvfrom() a UDP socket
  */
 void
-sorecvfrom(so)
-	struct socket *so;
+sorecvfrom(struct socket *so)
 {
 	struct sockaddr_in addr;
 	socklen_t addrlen = sizeof(struct sockaddr_in);
@@ -396,7 +387,7 @@ sorecvfrom(so)
 	
 	if (so->so_type == IPPROTO_ICMP) {   /* This is a "ping" reply */
 	  char buff[256];
-	  int len;
+	  ssize_t len;
 		
 	  len = recvfrom(so->s, buff, 256, 0, 
 			 (struct sockaddr *)&addr, &addrlen);
@@ -429,20 +420,20 @@ sorecvfrom(so)
 	   * XXX Shouldn't FIONREAD packets destined for port 53,
 	   * but I don't know the max packet size for DNS lookups
 	   */
-	  len = M_FREEROOM(m);
+		  len = (int)M_FREEROOM(m);
 	  /* if (so->so_fport != htons(53)) { */
 	  ioctlsocket(so->s, FIONREAD, &n);
 	  
 	  if (n > len) {
-	    n = (m->m_data - m->m_dat) + m->m_len + n + 1;
+	    n = (ioctlsockopt_t)((m->m_data - m->m_dat) + m->m_len + n + 1);
 	    m_inc(m, n);
-	    len = M_FREEROOM(m);
+	    len = (int)M_FREEROOM(m);
 	  }
 	  /* } */
 		
-	  m->m_len = recvfrom(so->s, m->m_data, len, 0,
+	  m->m_len = (int)recvfrom(so->s, m->m_data, len, 0,
 			      (struct sockaddr *)&addr, &addrlen);
-	  DEBUG_MISC((dfd, " did recvfrom %zu, errno = %d-%s\n",
+	  DEBUG_MISC((dfd, " did recvfrom %d, errno = %d-%s\n",
 		      m->m_len, errno,strerror(errno)));
 	  if(m->m_len<0) {
 	    u_char code=ICMP_UNREACH_PORT;
@@ -486,9 +477,7 @@ sorecvfrom(so)
  * sendto() a socket
  */
 int
-sosendto(so, m)
-	struct socket *so;
-	struct mbuf *m;
+sosendto(struct socket *so, struct mbuf *m)
 {
 	int ret;
 	struct sockaddr_in addr;
@@ -516,7 +505,7 @@ sosendto(so, m)
 	DEBUG_MISC((dfd, " sendto()ing, addr.sin_port=%d, addr.sin_addr.s_addr=%.16s\n", ntohs(addr.sin_port), inet_ntoa(addr.sin_addr)));
 	
 	/* Don't care what port we get */
-	ret = sendto(so->s, m->m_data, m->m_len, 0,
+	ret = (int)sendto(so->s, m->m_data, m->m_len, 0,
 		     (struct sockaddr *)&addr, sizeof (struct sockaddr));
 	if (ret < 0)
 		return -1;
@@ -535,11 +524,7 @@ sosendto(so, m)
  * XXX This should really be tcp_listen
  */
 struct socket *
-solisten(port, laddr, lport, flags)
-	u_int port;
-	u_int32_t laddr;
-	u_int lport;
-	int flags;
+solisten(u_int port, u_int32_t laddr, u_int lport, int flags)
 {
 	struct sockaddr_in addr;
 	struct socket *so;
@@ -615,8 +600,7 @@ solisten(port, laddr, lport, flags)
  * XXX not yet...
  */
 void
-sorwakeup(so)
-	struct socket *so;
+sorwakeup(struct socket *so)
 {
 /*	sowrite(so); */
 /*	FD_CLR(so->s,&writefds); */
@@ -628,8 +612,7 @@ sorwakeup(so)
  * For now, don't read, it'll be done in the main loop
  */
 void
-sowwakeup(so)
-	struct socket *so;
+sowwakeup(struct socket *so)
 {
 	/* Nothing, yet */
 }
@@ -641,8 +624,7 @@ sowwakeup(so)
  * times each when only 1 was needed
  */
 void
-soisfconnecting(so)
-	register struct socket *so;
+soisfconnecting(struct socket *so)
 {
 	so->so_state &= ~(SS_NOFDREF|SS_ISFCONNECTED|SS_FCANTRCVMORE|
 			  SS_FCANTSENDMORE|SS_FWDRAIN);
@@ -650,16 +632,14 @@ soisfconnecting(so)
 }
 
 void
-soisfconnected(so)
-        register struct socket *so;
+soisfconnected(struct socket *so)
 {
 	so->so_state &= ~(SS_ISFCONNECTING|SS_FWDRAIN|SS_NOFDREF);
 	so->so_state |= SS_ISFCONNECTED; /* Clobber other states */
 }
 
 void
-sofcantrcvmore(so)
-	struct  socket *so;
+sofcantrcvmore(struct  socket *so)
 {
 	if ((so->so_state & SS_NOFDREF) == 0) {
 		shutdown(so->s,0);
@@ -675,8 +655,7 @@ sofcantrcvmore(so)
 }
 
 void
-sofcantsendmore(so)
-	struct socket *so;
+sofcantsendmore(struct socket *so)
 {
 	if ((so->so_state & SS_NOFDREF) == 0) {
             shutdown(so->s,1);           /* send FIN to fhost */
@@ -695,8 +674,7 @@ sofcantsendmore(so)
 }
 
 void
-soisfdisconnected(so)
-	struct socket *so;
+soisfdisconnected(struct socket *so)
 {
 /*	so->so_state &= ~(SS_ISFCONNECTING|SS_ISFCONNECTED); */
 /*	close(so->s); */
@@ -711,12 +689,10 @@ soisfdisconnected(so)
  * Set CANTSENDMORE once all data has been write()n
  */
 void
-sofwdrain(so)
-	struct socket *so;
+sofwdrain(struct socket *so)
 {
 	if (so->so_rcv.sb_cc)
 		so->so_state |= SS_FWDRAIN;
 	else
 		sofcantsendmore(so);
 }
-

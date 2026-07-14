@@ -1999,8 +1999,10 @@ static void gen_opcode (unsigned long int opcode)
 	printf ("\top_illg(opcode);\n");
 	break;
      case i_TRAPcc:
-	if (curi->smode != am_unknown && curi->smode != am_illg)
+	if (curi->smode != am_unknown && curi->smode != am_illg) {
 	    genamode (curi->smode, "srcreg", curi->size, "dummy", 1, 0);
+	    printf ("\t(void)dummy;\n");
+	}
 	printf ("\tif (cctrue(%d)) { Exception(7,m68k_getpc()); goto %s; }\n", curi->cc, endlabelstr);
 	need_endlabel = 1;
 	break;
@@ -2159,8 +2161,10 @@ static void gen_opcode (unsigned long int opcode)
 	sync_m68k_pc ();
 	start_brace ();
 	printf ("\tuaecptr oldpc = m68k_getpc();\n");
-	if (curi->smode != am_unknown && curi->smode != am_illg)
+	if (curi->smode != am_unknown && curi->smode != am_illg) {
 	    genamode (curi->smode, "srcreg", curi->size, "dummy", 1, 0);
+	    printf ("\t(void)dummy;\n");
+	}
 	sync_m68k_pc ();
 	swap_opcode ();
 	printf ("\tfpuop_trapcc(opcode,oldpc);\n");
@@ -2396,6 +2400,7 @@ static void generate_one_opcode (int rp)
 
 	    printf ("#endif\n");
 	}
+	printf ("\t(void)srcreg;\n");
     }
     if (table68k[opcode].duse
 	/* Yes, the dmode can be imm, in case of LINK or DBcc */
@@ -2436,6 +2441,7 @@ static void generate_one_opcode (int rp)
 
 	    printf ("#endif\n");
 	}
+	printf ("\t(void)dstreg;\n");
     }
     need_endlabel = 0;
     endlabelno++;

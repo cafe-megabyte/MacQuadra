@@ -55,6 +55,7 @@
 
 
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -106,12 +107,8 @@ struct open_mac_file_handle {
 };
 static open_mac_file_handle *open_mac_file_handles = NULL;
 
-// File handle of first floppy drive (for SysMountFirstFloppy())
-static mac_file_handle *first_floppy = NULL;
-
 // Prototypes
 static void cdrom_close(mac_file_handle *fh);
-static bool cdrom_open(mac_file_handle *fh, const char *path = NULL);
 
 
 /*

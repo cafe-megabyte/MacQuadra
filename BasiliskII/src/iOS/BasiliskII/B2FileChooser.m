@@ -160,34 +160,24 @@
     }
 }
 
-- (NSArray<UITableViewRowAction *> *)tableView:(UITableView *)tableView editActionsForRowAtIndexPath:(NSIndexPath *)indexPath {
-    NSMutableArray<UITableViewRowAction *> *actions = [NSMutableArray arrayWithCapacity:2];
+- (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
+    NSMutableArray<UIContextualAction *> *actions = [NSMutableArray arrayWithCapacity:2];
     NSString *filePath = [self filePathAtIndex:indexPath.row];
     if ([self.delegate respondsToSelector:@selector(fileChooser:canDeletePath:)] && [self.delegate fileChooser:self canDeletePath:filePath]) {
-        UITableViewRowAction *deleteAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDestructive title:L(@"file.action.delete") handler:^(UITableViewRowAction * _Nonnull action, NSIndexPath * _Nonnull indexPath) {
+        UIContextualAction *deleteAction = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive title:L(@"file.action.delete") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
             [self tableView:tableView commitEditingStyle:UITableViewCellEditingStyleDelete forRowAtIndexPath:indexPath];
+            completionHandler(YES);
         }];
         [actions addObject:deleteAction];
     }
     if ([self.delegate respondsToSelector:@selector(fileChooser:canMovePath:)] && [self.delegate fileChooser:self canMovePath:filePath]) {
-        UITableViewRowAction *moveAction = [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleNormal title:L(@"file.action.move") handler:^(UITableViewRowAction * _Nonnull action, NSIndexPath * _Nonnull indexPath) {
+        UIContextualAction *moveAction = [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal title:L(@"file.action.move") handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
             // TODO: show paste button in nav bar or toolbar
+            completionHandler(NO);
         }];
         [actions addObject:moveAction];
     }
-    return actions;
-}
-
-- (BOOL)tableView:(UITableView *)tableView shouldShowMenuForRowAtIndexPath:(nonnull NSIndexPath *)indexPath {
-    return YES;
-}
-
-- (BOOL)tableView:(UITableView *)tableView canPerformAction:(SEL)action forRowAtIndexPath:(NSIndexPath *)indexPath withSender:(id)sender {
-    return (action == @selector(share:) || action == @selector(rename:) || action == @selector(delete:));
-}
-
-- (void)tableView:(UITableView *)tableView performAction:(SEL)action forRowAtIndexPath:(NSIndexPath *)indexPath withSender:(id)sender {
-    // menu will not be shown if this item doesn't exist
+    return [UISwipeActionsConfiguration configurationWithActions:actions];
 }
 
 #pragma mark - File Actions
@@ -198,7 +188,7 @@
     [alertController addAction:[UIAlertAction actionWithTitle:L(@"dir.delete.confirmation.delete") style:UIAlertActionStyleDestructive handler:^(UIAlertAction * _Nonnull action) {
         NSError *error = nil;
         if ([[NSFileManager defaultManager] removeItemAtPath:filePath error:&error]) {
-            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[directoryContents indexOfObject:fileName] inSection:0];
+            NSIndexPath *indexPath = [NSIndexPath indexPathForRow:[self->directoryContents indexOfObject:fileName] inSection:0];
             [self loadDirectoryContents];
             [self.tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
         } else {
@@ -221,9 +211,9 @@
         NSString *newName = alertController.textFields.firstObject.text;
         NSString *newPath = [filePath.stringByDeletingLastPathComponent stringByAppendingPathComponent:newName];
         if ([[NSFileManager defaultManager] moveItemAtPath:filePath toPath:newPath error:&error]) {
-            NSIndexPath *oldIndexPath = [NSIndexPath indexPathForRow:[directoryContents indexOfObject:fileName] inSection:0];
+            NSIndexPath *oldIndexPath = [NSIndexPath indexPathForRow:[self->directoryContents indexOfObject:fileName] inSection:0];
             [self loadDirectoryContents];
-            NSUInteger newIndex = [directoryContents indexOfObject:newName];
+            NSUInteger newIndex = [self->directoryContents indexOfObject:newName];
             if (newIndex == NSNotFound) {
                 [self.tableView deleteRowsAtIndexPaths:@[oldIndexPath] withRowAnimation:UITableViewRowAnimationFade];
             } else {

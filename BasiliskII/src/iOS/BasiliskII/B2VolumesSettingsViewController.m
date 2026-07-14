@@ -146,8 +146,8 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
         }];
         unitsControl.selectedSegmentIndex = 0;
         textField.rightView = unitsControl;
-        sizeTextFieldDelegate = [B2SizeTextFieldDelegate new];
-        textField.delegate = sizeTextFieldDelegate;
+        self->sizeTextFieldDelegate = [B2SizeTextFieldDelegate new];
+        textField.delegate = self->sizeTextFieldDelegate;
         [textField addTarget:self action:@selector(validateCreateDiskImageInput:) forControlEvents:UIControlEventAllEditingEvents];
         [unitsControl addTarget:self action:@selector(validateCreateDiskImageInput:) forControlEvents:UIControlEventValueChanged];
         unitLabel.text = [unitsControl titleForSegmentAtIndex:unitsControl.selectedSegmentIndex];
@@ -157,7 +157,7 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     UIAlertAction *createAction = [UIAlertAction actionWithTitle:L(@"settings.volumes.new.size.create") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         NSString *name = [self _newDiskImageName];
         off_t size = [self _newDiskImageSize];
-        createDiskImageController = nil;
+        self->createDiskImageController = nil;
         [self createDiskImageWithName:name size:size];
     }];
     [alertController addAction:createAction];
@@ -209,7 +209,7 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:L(@"settings.volumes.progress.title") message:@"\n\n\n" preferredStyle:UIAlertControllerStyleAlert];
     [self presentViewController:alertController animated:true completion:^{
         UIView *alertView = alertController.view;
-        UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleWhiteLarge];
+        UIActivityIndicatorView *activityView = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleLarge];
         activityView.color = [UIColor blackColor];
         activityView.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin;
         activityView.center = CGPointMake(alertView.bounds.size.width / 2.0, alertView.bounds.size.height / 2.0 + 32.0);
@@ -228,8 +228,8 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
                         [[B2AppDelegate sharedInstance] showAlertWithTitle:L(@"settings.volumes.new.error.title") message:[[NSString alloc] initWithUTF8String:strerror(error)]];
                     }
                 }];
-                [diskVolumes addObject:imageFileName];
-                [[NSUserDefaults standardUserDefaults] setObject:diskVolumes forKey:@"disk"];
+                [self->diskVolumes addObject:imageFileName];
+                [[NSUserDefaults standardUserDefaults] setObject:self->diskVolumes forKey:@"disk"];
                 [self reloadSections:[NSIndexSet indexSetWithIndex:B2VolumeTypeHardDisk] animated:YES];
             });
         });

@@ -61,6 +61,8 @@
 using std::map;
 #endif
 
+#undef DEBUG
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -202,7 +204,7 @@ bool ether_init(void) {
 	// Initialize slirp library
 	if (net_if_type == NET_IF_SLIRP) {
 		if (slirp_init() < 0) {
-			sprintf(str, "%s", GetString(STR_SLIRP_NO_DNS_FOUND_WARN));
+			snprintf(str, sizeof(str), "%s", GetString(STR_SLIRP_NO_DNS_FOUND_WARN));
 			WarningAlert(str);
 			return false;
 		}
@@ -227,7 +229,7 @@ bool ether_init(void) {
 	char dev_name[16];
 	switch (net_if_type) {
 	case NET_IF_ETHERTAP:
-		sprintf(dev_name, "/dev/%s", name);
+		snprintf(dev_name, sizeof(dev_name), "/dev/%s", name);
 		break;
 	case NET_IF_TUNTAP:
 		strcpy(dev_name, "/dev/net/tun");
@@ -239,7 +241,7 @@ bool ether_init(void) {
 	if (net_if_type != NET_IF_SLIRP) {
 		fd = open(dev_name, O_RDWR);
 		if (fd < 0) {
-			sprintf(str, GetString(STR_NO_SHEEP_NET_DRIVER_WARN), dev_name, strerror(errno));
+			snprintf(str, sizeof(str), GetString(STR_NO_SHEEP_NET_DRIVER_WARN), dev_name, strerror(errno));
 			WarningAlert(str);
 			goto open_error;
 		}
@@ -249,14 +251,14 @@ bool ether_init(void) {
 #ifdef USE_FIONBIO
 	int nonblock = 1;
 	if (ioctl(fd, FIONBIO, &nonblock) < 0) {
-		sprintf(str, GetString(STR_BLOCKING_NET_SOCKET_WARN), strerror(errno));
+		snprintf(str, sizeof(str), GetString(STR_BLOCKING_NET_SOCKET_WARN), strerror(errno));
 		WarningAlert(str);
 		goto open_error;
 	}
 #else
 	val = fcntl(fd, F_GETFL, 0);
 	if (val < 0 || fcntl(fd, F_SETFL, val | O_NONBLOCK) < 0) {
-		sprintf(str, GetString(STR_BLOCKING_NET_SOCKET_WARN), strerror(errno));
+		snprintf(str, sizeof(str), GetString(STR_BLOCKING_NET_SOCKET_WARN), strerror(errno));
 		WarningAlert(str);
 		goto open_error;
 	}
@@ -784,7 +786,7 @@ void ether_do_interrupt(void)
 			length = recvfrom(fd, Mac2HostAddr(packet), 1514, 0, (struct sockaddr *)&from, &from_len);
 			if (length < 14)
 				break;
-			ether_udp_read(packet, length, &from);
+			ether_udp_read(packet, (int)length, &from);
 
 		} else
 #endif
@@ -806,7 +808,7 @@ void ether_do_interrupt(void)
 			// Pointer to packet data (Ethernet header)
 			uint32 p = packet;
 			// Dispatch packet
-			ether_dispatch_packet(p, length);
+			ether_dispatch_packet(p, (uint32)length);
 		}
 	}
 }
@@ -815,12 +817,12 @@ void ether_do_interrupt(void)
 static int get_str_sep(char *buf, int buf_size, const char **pp, int sep)
 {
 	const char *p, *p1;
-	int len;
+	size_t len;
 	p = *pp;
 	p1 = strchr(p, sep);
 	if (!p1)
 		return -1;
-	len = p1 - p;
+	len = (size_t)(p1 - p);
 	p1++;
 	if (buf_size > 0) {
 		if (len > buf_size - 1)
@@ -869,7 +871,7 @@ static int slirp_add_redir(const char *redir_str)
 	if (get_str_sep(buf, sizeof(buf), &p, ':') < 0) {
 		goto fail_syntax;
 	}
-	host_port = strtol(buf, &end, 0);
+	host_port = (int)strtol(buf, &end, 0);
 	if (*end != '\0' || host_port < 1 || host_port > 65535) {
 		goto fail_syntax;
 	}
@@ -885,20 +887,20 @@ static int slirp_add_redir(const char *redir_str)
 		goto fail_syntax;
 	}
 
-	guest_port = strtol(p, &end, 0);
+	guest_port = (int)strtol(p, &end, 0);
 	if (*end != '\0' || guest_port < 1 || guest_port > 65535) {
 		goto fail_syntax;
 	}
 
 	if (slirp_redir(is_udp, host_port, guest_addr, guest_port) < 0) {
-		sprintf(str, "could not set up host forwarding rule '%s'", redir_str);
+		snprintf(str, sizeof(str), "could not set up host forwarding rule '%s'", redir_str);
 		WarningAlert(str);
 		return -1;
 	}
 	return 0;
 
  fail_syntax:
-	sprintf(str, "invalid host forwarding rule '%s'", redir_str);
+	snprintf(str, sizeof(str), "invalid host forwarding rule '%s'", redir_str);
 	WarningAlert(str);
 	return -1;
 }

@@ -51,6 +51,7 @@
 using std::map;
 #endif
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 

@@ -255,7 +255,7 @@ bool InstallSlotROM(void)
 	vendorID = p;
 	String("Christian Bauer");
 	revLevel = p;
-	sprintf(str, "V%d.%d", VERSION_MAJOR, VERSION_MINOR);
+	snprintf(str, sizeof(str), "V%d.%d", VERSION_MAJOR, VERSION_MINOR);
 	String(str);
 	partNum = p;
 	String("BasiliskII");

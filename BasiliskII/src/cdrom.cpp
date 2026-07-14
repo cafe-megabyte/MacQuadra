@@ -44,6 +44,7 @@ using std::vector;
 #include "prefs.h"
 #include "cdrom.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -196,8 +197,7 @@ static void find_hfs_partition(cdrom_drive_info &info)
 		// Partition map block found, Apple HFS partition?
 		if (strcmp((char *)(map + 48), "Apple_HFS") == 0) {
 			info.start_byte = (loff_t)((map[8] << 24) | (map[9] << 16) | (map[10] << 8) | map[11]) << 9;
-			uint32 num_blocks = (map[12] << 24) | (map[13] << 16) | (map[14] << 8) | map[15];
-			D(bug(" HFS partition found at %d, %d blocks\n", info.start_byte, num_blocks));
+			D(bug(" HFS partition found at %d, %d blocks\n", info.start_byte, (uint32)((map[12] << 24) | (map[13] << 16) | (map[14] << 8) | map[15])));
 			break;
 		}
 	}
@@ -475,8 +475,8 @@ int16 CDROMPrime(uint32 pb, uint32 dce)
 	}
 
 	// Update ParamBlock and DCE
-	WriteMacInt32(pb + ioActCount, actual);
-	WriteMacInt32(dce + dCtlPosition, ReadMacInt32(dce + dCtlPosition) + actual);
+	WriteMacInt32(pb + ioActCount, (uint32)actual);
+	WriteMacInt32(dce + dCtlPosition, ReadMacInt32(dce + dCtlPosition) + (uint32)actual);
 	return noErr;
 }
 

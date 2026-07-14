@@ -446,7 +446,7 @@ void REGPARAM2 frame_host_565_wput(uaecptr addr, uae_u32 w)
 
 uae_u32 REGPARAM2 frame_host_888_lget(uaecptr addr)
 {
-	uae_u32 *m, l;
+	uae_u32 *m;
 	m = (uae_u32 *)(FrameBaseDiff + addr);
 	return *m;
 }

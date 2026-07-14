@@ -32,6 +32,7 @@
 #include "audio.h"
 #include "audio_defs.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 
@@ -77,12 +78,12 @@ static int32 AudioGetInfo(uint32 infoPtr, uint32 selector, uint32 sourceID)
 			break;
 
 		case siSampleSizeAvailable: {
-			r.d[0] = audio_sample_sizes.size() * 2;
+			r.d[0] = (uint32)(audio_sample_sizes.size() * 2);
 			Execute68kTrap(0xa122, &r);	// NewHandle()
 			uint32 h = r.a[0];
 			if (h == 0)
 				return memFullErr;
-			WriteMacInt16(infoPtr + sil_count, audio_sample_sizes.size());
+			WriteMacInt16(infoPtr + sil_count, (uint16)audio_sample_sizes.size());
 			WriteMacInt32(infoPtr + sil_infoHandle, h);
 			uint32 sp = ReadMacInt32(h);
 			for (unsigned i=0; i<audio_sample_sizes.size(); i++)
@@ -95,12 +96,12 @@ static int32 AudioGetInfo(uint32 infoPtr, uint32 selector, uint32 sourceID)
 			break;
 
 		case siChannelAvailable: {
-			r.d[0] = audio_channel_counts.size() * 2;
+			r.d[0] = (uint32)(audio_channel_counts.size() * 2);
 			Execute68kTrap(0xa122, &r);	// NewHandle()
 			uint32 h = r.a[0];
 			if (h == 0)
 				return memFullErr;
-			WriteMacInt16(infoPtr + sil_count, audio_channel_counts.size());
+			WriteMacInt16(infoPtr + sil_count, (uint16)audio_channel_counts.size());
 			WriteMacInt32(infoPtr + sil_infoHandle, h);
 			uint32 sp = ReadMacInt32(h);
 			for (unsigned i=0; i<audio_channel_counts.size(); i++)
@@ -113,12 +114,12 @@ static int32 AudioGetInfo(uint32 infoPtr, uint32 selector, uint32 sourceID)
 			break;
 
 		case siSampleRateAvailable: {
-			r.d[0] = audio_sample_rates.size() * 4;
+			r.d[0] = (uint32)(audio_sample_rates.size() * 4);
 			Execute68kTrap(0xa122, &r);	// NewHandle()
 			uint32 h = r.a[0];
 			if (h == 0)
 				return memFullErr;
-			WriteMacInt16(infoPtr + sil_count, audio_sample_rates.size());
+			WriteMacInt16(infoPtr + sil_count, (uint16)audio_sample_rates.size());
 			WriteMacInt32(infoPtr + sil_infoHandle, h);
 			uint32 lp = ReadMacInt32(h);
 			for (unsigned i=0; i<audio_sample_rates.size(); i++)

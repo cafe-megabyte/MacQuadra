@@ -26,6 +26,7 @@
 #include "serial.h"
 #include "serial_defs.h"
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 

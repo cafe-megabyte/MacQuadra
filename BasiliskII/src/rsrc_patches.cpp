@@ -34,6 +34,7 @@
 #include "mon.h"
 #endif
 
+#undef DEBUG
 #define DEBUG 0
 #include "debug.h"
 

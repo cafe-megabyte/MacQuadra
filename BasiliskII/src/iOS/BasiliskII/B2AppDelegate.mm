@@ -89,7 +89,6 @@ static B2AppDelegate *sharedDelegate = nil;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     sharedDelegate = self;
-    [application setStatusBarHidden:YES];
     [self initEmulator];
     
     // populate documents directory so it shows up in Files
@@ -123,17 +122,6 @@ static B2AppDelegate *sharedDelegate = nil;
 
 - (void)applicationWillTerminate:(UIApplication *)application {
     // Called when the application is about to terminate. Save data if appropriate. See also applicationDidEnterBackground:.
-}
-
-- (BOOL)application:(UIApplication *)application openURL:(NSURL *)url sourceApplication:(NSString *)sourceApplication annotation:(id)annotation {
-    NSMutableDictionary *options = [NSMutableDictionary dictionaryWithCapacity:2];
-    if (sourceApplication) {
-        options[UIApplicationOpenURLOptionsSourceApplicationKey] = sourceApplication;
-    }
-    if (annotation) {
-        options[UIApplicationOpenURLOptionsAnnotationKey] = annotation;
-    }
-    return [self application:application openURL:url options:options];
 }
 
 - (BOOL)application:(UIApplication *)app openURL:(NSURL *)url options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options {

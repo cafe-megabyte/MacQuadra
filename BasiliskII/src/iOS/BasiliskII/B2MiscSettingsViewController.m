@@ -218,12 +218,12 @@ typedef enum : NSInteger {
         textField.keyboardType = UIKeyboardTypeNumberPad;
         textField.delegate = self;
         [textField addTarget:self action:@selector(validateModelInput:) forControlEvents:UIControlEventAllEditingEvents];
-        modelField = textField;
+        self->modelField = textField;
     }];
     
     [alertController addAction:[UIAlertAction actionWithTitle:L(@"misc.cancel") style:UIAlertActionStyleCancel handler:nil]];
     modelSaveAction = [UIAlertAction actionWithTitle:L(@"misc.ok") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        NSInteger value = modelField.text.integerValue;
+        NSInteger value = self->modelField.text.integerValue;
         [defaults setInteger:value forKey:@"modelid"];
         [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:B2MiscSettingsSectionMacModel] withRowAnimation:UITableViewRowAnimationAutomatic];
     }];
@@ -248,12 +248,12 @@ typedef enum : NSInteger {
         textField.keyboardType = UIKeyboardTypeNumberPad;
         textField.delegate = self;
         [textField addTarget:self action:@selector(validateRAMSizeInput:) forControlEvents:UIControlEventAllEditingEvents];
-        ramSizeField = textField;
+        self->ramSizeField = textField;
     }];
     
     [alertController addAction:[UIAlertAction actionWithTitle:L(@"misc.cancel") style:UIAlertActionStyleCancel handler:nil]];
     ramSizeSaveAction = [UIAlertAction actionWithTitle:L(@"misc.ok") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
-        NSInteger value = ramSizeField.text.integerValue * 1024 * 1024;
+        NSInteger value = self->ramSizeField.text.integerValue * 1024 * 1024;
         [defaults setInteger:value forKey:@"ramsize"];
         [self.tableView reloadRowsAtIndexPaths:@[[NSIndexPath indexPathForRow:0 inSection:B2MiscSettingsSectionMemory]] withRowAnimation:UITableViewRowAnimationNone];
     }];

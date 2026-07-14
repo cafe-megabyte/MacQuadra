@@ -10,8 +10,6 @@
 #include "debug.h"
 #import "B2ScreenView.h"
 
-#define DEBUG 0
-
 // Mac Screen Width and Height
 uint32 MacScreenWidth;
 uint32 MacScreenHeight;
@@ -296,7 +294,7 @@ bool VideoInit(bool classic)
 
     video_mode init_mode = VideoModes[0];
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    video_depth init_depth = DepthModeForPixelDepth([defaults integerForKey:@"videoDepth"]);
+    video_depth init_depth = DepthModeForPixelDepth((int)[defaults integerForKey:@"videoDepth"]);
     CGSize init_size = CGSizeFromString([defaults stringForKey:@"videoSize"]);
     if (VideoModes.size() > 0)
 	{

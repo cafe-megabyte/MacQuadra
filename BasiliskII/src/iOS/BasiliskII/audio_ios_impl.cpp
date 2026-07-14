@@ -7,7 +7,7 @@
 //
 
 #import <AudioToolbox/AudioToolbox.h>
-#include <libkern/OSAtomic.h>
+#include <os/lock.h>
 #include "audio_ios_impl.h"
 
 extern bool audio_open;					// Flag: audio is open and ready
@@ -24,11 +24,11 @@ static int sndBufferUsed[NUM_BUFFERS];
 static AudioQueueBufferRef aqBuffer[NUM_BUFFERS];
 static AudioQueueRef audioQueue;
 static AudioStreamBasicDescription outputFormat;
-static OSSpinLock audioBufferLock = OS_SPINLOCK_INIT;
+static os_unfair_lock audioBufferLock = OS_UNFAIR_LOCK_INIT;
 
 void audio_callback (void *data, AudioQueueRef mQueue, AudioQueueBufferRef mBuffer)
 {
-    OSSpinLockLock(&audioBufferLock);
+    os_unfair_lock_lock(&audioBufferLock);
     mBuffer->mAudioDataByteSize = sndBufferSize;
     if (numFullBuffers == 0) {
         bzero(mBuffer->mAudioData, sndBufferSize);
@@ -37,7 +37,7 @@ void audio_callback (void *data, AudioQueueRef mQueue, AudioQueueBufferRef mBuff
         numFullBuffers--;
         curReadBuffer = curReadBuffer ? 0 : 1;
     }
-    OSSpinLockUnlock(&audioBufferLock);
+    os_unfair_lock_unlock(&audioBufferLock);
     AudioQueueEnqueueBuffer(mQueue, mBuffer, 0, NULL);
     audioInt();
 }
@@ -96,12 +96,12 @@ bool open_audio(int sampleRate, int sampleSize, int channels)
 void audio_output(void *p, int numSamples)
 {
     if (numFullBuffers == NUM_BUFFERS || p == NULL) return;
-    OSSpinLockLock(&audioBufferLock);
+    os_unfair_lock_lock(&audioBufferLock);
     sndBufferUsed[curFillBuffer] = outputFormat.mBytesPerFrame * numSamples;
     memcpy(sndBuffer[curFillBuffer], p, sndBufferUsed[curFillBuffer]);
     int remain = sndBufferSize - sndBufferUsed[curFillBuffer];
     bzero(sndBuffer[curFillBuffer]+sndBufferSize-remain, remain);
     curFillBuffer = curFillBuffer ? 0 : 1;
     numFullBuffers++;
-    OSSpinLockUnlock(&audioBufferLock);
+    os_unfair_lock_unlock(&audioBufferLock);
 }

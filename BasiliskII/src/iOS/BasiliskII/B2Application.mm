@@ -35,7 +35,7 @@ static int8_t usb_to_adb_scancode[] = {
     BOOL physicalCapsLocked;
 }
 
-- (BOOL)handleKeyboardPress:(UIPress *)press keyDown:(BOOL)keyDown {
+- (BOOL)handleKeyboardPress:(UIPress *)press keyDown:(BOOL)keyDown API_AVAILABLE(ios(13.4)) {
     UIKey *key = press.key;
     if (key == nil || ![B2AppDelegate sharedInstance].emulatorRunning) {
         return NO;
@@ -71,7 +71,7 @@ static int8_t usb_to_adb_scancode[] = {
     return NO;
 }
 
-- (void)updateCapsLockStatusForKey:(UIKey *)key {
+- (void)updateCapsLockStatusForKey:(UIKey *)key API_AVAILABLE(ios(13.4)) {
     NSString *unmodifiedInput = key.charactersIgnoringModifiers;
     NSString *modifiedInput = key.characters;
 
@@ -97,8 +97,10 @@ static int8_t usb_to_adb_scancode[] = {
 - (void)pressesBegan:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
     BOOL handled = NO;
 
-    for (UIPress *press in presses) {
-        handled = [self handleKeyboardPress:press keyDown:YES] || handled;
+    if (@available(iOS 13.4, *)) {
+        for (UIPress *press in presses) {
+            handled = [self handleKeyboardPress:press keyDown:YES] || handled;
+        }
     }
 
     if (!handled) {
@@ -109,8 +111,10 @@ static int8_t usb_to_adb_scancode[] = {
 - (void)pressesEnded:(NSSet<UIPress *> *)presses withEvent:(UIPressesEvent *)event {
     BOOL handled = NO;
 
-    for (UIPress *press in presses) {
-        handled = [self handleKeyboardPress:press keyDown:NO] || handled;
+    if (@available(iOS 13.4, *)) {
+        for (UIPress *press in presses) {
+            handled = [self handleKeyboardPress:press keyDown:NO] || handled;
+        }
     }
 
     if (!handled) {
