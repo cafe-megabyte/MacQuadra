@@ -30,6 +30,11 @@ typedef enum : NSInteger {
     UIAlertAction *screenSizeSaveAction;
 }
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = L(@"settings.root.graphicsAndSound");
+}
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {

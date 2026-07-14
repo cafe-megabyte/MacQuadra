@@ -26,8 +26,10 @@ NSString *B2DidImportFileNotificationName = @"B2DidImportFileNotification";
 
 - (void)awakeFromNib {
     [super awakeFromNib];
+    self.title = L(@"settings.root.documents");
     baseFilePath = [B2AppDelegate sharedInstance].documentsPath;
     baseFileChooser = [[B2FileChooser alloc] initWithStyle:UITableViewStylePlain];
+    baseFileChooser.title = L(@"settings.root.documents");
     baseFileChooser.path = baseFilePath;
     baseFileChooser.delegate = self;
     self.viewControllers = @[baseFileChooser];

@@ -38,6 +38,7 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 - (void)viewDidLoad {
     [super viewDidLoad];
     
+    self.title = L(@"settings.root.volumes");
     self.navigationItem.rightBarButtonItem = self.editButtonItem;
 }
 

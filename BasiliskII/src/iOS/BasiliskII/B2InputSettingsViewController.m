@@ -25,6 +25,7 @@ typedef enum : NSInteger {
 
 - (void)viewDidLoad {
     [super viewDidLoad];
+    self.title = L(@"settings.root.keyboardAndMouse");
     keyboardLayouts = [B2AppDelegate sharedInstance].availableKeyboardLayouts;
 }
 

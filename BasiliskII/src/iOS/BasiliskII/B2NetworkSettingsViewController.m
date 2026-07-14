@@ -18,6 +18,11 @@
     UIAlertAction *udpPortSaveAction;
 }
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = L(@"settings.root.networking");
+}
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {

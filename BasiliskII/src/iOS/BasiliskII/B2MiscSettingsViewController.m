@@ -29,6 +29,11 @@ typedef enum : NSInteger {
     UIAlertAction *ramSizeSaveAction;
 }
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = L(@"settings.root.memoryAndMisc");
+}
+
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
