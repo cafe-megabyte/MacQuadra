@@ -10,3 +10,4 @@ int audioInt(void);
 bool open_audio(int sampleRate, int sampleSize, int channels);
 void close_audio(void);
 void audio_output(void *p, int numSamples);
+void audio_play_startup_sound(const void *p, int numSamples);

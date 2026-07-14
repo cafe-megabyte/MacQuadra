@@ -8,6 +8,9 @@
 
 #import <AudioToolbox/AudioToolbox.h>
 #include <os/lock.h>
+#include <algorithm>
+#include <cstdint>
+#include <vector>
 #include "audio_ios_impl.h"
 
 extern bool audio_open;					// Flag: audio is open and ready
@@ -25,6 +28,46 @@ static AudioQueueBufferRef aqBuffer[NUM_BUFFERS];
 static AudioQueueRef audioQueue;
 static AudioStreamBasicDescription outputFormat;
 static os_unfair_lock audioBufferLock = OS_UNFAIR_LOCK_INIT;
+static std::vector<uint8_t> startupSoundBuffer;
+static size_t startupSoundOffset = 0;
+
+static int16_t read_be_int16(const uint8_t *p)
+{
+    return (int16_t)((p[0] << 8) | p[1]);
+}
+
+static void write_be_int16(uint8_t *p, int16_t value)
+{
+    p[0] = (uint8_t)((value >> 8) & 0xff);
+    p[1] = (uint8_t)(value & 0xff);
+}
+
+static int16_t clamp_sample(int value)
+{
+    if (value > INT16_MAX) return INT16_MAX;
+    if (value < INT16_MIN) return INT16_MIN;
+    return (int16_t)value;
+}
+
+static void mix_startup_sound(AudioQueueBufferRef mBuffer)
+{
+    if (startupSoundOffset >= startupSoundBuffer.size()) return;
+
+    uint8_t *out = (uint8_t *)mBuffer->mAudioData;
+    const size_t outputBytes = mBuffer->mAudioDataByteSize;
+    const size_t bytesToMix = std::min(outputBytes, startupSoundBuffer.size() - startupSoundOffset);
+
+    for (size_t offset = 0; offset + 1 < bytesToMix; offset += 2) {
+        const int mixed = read_be_int16(out + offset) + read_be_int16(&startupSoundBuffer[startupSoundOffset + offset]);
+        write_be_int16(out + offset, clamp_sample(mixed));
+    }
+
+    startupSoundOffset += bytesToMix;
+    if (startupSoundOffset >= startupSoundBuffer.size()) {
+        startupSoundBuffer.clear();
+        startupSoundOffset = 0;
+    }
+}
 
 void audio_callback (void *data, AudioQueueRef mQueue, AudioQueueBufferRef mBuffer)
 {
@@ -37,6 +80,7 @@ void audio_callback (void *data, AudioQueueRef mQueue, AudioQueueBufferRef mBuff
         numFullBuffers--;
         curReadBuffer = curReadBuffer ? 0 : 1;
     }
+    mix_startup_sound(mBuffer);
     os_unfair_lock_unlock(&audioBufferLock);
     AudioQueueEnqueueBuffer(mQueue, mBuffer, 0, NULL);
     audioInt();
@@ -55,6 +99,8 @@ void close_audio(void)
     AudioQueueFlush(audioQueue);
     AudioQueueDispose(audioQueue, true);
     audioQueue = NULL;
+    startupSoundBuffer.clear();
+    startupSoundOffset = 0;
     audio_open = false;
 }
 
@@ -103,5 +149,17 @@ void audio_output(void *p, int numSamples)
     bzero(sndBuffer[curFillBuffer]+sndBufferSize-remain, remain);
     curFillBuffer = curFillBuffer ? 0 : 1;
     numFullBuffers++;
+    os_unfair_lock_unlock(&audioBufferLock);
+}
+
+void audio_play_startup_sound(const void *p, int numSamples)
+{
+    if (p == NULL || numSamples <= 0) return;
+
+    os_unfair_lock_lock(&audioBufferLock);
+    const size_t byteCount = (size_t)outputFormat.mBytesPerFrame * (size_t)numSamples;
+    const uint8_t *bytes = (const uint8_t *)p;
+    startupSoundBuffer.assign(bytes, bytes + byteCount);
+    startupSoundOffset = 0;
     os_unfair_lock_unlock(&audioBufferLock);
 }
