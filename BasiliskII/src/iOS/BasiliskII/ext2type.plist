@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Z</key>
+	<string>ZIVMLZIV</string>
+	<key>gz</key>
+	<string>GzipGzip</string>
+	<key>hqx</key>
+	<string>TEXTSITx</string>
+	<key>bin</key>
+	<string>TEXTSITx</string>
+	<key>pdf</key>
+	<string>PDF CARO</string>
+	<key>ps</key>
+	<string>TEXTttxt</string>
+	<key>sit</key>
+	<string>SIT!SITx</string>
+	<key>tar</key>
+	<string>TARFTAR </string>
+	<key>uu</key>
+	<string>TEXTSITx</string>
+	<key>uue</key>
+	<string>TEXTSITx</string>
+	<key>zip</key>
+	<string>ZIP ZIP </string>
+	<key>8svx</key>
+	<string>8SVXSNDM</string>
+	<key>aifc</key>
+	<string>AIFCTVOD</string>
+	<key>aiff</key>
+	<string>AIFFTVOD</string>
+	<key>au</key>
+	<string>ULAWTVOD</string>
+	<key>mid</key>
+	<string>MIDITVOD</string>
+	<key>midi</key>
+	<string>MIDITVOD</string>
+	<key>mp2</key>
+	<string>MPG TVOD</string>
+	<key>mp3</key>
+	<string>MPG TVOD</string>
+	<key>wav</key>
+	<string>WAVETVOD</string>
+	<key>bmp</key>
+	<string>BMPfogle</string>
+	<key>gif</key>
+	<string>GIFfogle</string>
+	<key>lbm</key>
+	<string>ILBMGKON</string>
+	<key>ilbm</key>
+	<string>ILBMGKON</string>
+	<key>jpg</key>
+	<string>JPEGogle</string>
+	<key>jpeg</key>
+	<string>JPEGogle</string>
+	<key>pict</key>
+	<string>PICTogle</string>
+	<key>png</key>
+	<string>PNGfogle</string>
+	<key>sgi</key>
+	<string>.SGIogle</string>
+	<key>tga</key>
+	<string>TPICogle</string>
+	<key>tif</key>
+	<string>TIFFogle</string>
+	<key>tiff</key>
+	<string>TIFFogle</string>
+	<key>htm</key>
+	<string>TEXTMOSS</string>
+	<key>html</key>
+	<string>TEXTMOSS</string>
+	<key>txt</key>
+	<string>TEXTttxt</string>
+	<key>rtf</key>
+	<string>TEXTMSWD</string>
+	<key>c</key>
+	<string>TEXTR*ch</string>
+	<key>C</key>
+	<string>TEXTR*ch</string>
+	<key>cc</key>
+	<string>TEXTR*ch</string>
+	<key>cpp</key>
+	<string>TEXTR*ch</string>
+	<key>cxx</key>
+	<string>TEXTR*ch</string>
+	<key>h</key>
+	<string>TEXTR*ch</string>
+	<key>hh</key>
+	<string>TEXTR*ch</string>
+	<key>hpp</key>
+	<string>TEXTR*ch</string>
+	<key>hxx</key>
+	<string>TEXTR*ch</string>
+	<key>s</key>
+	<string>TEXTR*ch</string>
+	<key>S</key>
+	<string>TEXTR*ch</string>
+	<key>i</key>
+	<string>TEXTR*ch</string>
+	<key>mpg</key>
+	<string>MPEGTVOD</string>
+	<key>mpeg</key>
+	<string>MPEGTVOD</string>
+	<key>mov</key>
+	<string>MooVTVOD</string>
+	<key>fli</key>
+	<string>FLI TVOD</string>
+	<key>avi</key>
+	<string>VfW TVOD</string>
+	<key>qxd</key>
+	<string>XDOCXPR3</string>
+	<key>hfv</key>
+	<string>DDimddsk</string>
+	<key>dsk</key>
+	<string>DDimddsk</string>
+	<key>img</key>
+	<string>rohdddsk</string>
+</dict>
+</plist>

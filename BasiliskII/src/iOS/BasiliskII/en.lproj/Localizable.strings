@@ -1,0 +1,108 @@
+"misc.ok" = "OK";
+"misc.cancel" = "Cancel";
+"misc.save" = "Save";
+"misc.error" = "error";
+
+"settings.volumes.type.disk" = "Hard Disk";
+"settings.volumes.type.floppy" = "Floppy";
+"settings.volumes.type.cdrom" = "CD-ROM";
+"settings.volumes.create" = "Create disk image…";
+"settings.volumes.available" = "Unused Disk Images";
+"settings.volumes.error" = "error";
+
+"settings.volumes.new.title" = "Create Disk Image";
+"settings.volumes.new.name" = "name";
+"settings.volumes.new.size" = "size";
+"settings.volumes.new.size.k" = "KiB";
+"settings.volumes.new.size.m" = "MiB";
+"settings.volumes.new.size.create" = "Create";
+"settings.volumes.new.error.title" = "Could not create disk image";
+"settings.volumes.progress.title" = "Creating Disk Image";
+"settings.volumes.delete.confirmation.title" = "Delete Disk Image";
+"settings.volumes.delete.confirmation.message" = "Are you sure you want to delete %@? This operation cannot be undone.";
+"settings.volumes.delete.confirmation.delete" = "Delete";
+
+"settings.gfx.size" = "Screen Resolution";
+"settings.gfx.size.item" = "%@ × %@";
+"settings.gfx.size.landscape" = "Landscape";
+"settings.gfx.size.portrait" = "Portrait";
+"settings.gfx.size.landscape2x" = "Landscape (Retina)";
+"settings.gfx.size.portrait2x" = "Portrait (Retina)";
+"settings.gfx.size.custom" = "Custom…";
+"settings.gfx.size.customize.title" = "Screen Size";
+"settings.gfx.size.customize.message" = "Enter custom screen size in pixels";
+"settings.gfx.size.customize.width" = "width";
+"settings.gfx.size.customize.height" = "height";
+"settings.gfx.size.customize.help" = "%1$d×%2$d\nPinch to scale\nDouble tap for full screen";
+
+"settings.gfx.depth" = "Color Depth";
+"settings.gfx.depth.1" = "Black and White";
+"settings.gfx.depth.2" = "4 Colors";
+"settings.gfx.depth.4" = "16 Colors";
+"settings.gfx.depth.8" = "256 Colors";
+"settings.gfx.depth.16" = "Thousands of Colors";
+"settings.gfx.depth.32" = "Millions of Colors";
+"settings.gfx.frameskip" = "Refresh Rate";
+"settings.gfx.frameskip.1" = "60 Hz";
+"settings.gfx.frameskip.2" = "30 Hz";
+"settings.gfx.frameskip.4" = "15 Hz";
+"settings.gfx.frameskip.6" = "10 Hz";
+"settings.gfx.frameskip.8" = "7.5 Hz";
+"settings.gfx.frameskip.12" = "5 Hz";
+"settings.gfx.scaling" = "Display Scaling";
+"settings.gfx.scaling.1" = "Nearest Neighbour";
+"settings.gfx.scaling.2" = "Linear";
+"settings.gfx.scaling.3" = "Trilinear";
+
+"settings.sound" = "Sound";
+"settings.sound.enable" = "Enable Sound";
+
+"settings.input.mouse" = "Mouse";
+"settings.input.mouse.type" = "Type";
+"settings.input.mouse.type.trackpad" = "Trackpad";
+"settings.input.mouse.type.touchscreen" = "Touch Screen";
+"settings.input.keyboard.layout.header" = "Keyboard Layout";
+"settings.input.keyboard.layout.footer" = "This sets the look of the keyboard UI, use the emulated Mac's Keyboard control panel to choose a matching layout.";
+
+"settings.net.interface" = "Ethernet Interface";
+"settings.net.interface.slirp" = "slirp";
+"settings.net.interface.udptunnel" = "tunnel over UDP";
+"settings.net.interface.none" = "None";
+"settings.net.interface.help" = "Use slirp to connect the emulated Macintosh to the internet, or tunnel to connect to other instances of BasiliskII running on the same network.";
+"settings.net.udpport.title" = "UDP Port";
+
+"settings.misc.modelid" = "Mac Model";
+"settings.misc.modelid.5" = "Mac IIci";
+"settings.misc.modelid.14" = "Quadra 900";
+"settings.misc.modelid.custom" = "Custom…";
+"settings.misc.modelid.customize.title" = "Model ID";
+"settings.misc.modelid.customize.message" = "Gestalt Model ID minus 6";
+"settings.misc.cpu" = "CPU Type";
+"settings.misc.cpu.2" = "68020";
+"settings.misc.cpu.3" = "68030";
+"settings.misc.cpu.4" = "68040";
+"settings.misc.fpu" = "FPU";
+"settings.misc.memory" = "Memory";
+"settings.misc.ramsize.customize.title" = "RAM Size";
+"settings.misc.ramsize.customize.message" = "Memory size in megabytes";
+"settings.misc.ramsize.customize.placeholder" = "ramsize (MB)";
+"settings.misc.ramsize" = "RAM Size";
+"settings.misc.ramsize.value" = "%d MB";
+"settings.misc.rom" = "ROM File";
+"settings.misc.rom.prompt" = "Choose a ROM file";
+
+"dir.items.1" = "1 item";
+"dir.items.n" = "%@ items";
+"dir.delete.confirmation.title" = "Delete File";
+"dir.delete.confirmation.message" = "Are you sure you want to delete %@? This operation cannot be undone.";
+"dir.delete.confirmation.delete" = "Delete";
+"dir.delete.error" = "Could not delete %@";
+
+"file.action.delete" = "Delete";
+"file.action.move" = "Move";
+"file.action.rename" = "Rename";
+"file.action.share" = "Share";
+
+"dir.rename.message" = "Enter new name";
+"dir.rename.rename" = "Rename";
+"dir.rename.error" = "Could not rename %@";

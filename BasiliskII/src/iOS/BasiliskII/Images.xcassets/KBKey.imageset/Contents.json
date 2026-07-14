@@ -1,0 +1,228 @@
+{
+  "images" : [
+    {
+      "filename" : "KBKey.png",
+      "idiom" : "iphone",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 8,
+          "left" : 8,
+          "right" : 8,
+          "top" : 8
+        },
+        "center" : {
+          "height" : 1,
+          "mode" : "tile",
+          "width" : 1
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "1x"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "KBKey-1.png",
+      "idiom" : "iphone",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 8,
+          "left" : 8,
+          "right" : 8,
+          "top" : 8
+        },
+        "center" : {
+          "height" : 1,
+          "mode" : "tile",
+          "width" : 1
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "1x"
+    },
+    {
+      "filename" : "KBKey@2x.png",
+      "idiom" : "iphone",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 16,
+          "left" : 16,
+          "right" : 16,
+          "top" : 16
+        },
+        "center" : {
+          "height" : 2,
+          "mode" : "tile",
+          "width" : 2
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "2x"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "KBKey@2x-1.png",
+      "idiom" : "iphone",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 16,
+          "left" : 16,
+          "right" : 16,
+          "top" : 16
+        },
+        "center" : {
+          "height" : 2,
+          "mode" : "tile",
+          "width" : 2
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "2x"
+    },
+    {
+      "filename" : "KBKey@3x.png",
+      "idiom" : "iphone",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 24,
+          "left" : 24,
+          "right" : 24,
+          "top" : 24
+        },
+        "center" : {
+          "height" : 3,
+          "mode" : "tile",
+          "width" : 3
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "3x"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "KBKey@3x-2.png",
+      "idiom" : "iphone",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 24,
+          "left" : 24,
+          "right" : 24,
+          "top" : 24
+        },
+        "center" : {
+          "height" : 3,
+          "mode" : "tile",
+          "width" : 3
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "3x"
+    },
+    {
+      "filename" : "KBKey~ipad.png",
+      "idiom" : "ipad",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 16,
+          "left" : 16,
+          "right" : 16,
+          "top" : 16
+        },
+        "center" : {
+          "height" : 1,
+          "mode" : "tile",
+          "width" : 1
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "1x"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "KBKey~ipad-2.png",
+      "idiom" : "ipad",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 16,
+          "left" : 16,
+          "right" : 16,
+          "top" : 16
+        },
+        "center" : {
+          "height" : 1,
+          "mode" : "tile",
+          "width" : 1
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "1x"
+    },
+    {
+      "filename" : "KBKey@2x~ipad.png",
+      "idiom" : "ipad",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 32,
+          "left" : 32,
+          "right" : 32,
+          "top" : 32
+        },
+        "center" : {
+          "height" : 2,
+          "mode" : "tile",
+          "width" : 2
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "2x"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "KBKey@2x~ipad-2.png",
+      "idiom" : "ipad",
+      "resizing" : {
+        "cap-insets" : {
+          "bottom" : 32,
+          "left" : 32,
+          "right" : 32,
+          "top" : 32
+        },
+        "center" : {
+          "height" : 2,
+          "mode" : "tile",
+          "width" : 2
+        },
+        "mode" : "9-part"
+      },
+      "scale" : "2x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}

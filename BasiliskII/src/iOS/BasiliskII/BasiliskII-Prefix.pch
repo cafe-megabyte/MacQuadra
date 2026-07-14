@@ -1,0 +1,38 @@
+//
+//  Prefix header
+//
+//  The contents of this file are implicitly included at the beginning of every source file.
+//
+
+#import <Availability.h>
+
+#ifndef __IPHONE_5_0
+#warning "This project uses features only available in iOS SDK 5.0 and later."
+#endif
+
+#define HAVE_CONFIG_H
+#define HAVE_RESOLV_H
+#define FPU_UAE
+
+#define L(format, ...) [[NSBundle mainBundle] localizedStringForKey:[NSString stringWithFormat:format, ##__VA_ARGS__] value:@"" table:nil]
+#define LX(format, ...) [NSString stringWithFormat:[[NSBundle mainBundle] localizedStringForKey:format value:@"" table:nil], ##__VA_ARGS__]
+
+#ifdef __OBJC__
+    #import <UIKit/UIKit.h>
+    #import <Foundation/Foundation.h>
+
+    #import "NSString+OSType.h"
+#endif
+
+#ifdef __cplusplus
+#include <stdint.h>
+bool InitEmulator ();
+void QuitEmuNoExit();
+
+void ErrorAlert  (const char *text);
+void WarningAlert(const char *text);
+bool ChoiceAlert (const char *text, const char *pos, const char *neg);
+bool ShouldHideExtFSFile (const char *path);
+bool GetTypeAndCreatorForFileName (const char *path, uint32_t *type, uint32_t *creator);
+
+#endif
