@@ -14,10 +14,12 @@
 uint32 MacScreenWidth;
 uint32 MacScreenHeight;
 
+#if DEBUG
 static uint8 bits_from_depth(const video_depth depth)
 {
 	return 1 << depth;
 }
+#endif
 
 // Supported video modes
 static vector<video_mode> VideoModes;
