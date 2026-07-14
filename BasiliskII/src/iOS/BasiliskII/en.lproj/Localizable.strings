@@ -3,6 +3,14 @@
 "misc.save" = "Save";
 "misc.error" = "error";
 
+"settings.root.title" = "BasiliskII Settings";
+"settings.root.volumes" = "Volumes";
+"settings.root.graphicsAndSound" = "Graphics & Sound";
+"settings.root.keyboardAndMouse" = "Keyboard & Mouse";
+"settings.root.networking" = "Networking";
+"settings.root.memoryAndMisc" = "Memory & Misc";
+"settings.root.documents" = "Documents";
+
 "settings.volumes.type.disk" = "Hard Disk";
 "settings.volumes.type.floppy" = "Floppy";
 "settings.volumes.type.cdrom" = "CD-ROM";

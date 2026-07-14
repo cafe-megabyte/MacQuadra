@@ -175,6 +175,9 @@
 		2850335D1B4B270A0061C869 /* B2VolumesSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2VolumesSettingsViewController.h; sourceTree = "<group>"; };
 		2850335E1B4B270A0061C869 /* B2VolumesSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = B2VolumesSettingsViewController.m; sourceTree = "<group>"; };
 		2854D53319AA4822001B7858 /* libresolv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libresolv.dylib; path = usr/lib/libresolv.dylib; sourceTree = SDKROOT; };
+		2866A76330068CAC006D1FF3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		2866A76430068CAC006D1FF3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		2866A76530068CAC006D1FF3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		287A15DE1CAEF9B700D84E02 /* libres_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libres_internal.h; sourceTree = "<group>"; };
 		287A15DF1CAEF9B700D84E02 /* res.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = res.c; sourceTree = "<group>"; };
 		287A15E01CAEF9B700D84E02 /* res.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = res.h; sourceTree = "<group>"; };
@@ -888,6 +891,7 @@
 			knownRegions = (
 				en,
 				Base,
+				de,
 			);
 			mainGroup = 2898F44518CB719600FE7806;
 			productRefGroup = 2898F44F18CB719600FE7806 /* Products */;
@@ -1063,6 +1067,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				288C50191B9CADF900EA91F3 /* en */,
+				2866A76330068CAC006D1FF3 /* de */,
 			);
 			name = Localizable.strings;
 			sourceTree = "<group>";
@@ -1071,6 +1076,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				2898F45B18CB719600FE7806 /* en */,
+				2866A76430068CAC006D1FF3 /* de */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -1079,6 +1085,7 @@
 			isa = PBXVariantGroup;
 			children = (
 				2898F47D18CB719700FE7806 /* en */,
+				2866A76530068CAC006D1FF3 /* de */,
 			);
 			name = InfoPlist.strings;
 			sourceTree = "<group>";
@@ -1152,6 +1159,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;
@@ -1211,6 +1219,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
 				CLANG_CXX_LIBRARY = "libc++";
 				CLANG_ENABLE_MODULES = YES;

@@ -1,0 +1,116 @@
+"misc.ok" = "OK";
+"misc.cancel" = "Abbrechen";
+"misc.save" = "Sichern";
+"misc.error" = "Fehler";
+
+"settings.root.title" = "BasiliskII-Einstellungen";
+"settings.root.volumes" = "Laufwerke";
+"settings.root.graphicsAndSound" = "Grafik & Ton";
+"settings.root.keyboardAndMouse" = "Tastatur & Maus";
+"settings.root.networking" = "Netzwerk";
+"settings.root.memoryAndMisc" = "Speicher & Sonstiges";
+"settings.root.documents" = "Dokumente";
+
+"settings.volumes.type.disk" = "Festplatte";
+"settings.volumes.type.floppy" = "Diskette";
+"settings.volumes.type.cdrom" = "CD-ROM";
+"settings.volumes.create" = "Festplattenabbild erstellen…";
+"settings.volumes.available" = "Ungenutzte Festplattenabbilder";
+"settings.volumes.error" = "Fehler";
+
+"settings.volumes.new.title" = "Festplattenabbild erstellen";
+"settings.volumes.new.name" = "Name";
+"settings.volumes.new.size" = "Größe";
+"settings.volumes.new.size.k" = "KiB";
+"settings.volumes.new.size.m" = "MiB";
+"settings.volumes.new.size.create" = "Erstellen";
+"settings.volumes.new.error.title" = "Festplattenabbild konnte nicht erstellt werden";
+"settings.volumes.progress.title" = "Festplattenabbild wird erstellt";
+"settings.volumes.delete.confirmation.title" = "Festplattenabbild löschen";
+"settings.volumes.delete.confirmation.message" = "Möchten Sie %@ wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.";
+"settings.volumes.delete.confirmation.delete" = "Löschen";
+
+"settings.gfx.size" = "Bildschirmauflösung";
+"settings.gfx.size.item" = "%@ × %@";
+"settings.gfx.size.landscape" = "Querformat";
+"settings.gfx.size.portrait" = "Hochformat";
+"settings.gfx.size.landscape2x" = "Querformat (Retina)";
+"settings.gfx.size.portrait2x" = "Hochformat (Retina)";
+"settings.gfx.size.custom" = "Eigene…";
+"settings.gfx.size.customize.title" = "Bildschirmgröße";
+"settings.gfx.size.customize.message" = "Eigene Bildschirmgröße in Pixeln eingeben";
+"settings.gfx.size.customize.width" = "Breite";
+"settings.gfx.size.customize.height" = "Höhe";
+"settings.gfx.size.customize.help" = "%1$d×%2$d\nZum Skalieren aufziehen\nDoppeltippen für Vollbild";
+
+"settings.gfx.depth" = "Farbtiefe";
+"settings.gfx.depth.1" = "Schwarzweiß";
+"settings.gfx.depth.2" = "4 Farben";
+"settings.gfx.depth.4" = "16 Farben";
+"settings.gfx.depth.8" = "256 Farben";
+"settings.gfx.depth.16" = "Tausende Farben";
+"settings.gfx.depth.32" = "Millionen Farben";
+"settings.gfx.frameskip" = "Bildwiederholrate";
+"settings.gfx.frameskip.1" = "60 Hz";
+"settings.gfx.frameskip.2" = "30 Hz";
+"settings.gfx.frameskip.4" = "15 Hz";
+"settings.gfx.frameskip.6" = "10 Hz";
+"settings.gfx.frameskip.8" = "7,5 Hz";
+"settings.gfx.frameskip.12" = "5 Hz";
+"settings.gfx.scaling" = "Anzeigeskalierung";
+"settings.gfx.scaling.1" = "Nächster Nachbar";
+"settings.gfx.scaling.2" = "Linear";
+"settings.gfx.scaling.3" = "Trilinear";
+
+"settings.sound" = "Ton";
+"settings.sound.enable" = "Ton aktivieren";
+
+"settings.input.mouse" = "Maus";
+"settings.input.mouse.type" = "Typ";
+"settings.input.mouse.type.trackpad" = "Trackpad";
+"settings.input.mouse.type.touchscreen" = "Touchscreen";
+"settings.input.keyboard.layout.header" = "Tastaturbelegung";
+"settings.input.keyboard.layout.footer" = "Dies legt das Aussehen der Tastatur-Oberfläche fest. Verwenden Sie im emulierten Mac das Kontrollfeld \"Tastatur\", um eine passende Belegung auszuwählen.";
+
+"settings.net.interface" = "Ethernet-Schnittstelle";
+"settings.net.interface.slirp" = "slirp";
+"settings.net.interface.udptunnel" = "Tunnel über UDP";
+"settings.net.interface.none" = "Keine";
+"settings.net.interface.help" = "Verwenden Sie slirp, um den emulierten Macintosh mit dem Internet zu verbinden, oder Tunnel, um eine Verbindung zu anderen BasiliskII-Instanzen im selben Netzwerk herzustellen.";
+"settings.net.udpport.title" = "UDP-Port";
+
+"settings.misc.modelid" = "Mac-Modell";
+"settings.misc.modelid.5" = "Mac IIci";
+"settings.misc.modelid.14" = "Quadra 900";
+"settings.misc.modelid.custom" = "Eigenes…";
+"settings.misc.modelid.customize.title" = "Modell-ID";
+"settings.misc.modelid.customize.message" = "Gestalt-Modell-ID minus 6";
+"settings.misc.cpu" = "CPU-Typ";
+"settings.misc.cpu.2" = "68020";
+"settings.misc.cpu.3" = "68030";
+"settings.misc.cpu.4" = "68040";
+"settings.misc.fpu" = "FPU";
+"settings.misc.memory" = "Speicher";
+"settings.misc.ramsize.customize.title" = "RAM-Größe";
+"settings.misc.ramsize.customize.message" = "Speichergröße in Megabyte";
+"settings.misc.ramsize.customize.placeholder" = "RAM-Größe (MB)";
+"settings.misc.ramsize" = "RAM-Größe";
+"settings.misc.ramsize.value" = "%d MB";
+"settings.misc.rom" = "ROM-Datei";
+"settings.misc.rom.prompt" = "ROM-Datei auswählen";
+
+"dir.items.1" = "1 Objekt";
+"dir.items.n" = "%@ Objekte";
+"dir.delete.confirmation.title" = "Datei löschen";
+"dir.delete.confirmation.message" = "Möchten Sie %@ wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.";
+"dir.delete.confirmation.delete" = "Löschen";
+"dir.delete.error" = "%@ konnte nicht gelöscht werden";
+
+"file.action.delete" = "Löschen";
+"file.action.move" = "Bewegen";
+"file.action.rename" = "Umbenennen";
+"file.action.share" = "Teilen";
+
+"dir.rename.message" = "Neuen Namen eingeben";
+"dir.rename.rename" = "Umbenennen";
+"dir.rename.error" = "%@ konnte nicht umbenannt werden";

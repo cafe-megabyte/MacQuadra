@@ -14,9 +14,31 @@
 
 @implementation B2SettingsRootTableViewController
 
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    self.title = L(@"settings.root.title");
+}
+
 - (void)tableView:(UITableView *)tableView willDisplayCell:(UITableViewCell *)cell forRowAtIndexPath:(NSIndexPath *)indexPath {
     BOOL isSidebar = self.splitViewController.traitCollection.horizontalSizeClass == UIUserInterfaceSizeClassRegular;
     cell.accessoryType = isSidebar ? UITableViewCellAccessoryNone : UITableViewCellAccessoryDisclosureIndicator;
+}
+
+- (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
+    UITableViewCell *cell = [super tableView:tableView cellForRowAtIndexPath:indexPath];
+    NSArray<NSString *> *settingTitleKeys = @[
+        @"settings.root.volumes",
+        @"settings.root.graphicsAndSound",
+        @"settings.root.keyboardAndMouse",
+        @"settings.root.networking",
+        @"settings.root.memoryAndMisc",
+        @"settings.root.documents"
+    ];
+    if (indexPath.section == 0 && indexPath.row < settingTitleKeys.count) {
+        NSString *titleKey = settingTitleKeys[indexPath.row];
+        cell.textLabel.text = [[NSBundle mainBundle] localizedStringForKey:titleKey value:@"" table:nil];
+    }
+    return cell;
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator {
