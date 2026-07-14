@@ -29,6 +29,7 @@ static B2ViewController *_sharedB2ViewController = nil;
 {
     KBKeyboardView *keyboardView;
     UISwipeGestureRecognizer *showKeyboardGesture, *hideKeyboardGesture;
+    UIScreenEdgePanGestureRecognizer *showKeyboardLeftEdgeGesture, *showKeyboardRightEdgeGesture;
     UIControl *pointingDeviceView;
     #ifdef __IPHONE_13_4
     id pointerInteraction;
@@ -245,6 +246,14 @@ static B2ViewController *_sharedB2ViewController = nil;
     showKeyboardGesture.direction = UISwipeGestureRecognizerDirectionUp;
     showKeyboardGesture.numberOfTouchesRequired = 2;
     [self.view addGestureRecognizer:showKeyboardGesture];
+
+    showKeyboardLeftEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard:)];
+    showKeyboardLeftEdgeGesture.edges = UIRectEdgeLeft;
+    [self.view addGestureRecognizer:showKeyboardLeftEdgeGesture];
+
+    showKeyboardRightEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard:)];
+    showKeyboardRightEdgeGesture.edges = UIRectEdgeRight;
+    [self.view addGestureRecognizer:showKeyboardRightEdgeGesture];
     
     hideKeyboardGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(hideKeyboard:)];
     hideKeyboardGesture.direction = UISwipeGestureRecognizerDirectionDown;
