@@ -6,6 +6,22 @@
 	objectVersion = 54;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		2866A9C4300691D7006D1FF3 /* BuildNumberGenerator */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 2866A9C5300691D7006D1FF3 /* Build configuration list for PBXAggregateTarget "BuildNumberGenerator" */;
+			buildPhases = (
+				2866A9C8300691FE006D1FF3 /* ShellScript */,
+			);
+			dependencies = (
+			);
+			name = BuildNumberGenerator;
+			packageProductDependencies = (
+			);
+			productName = BuildNumberGenerator;
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		2814CEF82DE876CF005024E7 /* DefaultSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2814CEF72DE876CF005024E7 /* DefaultSceneDelegate.swift */; };
 		281509101CC57F81004ECA0A /* B2TouchScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */; };
@@ -37,6 +53,7 @@
 		285033591B496B2B0061C869 /* B2SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 285033581B496B2B0061C869 /* B2SettingsViewController.m */; };
 		2850335F1B4B270A0061C869 /* B2VolumesSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2850335E1B4B270A0061C869 /* B2VolumesSettingsViewController.m */; };
 		2854D53419AA4822001B7858 /* libresolv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2854D53319AA4822001B7858 /* libresolv.dylib */; };
+		2866A76730069070006D1FF3 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2866A76630069070006D1FF3 /* Settings.bundle */; };
 		287A15E11CAEF9B700D84E02 /* res.c in Sources */ = {isa = PBXBuildFile; fileRef = 287A15DF1CAEF9B700D84E02 /* res.c */; };
 		288455CE1CBAF7C7004EF2E6 /* KBKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 288455C91CBAF7C7004EF2E6 /* KBKey.m */; };
 		288455CF1CBAF7C7004EF2E6 /* KBKeyboardLayout.m in Sources */ = {isa = PBXBuildFile; fileRef = 288455CB1CBAF7C7004EF2E6 /* KBKeyboardLayout.m */; };
@@ -125,6 +142,13 @@
 			remoteGlobalIDString = 284E59082744341800E014B9;
 			remoteInfo = slirp;
 		};
+		2866AC2530069460006D1FF3 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2898F44618CB719600FE7806 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2866A9C4300691D7006D1FF3;
+			remoteInfo = BuildNumberGenerator;
+		};
 		2898F47718CB719700FE7806 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 2898F44618CB719600FE7806 /* Project object */;
@@ -178,6 +202,7 @@
 		2866A76330068CAC006D1FF3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2866A76430068CAC006D1FF3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		2866A76530068CAC006D1FF3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		2866A76630069070006D1FF3 /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
 		287A15DE1CAEF9B700D84E02 /* libres_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = libres_internal.h; sourceTree = "<group>"; };
 		287A15DF1CAEF9B700D84E02 /* res.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = res.c; sourceTree = "<group>"; };
 		287A15E01CAEF9B700D84E02 /* res.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = res.h; sourceTree = "<group>"; };
@@ -573,6 +598,7 @@
 				28B5C0F718D24206006583B9 /* sysdeps.h */,
 				287A15DD1CAEF9B700D84E02 /* libres */,
 				2898F45818CB719600FE7806 /* Supporting Files */,
+				2866A76630069070006D1FF3 /* Settings.bundle */,
 			);
 			name = iOS;
 			path = iOS/BasiliskII;
@@ -828,6 +854,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				2866AC2630069460006D1FF3 /* PBXTargetDependency */,
 				284E59262744344F00E014B9 /* PBXTargetDependency */,
 				28B5C12018D24B14006583B9 /* PBXTargetDependency */,
 			);
@@ -870,6 +897,9 @@
 						DevelopmentTeam = UJXNDZ5TNU;
 						ProvisioningStyle = Automatic;
 					};
+					2866A9C4300691D7006D1FF3 = {
+						CreatedOnToolsVersion = 26.6;
+					};
 					2898F44D18CB719600FE7806 = {
 						DevelopmentTeam = 7V6H28ZHKW;
 						LastSwiftMigration = 1630;
@@ -898,6 +928,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
+				2866A9C4300691D7006D1FF3 /* BuildNumberGenerator */,
 				2898F44D18CB719600FE7806 /* MacQuadra */,
 				2898F47118CB719600FE7806 /* BasiliskIITests */,
 				28B5C11B18D24B04006583B9 /* uae_cpu */,
@@ -911,6 +942,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2866A76730069070006D1FF3 /* Settings.bundle in Resources */,
 				28AD37D219A6511700ADF203 /* ext2type.plist in Resources */,
 				288455DE1CBB0112004EF2E6 /* Keyboard Layouts in Resources */,
 				288C501A1B9CADF900EA91F3 /* Localizable.strings in Resources */,
@@ -930,6 +962,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		2866A9C8300691FE006D1FF3 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(PROJECT_DIR)/BuildSupport/BuildNumber.h",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "mkdir -p \"${PROJECT_DIR}/BuildSupport\"\necho \"#define BUILD_NUMBER_VALUE $(date '+%Y%m%d.%H%M%S')\" > \"${PROJECT_DIR}/BuildSupport/BuildNumber.h\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		284E59052744341800E014B9 /* Sources */ = {
@@ -1050,6 +1104,11 @@
 			target = 284E59082744341800E014B9 /* slirp */;
 			targetProxy = 284E59252744344F00E014B9 /* PBXContainerItemProxy */;
 		};
+		2866AC2630069460006D1FF3 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2866A9C4300691D7006D1FF3 /* BuildNumberGenerator */;
+			targetProxy = 2866AC2530069460006D1FF3 /* PBXContainerItemProxy */;
+		};
 		2898F47818CB719700FE7806 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 2898F44D18CB719600FE7806 /* MacQuadra */;
@@ -1151,6 +1210,24 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		2866A9C6300691D7006D1FF3 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		2866A9C7300691D7006D1FF3 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
 		};
@@ -1279,6 +1356,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "BasiliskII/BasiliskII-Prefix.pch";
 				GCC_STRICT_ALIASING = NO;
@@ -1292,6 +1370,8 @@
 				);
 				INFOPLIST_FILE = "BasiliskII/BasiliskII-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = MacQuadra;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_DIR)/BuildSupport/BuildNumber.h";
+				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				MARKETING_VERSION = 1.0.1;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1316,6 +1396,7 @@
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "BasiliskII/BasiliskII-Prefix.pch";
 				GCC_STRICT_ALIASING = NO;
@@ -1329,6 +1410,8 @@
 				);
 				INFOPLIST_FILE = "BasiliskII/BasiliskII-Info.plist";
 				INFOPLIST_KEY_CFBundleDisplayName = MacQuadra;
+				INFOPLIST_PREFIX_HEADER = "$(PROJECT_DIR)/BuildSupport/BuildNumber.h";
+				INFOPLIST_PREPROCESS = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				MARKETING_VERSION = 1.0.1;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1427,6 +1510,15 @@
 			buildConfigurations = (
 				284E59102744341800E014B9 /* Debug */,
 				284E59112744341800E014B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		2866A9C5300691D7006D1FF3 /* Build configuration list for PBXAggregateTarget "BuildNumberGenerator" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				2866A9C6300691D7006D1FF3 /* Debug */,
+				2866A9C7300691D7006D1FF3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

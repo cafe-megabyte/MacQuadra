@@ -89,12 +89,28 @@ static B2AppDelegate *sharedDelegate = nil;
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     sharedDelegate = self;
+    [self updateSettingsBundleVersionInfo];
     [self initEmulator];
     
     // populate documents directory so it shows up in Files
     [[NSFileManager defaultManager] createDirectoryAtPath:self.userKeyboardLayoutsPath withIntermediateDirectories:YES attributes:nil error:nil];
 
     return YES;
+}
+
+- (void)updateSettingsBundleVersionInfo {
+    NSBundle *bundle = [NSBundle mainBundle];
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+
+    id version = [bundle objectForInfoDictionaryKey:@"CFBundleShortVersionString"];
+    if ([version isKindOfClass:[NSString class]]) {
+        [defaults setObject:version forKey:@"app_version"];
+    }
+
+    id buildNumber = [bundle objectForInfoDictionaryKey:@"CFBundleVersion"];
+    if ([buildNumber isKindOfClass:[NSString class]]) {
+        [defaults setObject:buildNumber forKey:@"app_build_number"];
+    }
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
