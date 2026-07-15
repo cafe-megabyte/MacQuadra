@@ -98,10 +98,15 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 }
 
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
-    if ([segue.destinationViewController isKindOfClass:[B2SettingsViewController class]] && [sender isKindOfClass:[NSString class]]) {
-        // open specific settings page
+    if ([segue.destinationViewController isKindOfClass:[B2SettingsViewController class]]) {
         B2SettingsViewController *svc = (B2SettingsViewController*)segue.destinationViewController;
-        svc.selectedSetting = (NSString*)sender;
+        if ([sender isKindOfClass:[NSString class]]) {
+            // open specific settings page
+            svc.selectedSetting = (NSString*)sender;
+        }
+        if (@available(iOS 13.0, *)) {
+            svc.modalInPresentation = ![B2AppDelegate sharedInstance].emulatorRunning;
+        }
     }
 }
 
