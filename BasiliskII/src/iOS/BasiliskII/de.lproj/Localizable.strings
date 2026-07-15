@@ -41,7 +41,11 @@
 "settings.gfx.size.customize.message" = "Eigene Bildschirmgröße in Pixeln eingeben";
 "settings.gfx.size.customize.width" = "Breite";
 "settings.gfx.size.customize.height" = "Höhe";
-"settings.gfx.size.customize.help" = "%1$d×%2$d\nZum Skalieren aufziehen\nDoppeltippen für Vollbild";
+"settings.gfx.size.customize.help" = "%1$d×%2$d\nZum Skalieren aufziehen";
+"settings.gfx.size.customize.edge" = "Rand";
+"settings.gfx.size.customize.safe" = "Sicher";
+"settings.gfx.size.customize.input" = "Eingabe";
+"settings.gfx.size.customize.manual" = "Manuell";
 
 "settings.gfx.depth" = "Farbtiefe";
 "settings.gfx.depth.1" = "Schwarzweiß";

@@ -25,6 +25,21 @@
 
 static B2ViewController *_sharedB2ViewController = nil;
 
+typedef NS_ENUM(NSInteger, B2ResizeAreaMode) {
+    B2ResizeAreaModeEdge,
+    B2ResizeAreaModeSafeArea,
+};
+
+typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
+    B2ResizeScaleMode1x,
+    B2ResizeScaleMode2x,
+    B2ResizeScaleMode4x,
+};
+
+@interface B2ViewController () <UITextFieldDelegate>
+
+@end
+
 @implementation B2ViewController
 {
     KBKeyboardView *keyboardView;
@@ -38,6 +53,12 @@ static B2ViewController *_sharedB2ViewController = nil;
     // interactive screen resizing
     NSArray<UIGestureRecognizer*> *resizeGestures;
     CGSize initialScreenSize;
+    B2ResizeAreaMode resizeAreaMode;
+    B2ResizeScaleMode resizeScaleMode;
+    UIVisualEffectView *resizeControlsView;
+    UISegmentedControl *resizeAreaControl;
+    UISegmentedControl *resizeScaleControl;
+    UISegmentedControl *resizeModeControl;
 }
 
 
@@ -156,26 +177,31 @@ static B2ViewController *_sharedB2ViewController = nil;
 
 - (void)startChoosingCustomSizeUI {
     [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
-    sharedScreenView.screenSize = sharedScreenView.videoModes.lastObject.CGSizeValue;
-    self.keyboardVisible = YES;
+    self.keyboardVisible = NO;
+    [self setKeyboardGesturesEnabled:NO];
+    resizeAreaMode = B2ResizeAreaModeEdge;
+    resizeScaleMode = B2ResizeScaleMode2x;
+    [self installResizeControls];
     pointingDeviceView.userInteractionEnabled = NO;
     // pinch to scale
     UIPinchGestureRecognizer *pinchGestureRecognizer = [UIPinchGestureRecognizer new];
     [pinchGestureRecognizer addTarget:self action:@selector(handleResizePinch:)];
-    // double-tap for full size
-    UITapGestureRecognizer *tapGestureRecognizer = [UITapGestureRecognizer new];
-    tapGestureRecognizer.numberOfTapsRequired = 2;
-    [tapGestureRecognizer addTarget:self action:@selector(handleResizeTap:)];
-    resizeGestures = @[pinchGestureRecognizer, tapGestureRecognizer];
+    resizeGestures = @[pinchGestureRecognizer];
     for (UIGestureRecognizer *recognizer in resizeGestures) {
         [sharedScreenView addGestureRecognizer:recognizer];
     }
-    [self updateInteractiveScreenResize:sharedScreenView.screenSize];
+    [self applyResizeControls];
     _helpView.hidden = NO;
 }
 
 - (IBAction)endChoosingCustomSizeUI:(id)sender {
     self.keyboardVisible = NO;
+    [self setKeyboardGesturesEnabled:YES];
+    [resizeControlsView removeFromSuperview];
+    resizeControlsView = nil;
+    resizeAreaControl = nil;
+    resizeScaleControl = nil;
+    resizeModeControl = nil;
     pointingDeviceView.userInteractionEnabled = YES;
     for (UIGestureRecognizer *recognizer in resizeGestures) {
         [sharedScreenView removeGestureRecognizer:recognizer];
@@ -194,6 +220,9 @@ static B2ViewController *_sharedB2ViewController = nil;
 - (void)handleResizePinch:(UIPinchGestureRecognizer*)recognizer {
     if (recognizer.state == UIGestureRecognizerStateBegan) {
         initialScreenSize = sharedScreenView.screenSize;
+        resizeAreaControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+        resizeScaleControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+        resizeModeControl.selectedSegmentIndex = 1;
     }
     if (recognizer.state == UIGestureRecognizerStateChanged && recognizer.numberOfTouches == 2) {
         CGPoint firstPoint = [recognizer locationOfTouch:0 inView:recognizer.view];
@@ -213,22 +242,159 @@ static B2ViewController *_sharedB2ViewController = nil;
     }
 }
 
-- (void)handleResizeTap:(UITapGestureRecognizer*)recognizer {
-    if (recognizer.state == UIGestureRecognizerStateEnded) {
-        CGSize fullSize = sharedScreenView.bounds.size;
-        if (self.keyboardVisible) {
-            fullSize.height -= keyboardView.bounds.size.height;
-        }
-        [self updateInteractiveScreenResize:fullSize];
+- (void)installResizeControls {
+    [resizeControlsView removeFromSuperview];
+    
+    UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleRegular];
+    resizeControlsView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+    resizeControlsView.translatesAutoresizingMaskIntoConstraints = NO;
+    resizeControlsView.layer.cornerRadius = 8.0;
+    resizeControlsView.clipsToBounds = YES;
+    
+    resizeAreaControl = [[UISegmentedControl alloc] initWithItems:@[L(@"settings.gfx.size.customize.edge"), L(@"settings.gfx.size.customize.safe")]];
+    resizeAreaControl.selectedSegmentIndex = resizeAreaMode;
+    [resizeAreaControl addTarget:self action:@selector(resizeAreaChanged:) forControlEvents:UIControlEventValueChanged];
+    
+    resizeScaleControl = [[UISegmentedControl alloc] initWithItems:@[@"1×", @"2×", @"4×"]];
+    resizeScaleControl.selectedSegmentIndex = resizeScaleMode;
+    [resizeScaleControl addTarget:self action:@selector(resizeScaleChanged:) forControlEvents:UIControlEventValueChanged];
+    
+    resizeModeControl = [[UISegmentedControl alloc] initWithItems:@[L(@"settings.gfx.size.customize.input"), L(@"settings.gfx.size.customize.manual")]];
+    resizeModeControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+    [resizeModeControl addTarget:self action:@selector(resizeModeChanged:) forControlEvents:UIControlEventValueChanged];
+    
+    UIStackView *stackView = [[UIStackView alloc] initWithArrangedSubviews:@[resizeAreaControl, resizeScaleControl, resizeModeControl]];
+    stackView.translatesAutoresizingMaskIntoConstraints = NO;
+    stackView.axis = UILayoutConstraintAxisVertical;
+    stackView.alignment = UIStackViewAlignmentFill;
+    stackView.spacing = 8.0;
+    stackView.layoutMargins = UIEdgeInsetsMake(10.0, 10.0, 10.0, 10.0);
+    stackView.layoutMarginsRelativeArrangement = YES;
+    
+    [resizeControlsView.contentView addSubview:stackView];
+    [self.view addSubview:resizeControlsView];
+    
+    NSLayoutYAxisAnchor *bottomAnchor = self.view.bottomAnchor;
+    if (@available(iOS 11, *)) {
+        bottomAnchor = self.view.safeAreaLayoutGuide.bottomAnchor;
+    }
+    [NSLayoutConstraint activateConstraints:@[
+        [stackView.leadingAnchor constraintEqualToAnchor:resizeControlsView.contentView.leadingAnchor],
+        [stackView.trailingAnchor constraintEqualToAnchor:resizeControlsView.contentView.trailingAnchor],
+        [stackView.topAnchor constraintEqualToAnchor:resizeControlsView.contentView.topAnchor],
+        [stackView.bottomAnchor constraintEqualToAnchor:resizeControlsView.contentView.bottomAnchor],
+        [resizeControlsView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+        [resizeControlsView.bottomAnchor constraintEqualToAnchor:bottomAnchor constant:-16.0],
+        [resizeControlsView.widthAnchor constraintLessThanOrEqualToAnchor:self.view.widthAnchor constant:-32.0],
+    ]];
+}
+
+- (void)resizeAreaChanged:(UISegmentedControl*)sender {
+    resizeAreaMode = (B2ResizeAreaMode)sender.selectedSegmentIndex;
+    resizeScaleControl.selectedSegmentIndex = resizeScaleMode;
+    resizeModeControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+    [self applyResizeControls];
+}
+
+- (void)resizeScaleChanged:(UISegmentedControl*)sender {
+    resizeScaleMode = (B2ResizeScaleMode)sender.selectedSegmentIndex;
+    resizeAreaControl.selectedSegmentIndex = resizeAreaMode;
+    resizeModeControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+    [self applyResizeControls];
+}
+
+- (void)resizeModeChanged:(UISegmentedControl*)sender {
+    resizeAreaControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+    resizeScaleControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+    if (sender.selectedSegmentIndex == 0) {
+        [self showResizeInputDialog];
     }
 }
 
-- (void)updateInteractiveScreenResize:(CGSize)size {
+- (void)applyResizeControls {
+    [self updateInteractiveScreenResize:[self screenSizeForResizeControls]];
+}
+
+- (CGSize)screenSizeForResizeControls {
+    CGSize baseSize = [self baseSizeForResizeAreaMode:resizeAreaMode];
+    CGFloat divisor = [self divisorForResizeScaleMode:resizeScaleMode];
+    return CGSizeMake(baseSize.width / divisor, baseSize.height / divisor);
+}
+
+- (CGSize)baseSizeForResizeAreaMode:(B2ResizeAreaMode)areaMode {
+    CGRect bounds = self.view.bounds;
+    if (areaMode == B2ResizeAreaModeSafeArea) {
+        UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
+        if (@available(iOS 11, *)) {
+            safeAreaInsets = self.view.safeAreaInsets;
+        }
+        CGFloat safeInset = MAX(MAX(safeAreaInsets.top, safeAreaInsets.bottom), MAX(safeAreaInsets.left, safeAreaInsets.right));
+        bounds = UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
+    }
+    
+    CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
+    if (nativeScale <= 0.0) {
+        nativeScale = [UIScreen mainScreen].scale;
+    }
+    return CGSizeMake(bounds.size.width * nativeScale, bounds.size.height * nativeScale);
+}
+
+- (CGFloat)divisorForResizeScaleMode:(B2ResizeScaleMode)scaleMode {
+    switch (scaleMode) {
+        case B2ResizeScaleMode1x:
+            return 1.0;
+        case B2ResizeScaleMode2x:
+            return 2.0;
+        case B2ResizeScaleMode4x:
+            return 4.0;
+    }
+    return 2.0;
+}
+
+- (void)showResizeInputDialog {
+    self.keyboardVisible = NO;
+    
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:L(@"settings.gfx.size.customize.title")
+                                                                             message:L(@"settings.gfx.size.customize.message")
+                                                                      preferredStyle:UIAlertControllerStyleAlert];
+    __block UITextField *widthField;
+    __block UITextField *heightField;
+    CGSize screenSize = sharedScreenView.screenSize;
+    
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = L(@"settings.gfx.size.customize.width");
+        textField.text = [NSString stringWithFormat:@"%d", (int)screenSize.width];
+        textField.keyboardType = UIKeyboardTypeNumberPad;
+        textField.delegate = self;
+        widthField = textField;
+    }];
+    [alertController addTextFieldWithConfigurationHandler:^(UITextField * _Nonnull textField) {
+        textField.placeholder = L(@"settings.gfx.size.customize.height");
+        textField.text = [NSString stringWithFormat:@"%d", (int)screenSize.height];
+        textField.keyboardType = UIKeyboardTypeNumberPad;
+        textField.delegate = self;
+        heightField = textField;
+    }];
+    
+    [alertController addAction:[UIAlertAction actionWithTitle:L(@"misc.cancel") style:UIAlertActionStyleCancel handler:^(UIAlertAction * _Nonnull action) {
+        self->resizeModeControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+    }]];
+    [alertController addAction:[UIAlertAction actionWithTitle:L(@"misc.ok") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
+        CGSize inputSize = CGSizeMake(widthField.text.integerValue, heightField.text.integerValue);
+        if (![self updateInteractiveScreenResize:inputSize]) {
+            self->resizeModeControl.selectedSegmentIndex = UISegmentedControlNoSegment;
+        }
+    }]];
+    
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (BOOL)updateInteractiveScreenResize:(CGSize)size {
     uint32_t w = (uint32_t)size.width &~ 1;
     uint32_t h = (uint32_t)size.height &~ 1;
     if (w < 240 || h < 240 || w * h > 3840 * 2160) {
         // invalid size
-        return;
+        return NO;
     }
     size = CGSizeMake(w, h);
     [sharedScreenView setScreenSize:size];
@@ -237,9 +403,22 @@ static B2ViewController *_sharedB2ViewController = nil;
     [sharedScreenView updateImage:UIGraphicsGetImageFromCurrentImageContext().CGImage];
     UIGraphicsPopContext();
     _helpLabel.text = [NSString stringWithFormat:L(@"settings.gfx.size.customize.help"), (int)size.width, (int)size.height];
+    return YES;
+}
+
+- (BOOL)textField:(UITextField *)textField shouldChangeCharactersInRange:(NSRange)range replacementString:(NSString *)string {
+    NSCharacterSet *nonDigits = [[NSCharacterSet decimalDigitCharacterSet] invertedSet];
+    return [string rangeOfCharacterFromSet:nonDigits].location == NSNotFound;
 }
 
 #pragma mark - Keyboard
+
+- (void)setKeyboardGesturesEnabled:(BOOL)enabled {
+    showKeyboardGesture.enabled = enabled;
+    showKeyboardLeftEdgeGesture.enabled = enabled;
+    showKeyboardRightEdgeGesture.enabled = enabled;
+    hideKeyboardGesture.enabled = enabled;
+}
 
 - (void)installKeyboardGestures {
     showKeyboardGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard:)];

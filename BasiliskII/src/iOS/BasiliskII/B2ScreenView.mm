@@ -124,6 +124,10 @@ B2ScreenView *sharedScreenView = nil;
 
     // Resize screen view after updating constraints
     CGRect viewBounds = self.bounds;
+    BOOL usesSafeLayoutBounds = [self screenSizeMatchesSafeAreaPreset:_screenSize];
+    if (usesSafeLayoutBounds) {
+        viewBounds = [self safeLayoutBoundsWithinBounds:viewBounds];
+    }
     CGSize screenSize = _screenSize;
     CGFloat screenScale = MIN(viewBounds.size.width / screenSize.width, viewBounds.size.height / screenSize.height);
     NSString *screenFilter = [[NSUserDefaults standardUserDefaults] stringForKey:@"screenFilter"];
@@ -134,10 +138,13 @@ B2ScreenView *sharedScreenView = nil;
     }
 
     _screenBounds = CGRectMake(0, 0, screenSize.width * screenScale, screenSize.height * screenScale);
-    _screenBounds.origin.x = (viewBounds.size.width - _screenBounds.size.width)/2;
+    _screenBounds.origin.x = viewBounds.origin.x + (viewBounds.size.width - _screenBounds.size.width)/2;
+    if (usesSafeLayoutBounds) {
+        _screenBounds.origin.y = viewBounds.origin.y + (viewBounds.size.height - _screenBounds.size.height)/2;
+    }
     _screenBounds = CGRectIntegral(_screenBounds);
 
-    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad && (viewBounds.size.height - _screenBounds.size.height) >= 30.0) {
+    if (!usesSafeLayoutBounds && [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad && (viewBounds.size.height - _screenBounds.size.height) >= 30.0) {
         // move under multitasking indicator on iPad
         _screenBounds.origin.y += 30;
     }
@@ -165,7 +172,7 @@ B2ScreenView *sharedScreenView = nil;
 - (void)updateConstraints {
     [super updateConstraints];
     CGFloat scale = _screenSize.height / self.superview.bounds.size.height;
-    BOOL wantsMargins = floor(scale) != scale;
+    BOOL wantsMargins = ![self screenSizeMatchesSafeAreaPreset:_screenSize] && scale > 1.0 && floor(scale) != scale;
     if (wantsMargins) {
         [NSLayoutConstraint deactivateConstraints:self.fullScreenConstraints];
         [NSLayoutConstraint activateConstraints:self.marginConstraints];
@@ -173,6 +180,38 @@ B2ScreenView *sharedScreenView = nil;
         [NSLayoutConstraint deactivateConstraints:self.marginConstraints];
         [NSLayoutConstraint activateConstraints:self.fullScreenConstraints];
     }
+}
+
+- (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds {
+    UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
+    if (@available(iOS 11, *)) {
+        safeAreaInsets = self.safeAreaInsets;
+    }
+    CGFloat safeInset = MAX(MAX(safeAreaInsets.top, safeAreaInsets.bottom), MAX(safeAreaInsets.left, safeAreaInsets.right));
+    return UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
+}
+
+- (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize {
+    if (CGSizeEqualToSize(screenSize, CGSizeZero)) {
+        return NO;
+    }
+    
+    CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
+    if (nativeScale <= 0.0) {
+        nativeScale = [UIScreen mainScreen].scale;
+    }
+    
+    CGRect safeBounds = [self safeLayoutBoundsWithinBounds:self.bounds];
+    CGSize safePixelSize = CGSizeMake(safeBounds.size.width * nativeScale, safeBounds.size.height * nativeScale);
+    const CGFloat divisors[] = {1.0, 2.0, 4.0};
+    for (NSUInteger i = 0; i < sizeof(divisors) / sizeof(divisors[0]); i++) {
+        uint32_t w = (uint32_t)(safePixelSize.width / divisors[i]) &~ 1;
+        uint32_t h = (uint32_t)(safePixelSize.height / divisors[i]) &~ 1;
+        if ((uint32_t)screenSize.width == w && (uint32_t)screenSize.height == h) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (void)updateImage:(CGImageRef)newImage {
