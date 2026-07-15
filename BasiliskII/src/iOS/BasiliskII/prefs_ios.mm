@@ -127,26 +127,33 @@ void PrefsAddInt32(const char *name, int32 val)
 const char *PrefsFindString(const char *name, int index)
 {
     @autoreleasepool {
-        // cache in prefsStrings
-        id value = cachedPrefsStrings[@(name)];
-        if (value == nil) {
-            value = [defaults valueForKey:@(name)];
-            if (value != nil) {
-                cachedPrefsStrings[@(name)] = value;
-            }
-        }
+        NSString *key = @(name);
+        id value = nil;
+        id currentValue = [defaults objectForKey:key];
         
-        if ([value isKindOfClass:[NSArray class]]) {
-            if (index < [value count])
-                return [[value objectAtIndex:index] UTF8String];
+        if ([currentValue isKindOfClass:[NSArray class]]) {
+            if (index < [currentValue count])
+                value = [currentValue objectAtIndex:index];
             else
                 return NULL;
         } else if (index > 0) {
             return NULL;
         } else {
-            if (![value isKindOfClass:[NSString class]])
-                value = [value stringValue];
-            return [value UTF8String];
+            value = currentValue;
+        }
+        
+        if (![value isKindOfClass:[NSString class]])
+            value = [value stringValue];
+        if (value == nil)
+            return NULL;
+        
+        @synchronized (cachedPrefsStrings) {
+            NSString *cacheKey = [NSString stringWithFormat:@"%s:%d", name, index];
+            NSMutableData *data = [[value dataUsingEncoding:NSUTF8StringEncoding] mutableCopy];
+            uint8_t terminator = 0;
+            [data appendBytes:&terminator length:sizeof(terminator)];
+            cachedPrefsStrings[cacheKey] = data;
+            return (const char *)[cachedPrefsStrings[cacheKey] bytes];
         }
     }
 }

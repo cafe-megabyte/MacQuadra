@@ -337,6 +337,10 @@ static B2AppDelegate *sharedDelegate = nil;
     @autoreleasepool {
         if (!InitEmulator()) {
             NSLog(@"Could not init emulator");
+            emulThread = nil;
+            tickThread = nil;
+            [pramTimer invalidate];
+            pramTimer = nil;
             return;
         }
         
