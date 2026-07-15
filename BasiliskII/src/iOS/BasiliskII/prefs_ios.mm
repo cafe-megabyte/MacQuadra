@@ -60,7 +60,7 @@ void PrefsInit(const char *vmdir, int &argc, char **&argv)
                                                  @"modelid": @14,
                                                  @"cpu": @4,
                                                  @"fpu": @YES,
-                                                 @"ramsize": @(128 * 1024 * 1024),
+                                                 @"ramsize": @(512 * 1024 * 1024),
                                                  @"trackpad": @([UIDevice currentDevice].userInterfaceIdiom != UIUserInterfaceIdiomPad),
                                                  @"keyboardLayout": DefaultKeyboardLayoutName(),
                                                  @"videoDepth": @(32),

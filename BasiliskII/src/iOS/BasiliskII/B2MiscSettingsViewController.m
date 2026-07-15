@@ -16,6 +16,9 @@ typedef enum : NSInteger {
     B2MiscSettingsSectionMemory
 } B2MiscSettingsSection;
 
+static const NSInteger B2MinimumRAMSizeMB = 1;
+static const NSInteger B2MaximumRAMSizeMB = 512;
+
 @interface B2MiscSettingsViewController () <UITextFieldDelegate, B2FileChooserDelegate>
 
 @end
@@ -269,7 +272,7 @@ typedef enum : NSInteger {
 
 - (void)validateRAMSizeInput:(id)sender {
     NSInteger value = ramSizeField.text.integerValue;
-    ramSizeSaveAction.enabled = value >= 1 && value <= 128;
+    ramSizeSaveAction.enabled = value >= B2MinimumRAMSizeMB && value <= B2MaximumRAMSizeMB;
 }
 
 #pragma mark - Field Delegate
