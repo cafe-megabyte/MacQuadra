@@ -29,28 +29,6 @@
 // XPRAM defaults key
 static NSString * XPRAM_KEY = @"xpram_data";
 
-static void InitDefaultXPRAMDisplayDepth(void) {
-    // Set only the bytes that differ after changing a fresh Mac OS 7.6.1 install
-    // from black and white to millions of colors. Existing XPRAM is never patched.
-    static const struct {
-        size_t offset;
-        uint8 value;
-    } patches[] = {
-        {0x02, 0x4f},
-        {0x03, 0x48},
-        {0x58, 0x85},
-        {0x8a, 0x05},
-        {0xb8, 0x56},
-        {0xb9, 0x30},
-    };
-
-    for (size_t i = 0; i < sizeof(patches) / sizeof(patches[0]); i++) {
-        if (patches[i].offset < XPRAM_SIZE) {
-            XPRAM[patches[i].offset] = patches[i].value;
-        }
-    }
-}
-
 /*
  *  Load XPRAM from user defaults
  */
@@ -58,11 +36,8 @@ static void InitDefaultXPRAMDisplayDepth(void) {
 void LoadXPRAM(const char *vmdir) {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSData *xpramData = [defaults objectForKey:XPRAM_KEY];
-    if ([xpramData isKindOfClass:[NSData class]] && xpramData.length == XPRAM_SIZE) {
+    if ([xpramData isKindOfClass:[NSData class]] && xpramData.length == XPRAM_SIZE)
         memcpy(XPRAM, xpramData.bytes, XPRAM_SIZE);
-    } else {
-        InitDefaultXPRAMDisplayDepth();
-    }
 }
 
 
