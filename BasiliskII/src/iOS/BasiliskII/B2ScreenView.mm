@@ -184,6 +184,10 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 }
 
 - (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds {
+    return [self safeLayoutBoundsWithinBounds:bounds landscape:NO];
+}
+
+- (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds landscape:(BOOL)landscape {
     UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
     if (@available(iOS 11, *)) {
         safeAreaInsets = self.safeAreaInsets;
@@ -191,6 +195,10 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         CGFloat safeInset = MAX(MAX(safeAreaInsets.top, safeAreaInsets.bottom), MAX(safeAreaInsets.left, safeAreaInsets.right));
         return UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
+    }
+    if (landscape && self.bounds.size.width < self.bounds.size.height) {
+        // Landscape presets may be calculated while the app is still portrait; rotate the current safe area for sizing.
+        safeAreaInsets = UIEdgeInsetsMake(safeAreaInsets.left, safeAreaInsets.top, safeAreaInsets.right, safeAreaInsets.bottom);
     }
     if (bounds.size.width < bounds.size.height && safeAreaInsets.left == 0.0 && safeAreaInsets.right == 0.0 && safeAreaInsets.bottom > 0.0) {
         // UIKit reports no horizontal safe area in iPhone portrait, but the bottom rounded corners still clip full-width content.
@@ -284,7 +292,7 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
         return presetSize;
     }
 
-    CGRect bounds = [self safeLayoutBoundsWithinBounds:[self boundsForLandscape:landscape]];
+    CGRect bounds = [self safeLayoutBoundsWithinBounds:[self boundsForLandscape:landscape] landscape:landscape];
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
