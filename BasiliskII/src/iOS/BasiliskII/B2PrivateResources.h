@@ -11,6 +11,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (class, readonly, strong) B2PrivateResources *sharedInstance NS_SWIFT_NAME(shared);
 - (BOOL)prepareResourcesIfNeededFromViewController:(UIViewController *)viewController completion:(nullable dispatch_block_t)completion NS_SWIFT_NAME(prepareResourcesIfNeeded(from:completion:));
+- (BOOL)allRequiredResourcesConfigured;
 
 @end
 

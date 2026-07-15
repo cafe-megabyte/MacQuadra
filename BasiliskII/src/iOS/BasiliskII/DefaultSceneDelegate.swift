@@ -25,6 +25,9 @@ class DefaultSceneDelegate: UIResponder, UIWindowSceneDelegate {
             window.rootViewController = UIStoryboard(name: "Main", bundle: .main).instantiateInitialViewController()
             window.makeKeyAndVisible()
         }
+        if let shortcutItem = connectionOptions.shortcutItem {
+            appDelegate.application(UIApplication.shared, performActionFor: shortcutItem) { _ in }
+        }
         self.destroyOtherSessions(not: session)
     }
 
@@ -48,21 +51,7 @@ class DefaultSceneDelegate: UIResponder, UIWindowSceneDelegate {
     }
 
     func sceneDidBecomeActive(_ scene: UIScene) {
-        // show settings if emulator is not running
-        let appDelegate = B2AppDelegate.shared
-        guard let rootViewController = appDelegate.window.rootViewController as? B2ViewController else {
-            return
-        }
-        if !appDelegate.emulatorRunning && rootViewController.presentedViewController == nil {
-            let preparingResources = B2PrivateResources.shared.prepareResourcesIfNeeded(from: rootViewController) {
-                if !appDelegate.emulatorRunning && rootViewController.presentedViewController == nil {
-                    rootViewController.perform(#selector(B2ViewController.showSettings(_:)), with: appDelegate, afterDelay: 0.0)
-                }
-            }
-            if !preparingResources {
-                rootViewController.perform(#selector(B2ViewController.showSettings(_:)), with: appDelegate, afterDelay: 0.0)
-            }
-        }
+        B2AppDelegate.shared.activateMainScreen()
     }
 
     func windowScene(_ windowScene: UIWindowScene, performActionFor shortcutItem: UIApplicationShortcutItem, completionHandler: @escaping (Bool) -> Void) {

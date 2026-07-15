@@ -79,6 +79,8 @@ static B2AppDelegate *sharedDelegate = nil;
     NSTimeInterval redrawDelay;
     NSData *lastPRAM;
     NSMutableArray *videoModes;
+    BOOL settingsRequested;
+    BOOL activationInProgress;
 }
 
 + (instancetype)sharedInstance {
@@ -130,18 +132,7 @@ static B2AppDelegate *sharedDelegate = nil;
 
 - (void)applicationDidBecomeActive:(UIApplication *)application {
     // Restart any tasks that were paused (or not yet started) while the application was inactive. If the application was previously in the background, optionally refresh the user interface.
-    
-    // Show settings if emulator is not running
-    if (self.emulatorRunning == NO && self.window.rootViewController.presentedViewController == nil) {
-        BOOL preparingResources = [[B2PrivateResources sharedInstance] prepareResourcesIfNeededFromViewController:self.window.rootViewController completion:^{
-            if (self.emulatorRunning == NO && self.window.rootViewController.presentedViewController == nil) {
-                [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
-            }
-        }];
-        if (!preparingResources) {
-            [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
-        }
-    }
+    [self activateMainScreen];
 }
 
 - (void)applicationWillTerminate:(UIApplication *)application {
@@ -173,11 +164,55 @@ static B2AppDelegate *sharedDelegate = nil;
 
 - (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler {
     BOOL success = NO;
-    if ([shortcutItem.type isEqualToString:@"settings"] && self.window.rootViewController.presentedViewController == nil) {
-        [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+    if ([shortcutItem.type isEqualToString:@"settings"]) {
+        settingsRequested = YES;
+        [self activateMainScreen];
         success = YES;
     }
     completionHandler(success);
+}
+
+- (void)activateMainScreen {
+    if (self.window.rootViewController == nil) {
+        return;
+    }
+
+    UIViewController *rootViewController = self.window.rootViewController;
+    if (rootViewController.presentedViewController != nil) {
+        return;
+    }
+
+    if (settingsRequested) {
+        settingsRequested = NO;
+        [rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+        return;
+    }
+
+    if (activationInProgress || self.emulatorRunning) {
+        return;
+    }
+
+    activationInProgress = YES;
+    BOOL preparingResources = [[B2PrivateResources sharedInstance] prepareResourcesIfNeededFromViewController:rootViewController completion:^{
+        self->activationInProgress = NO;
+        [self bootOrShowSettingsIfNeeded];
+    }];
+    if (!preparingResources) {
+        activationInProgress = NO;
+        [self bootOrShowSettingsIfNeeded];
+    }
+}
+
+- (void)bootOrShowSettingsIfNeeded {
+    if (self.emulatorRunning || self.window.rootViewController.presentedViewController != nil) {
+        return;
+    }
+
+    if ([[B2PrivateResources sharedInstance] allRequiredResourcesConfigured]) {
+        [self startEmulator];
+    } else {
+        [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+    }
 }
 
 - (BOOL)importFileToDocuments:(NSURL *)url copy:(BOOL)copy {
@@ -349,6 +384,11 @@ static B2AppDelegate *sharedDelegate = nil;
             tickThread = nil;
             [pramTimer invalidate];
             pramTimer = nil;
+            dispatch_async(dispatch_get_main_queue(), ^{
+                if (self.window.rootViewController.presentedViewController == nil) {
+                    [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+                }
+            });
             return;
         }
         

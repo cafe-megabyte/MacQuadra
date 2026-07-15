@@ -107,14 +107,14 @@
 	</dict>
 	<key>UIApplicationShortcutItems</key>
 	<array>
-		<dict>
-			<key>UIApplicationShortcutItemIconSymbolName</key>
-			<string>gear</string>
-			<key>UIApplicationShortcutItemTitle</key>
-			<string>Settings</string>
-			<key>UIApplicationShortcutItemType</key>
-			<string>settings</string>
-		</dict>
+			<dict>
+				<key>UIApplicationShortcutItemIconSymbolName</key>
+				<string>gear</string>
+				<key>UIApplicationShortcutItemTitle</key>
+				<string>shortcut.settings.title</string>
+				<key>UIApplicationShortcutItemType</key>
+				<string>settings</string>
+			</dict>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>

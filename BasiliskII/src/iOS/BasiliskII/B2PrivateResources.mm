@@ -320,6 +320,11 @@ static uint32_t B2ReadUInt32LE(const uint8_t *bytes)
     return YES;
 }
 
+- (BOOL)allRequiredResourcesConfigured
+{
+    return [self configuredResourceExistsForKind:B2PrivateResourceKindROM] && [self configuredResourceExistsForKind:B2PrivateResourceKindDisk];
+}
+
 - (void)prepareKind:(B2PrivateResourceKind)kind fromViewController:(UIViewController *)viewController completion:(dispatch_block_t)completion
 {
     if ([self configureExistingResourceForKind:kind]) {

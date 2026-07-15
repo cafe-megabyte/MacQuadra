@@ -23,6 +23,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (readonly, nonatomic) NSArray<NSString *> *availableKeyboardLayouts;
 
 - (void)startEmulator;
+- (void)activateMainScreen;
 - (void)showAlertWithTitle:(NSString *)title message:(NSString *)message;
 
 @end

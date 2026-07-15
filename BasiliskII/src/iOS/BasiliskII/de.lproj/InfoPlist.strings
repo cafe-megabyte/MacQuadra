@@ -1,2 +1,4 @@
 /* Localized versions of Info.plist keys */
 
+"UIApplicationShortcutItemTitle" = "Einstellungen";
+"shortcut.settings.title" = "Einstellungen";
