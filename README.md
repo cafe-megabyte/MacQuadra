@@ -11,6 +11,7 @@ BasiliskII/src/iOS
 ## What this fork adds
 
 - Automatic emulator boot once a ROM and boot disk are available in the file system
+- Play sound at startup decoded from ROM file
 - Optional private ZIP download URLs for a ROM file and disk image with on-the-fly deflate
 - Improved interactive custom screen sizing with different preset-options
 - Dynamic screen sizes that are re-calculated on emulator start
