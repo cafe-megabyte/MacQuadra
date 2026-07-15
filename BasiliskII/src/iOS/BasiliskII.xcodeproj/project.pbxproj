@@ -24,8 +24,6 @@
 
 /* Begin PBXBuildFile section */
 		2814CEF82DE876CF005024E7 /* DefaultSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2814CEF72DE876CF005024E7 /* DefaultSceneDelegate.swift */; };
-		28E000032F00000000000001 /* B2PrivateResources.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28E000022F00000000000001 /* B2PrivateResources.mm */; };
-		28E000052F00000000000001 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 28E000042F00000000000001 /* libz.tbd */; };
 		281509101CC57F81004ECA0A /* B2TouchScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */; };
 		281509131CC5836A004ECA0A /* B2TrackPad.mm in Sources */ = {isa = PBXBuildFile; fileRef = 281509121CC5836A004ECA0A /* B2TrackPad.mm */; };
 		281A4C9D1CA965B000A380A7 /* B2DocumentsSettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 281A4C9C1CA965B000A380A7 /* B2DocumentsSettingsController.m */; };
@@ -133,6 +131,8 @@
 		28D555A21C934F0400059DDE /* B2NetworkSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 28D555A11C934F0400059DDE /* B2NetworkSettingsViewController.m */; };
 		28D555A51C93651300059DDE /* B2MiscSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 28D555A41C93651300059DDE /* B2MiscSettingsViewController.m */; };
 		28D555AE1C97739500059DDE /* B2FileChooser.m in Sources */ = {isa = PBXBuildFile; fileRef = 28D555AD1C97739500059DDE /* B2FileChooser.m */; };
+		28E000032F00000000000001 /* B2PrivateResources.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28E000022F00000000000001 /* B2PrivateResources.mm */; };
+		28E000052F00000000000001 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 28E000042F00000000000001 /* libz.tbd */; };
 		28FA0B771CC829A900481FE8 /* B2Application.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28FA0B761CC829A900481FE8 /* B2Application.mm */; };
 /* End PBXBuildFile section */
 
@@ -182,9 +182,6 @@
 /* Begin PBXFileReference section */
 		2814CEF72DE876CF005024E7 /* DefaultSceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultSceneDelegate.swift; sourceTree = "<group>"; };
 		2814CEF92DE876D2005024E7 /* BasiliskII-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BasiliskII-Bridging-Header.h"; sourceTree = "<group>"; };
-		28E000012F00000000000001 /* B2PrivateResources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = B2PrivateResources.h; sourceTree = "<group>"; };
-		28E000022F00000000000001 /* B2PrivateResources.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = B2PrivateResources.mm; sourceTree = "<group>"; };
-		28E000042F00000000000001 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		2815090E1CC57F81004ECA0A /* B2TouchScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2TouchScreen.h; sourceTree = "<group>"; };
 		2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2TouchScreen.mm; sourceTree = "<group>"; };
 		281509111CC5836A004ECA0A /* B2TrackPad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2TrackPad.h; sourceTree = "<group>"; };
@@ -196,6 +193,8 @@
 		2822DA6818E6325500EE554D /* timer_unix.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = timer_unix.cpp; sourceTree = "<group>"; };
 		282A8E8D1A500A79008F8F71 /* Main.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = Main.storyboard; sourceTree = "<group>"; };
 		282FDBB918D50879006547A0 /* config.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = config.h; sourceTree = SOURCE_ROOT; };
+		2832F4B13007B24A008C6B84 /* B2PrivateResourceURLs.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = B2PrivateResourceURLs.h; sourceTree = "<group>"; };
+		2832F4B23007B24A008C6B84 /* B2PrivateResourceURLs.example.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = B2PrivateResourceURLs.example.h; sourceTree = "<group>"; };
 		283ADADF1CC6CE81003091F5 /* B2SettingsRootTableViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2SettingsRootTableViewController.h; sourceTree = "<group>"; };
 		283ADAE01CC6CE81003091F5 /* B2SettingsRootTableViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = B2SettingsRootTableViewController.m; sourceTree = "<group>"; };
 		284E59092744341800E014B9 /* libslirp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libslirp.a; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -405,6 +404,9 @@
 		28D555A41C93651300059DDE /* B2MiscSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = B2MiscSettingsViewController.m; sourceTree = "<group>"; };
 		28D555AC1C97739500059DDE /* B2FileChooser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2FileChooser.h; sourceTree = "<group>"; };
 		28D555AD1C97739500059DDE /* B2FileChooser.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = B2FileChooser.m; sourceTree = "<group>"; };
+		28E000012F00000000000001 /* B2PrivateResources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = B2PrivateResources.h; sourceTree = "<group>"; };
+		28E000022F00000000000001 /* B2PrivateResources.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = B2PrivateResources.mm; sourceTree = "<group>"; };
+		28E000042F00000000000001 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		28FA0B751CC829A900481FE8 /* B2Application.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2Application.h; sourceTree = "<group>"; };
 		28FA0B761CC829A900481FE8 /* B2Application.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2Application.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -584,6 +586,8 @@
 				2898F46118CB719600FE7806 /* B2AppDelegate.mm */,
 				28E000012F00000000000001 /* B2PrivateResources.h */,
 				28E000022F00000000000001 /* B2PrivateResources.mm */,
+				2832F4B13007B24A008C6B84 /* B2PrivateResourceURLs.h */,
+				2832F4B23007B24A008C6B84 /* B2PrivateResourceURLs.example.h */,
 				28FA0B751CC829A900481FE8 /* B2Application.h */,
 				28FA0B761CC829A900481FE8 /* B2Application.mm */,
 				28621F1D19ABADC2009615FC /* UI */,
