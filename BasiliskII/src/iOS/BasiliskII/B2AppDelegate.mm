@@ -30,6 +30,7 @@
 #include <pthread.h>
 
 static NSMutableSet *hiddenExtFSFiles = nil;
+static NSString * const B2KeyboardLayoutsReadmeFileName = @"README.txt";
 
 bool ShouldHideExtFSFile(const char *path) {
     return [hiddenExtFSFiles containsObject:@(path)] ? true : false;
@@ -96,7 +97,7 @@ static B2AppDelegate *sharedDelegate = nil;
     [self initEmulator];
     
     // populate documents directory so it shows up in Files
-    [[NSFileManager defaultManager] createDirectoryAtPath:self.userKeyboardLayoutsPath withIntermediateDirectories:YES attributes:nil error:nil];
+    [self populateDocumentsDirectory];
 
     return YES;
 }
@@ -114,6 +115,31 @@ static B2AppDelegate *sharedDelegate = nil;
     if ([buildNumber isKindOfClass:[NSString class]]) {
         [defaults setObject:buildNumber forKey:@"app_build_number"];
     }
+}
+
+- (void)populateDocumentsDirectory {
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    NSString *keyboardLayoutsPath = self.userKeyboardLayoutsPath;
+    [fileManager createDirectoryAtPath:keyboardLayoutsPath withIntermediateDirectories:YES attributes:nil error:nil];
+
+    NSString *readmePath = [keyboardLayoutsPath stringByAppendingPathComponent:B2KeyboardLayoutsReadmeFileName];
+    if ([fileManager fileExistsAtPath:readmePath]) {
+        return;
+    }
+
+    NSString *readme = @"Basilisk II Keyboard Layouts\n"
+                       @"============================\n"
+                       @"\n"
+                       @"This folder is for additional on-screen keyboard layouts.\n"
+                       @"\n"
+                       @"Put custom keyboard layout files in this folder and make sure their file names end with:\n"
+                       @".nfkeyboardlayout\n"
+                       @"\n"
+                       @"The app will list these files in Settings > Keyboard & Mouse > Keyboard Layout.\n"
+                       @"\n"
+                       @"You can find compatible layout files here:\n"
+                       @"https://github.com/gingerbeardman/artworks-keyboard\n";
+    [readme writeToFile:readmePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
 }
 
 - (void)applicationWillResignActive:(UIApplication *)application {
