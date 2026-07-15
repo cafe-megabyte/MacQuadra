@@ -1,4 +1,4 @@
-# MacQuadra
+# MacQuadra 
 
 MacQuadra is an iOS-focused fork of Basilisk II, tuned for running classic 68k Macintosh software on iPhone and iPad.
 
