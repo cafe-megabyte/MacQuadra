@@ -20,6 +20,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, strong) IBOutletCollection(NSLayoutConstraint) NSArray<NSLayoutConstraint*> *marginConstraints;
 
 - (CGSize)videoSizeForPreset:(NSString *)preset;
+- (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds;
 - (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize;
 - (void)updateImage:(nullable CGImageRef)newImage;
 - (void)updateCustomSize:(CGSize)customSize;

@@ -110,16 +110,18 @@ NSString * const B2VideoSizePresetLarge = @"large";
 
     // Resize screen view after updating constraints
     CGRect viewBounds = self.bounds;
+    BOOL usesEdgeLayoutBounds = [self screenSizeMatchesEdgePreset:_screenSize];
     BOOL usesSafeLayoutBounds = [self screenSizeMatchesSafeAreaPreset:_screenSize];
+    BOOL usesDynamicLayoutBounds = usesEdgeLayoutBounds || usesSafeLayoutBounds;
     if (usesSafeLayoutBounds) {
         viewBounds = [self safeLayoutBoundsWithinBounds:viewBounds];
     }
     CGSize screenSize = _screenSize;
     CGFloat screenScale = MIN(viewBounds.size.width / screenSize.width, viewBounds.size.height / screenSize.height);
     NSString *screenFilter = [[NSUserDefaults standardUserDefaults] stringForKey:@"screenFilter"];
-    if ([screenFilter isEqualToString:kCAFilterNearest] && screenScale > 1.0) {
+    if (!usesDynamicLayoutBounds && [screenFilter isEqualToString:kCAFilterNearest] && screenScale > 1.0) {
         screenScale = floor(screenScale);
-    } else if (screenScale > 1.0 && screenScale <= 1.1) {
+    } else if (!usesDynamicLayoutBounds && screenScale > 1.0 && screenScale <= 1.1) {
         screenScale = 1.0;
     }
 
@@ -128,7 +130,11 @@ NSString * const B2VideoSizePresetLarge = @"large";
     if (usesSafeLayoutBounds) {
         _screenBounds.origin.y = viewBounds.origin.y + (viewBounds.size.height - _screenBounds.size.height)/2;
     }
-    _screenBounds = CGRectIntegral(_screenBounds);
+    if (usesSafeLayoutBounds) {
+        _screenBounds = [self integralRectInsideBounds:_screenBounds bounds:viewBounds];
+    } else {
+        _screenBounds = CGRectIntegral(_screenBounds);
+    }
 
     if (!usesSafeLayoutBounds && [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad && (viewBounds.size.height - _screenBounds.size.height) >= 30.0) {
         // move under multitasking indicator on iPad
@@ -157,8 +163,13 @@ NSString * const B2VideoSizePresetLarge = @"large";
 
 - (void)updateConstraints {
     [super updateConstraints];
-    CGFloat scale = _screenSize.height / self.superview.bounds.size.height;
-    BOOL wantsMargins = ![self screenSizeMatchesSafeAreaPreset:_screenSize] && scale > 1.0 && floor(scale) != scale;
+    CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
+    if (nativeScale <= 0.0) {
+        nativeScale = [UIScreen mainScreen].scale;
+    }
+    CGFloat scale = _screenSize.height / (self.superview.bounds.size.height * nativeScale);
+    BOOL matchesDynamicLayoutPreset = [self screenSizeMatchesEdgePreset:_screenSize] || [self screenSizeMatchesSafeAreaPreset:_screenSize];
+    BOOL wantsMargins = !matchesDynamicLayoutPreset && scale > 1.0 && floor(scale) != scale;
     if (wantsMargins) {
         [NSLayoutConstraint deactivateConstraints:self.fullScreenConstraints];
         [NSLayoutConstraint activateConstraints:self.marginConstraints];
@@ -173,8 +184,27 @@ NSString * const B2VideoSizePresetLarge = @"large";
     if (@available(iOS 11, *)) {
         safeAreaInsets = self.safeAreaInsets;
     }
-    CGFloat safeInset = MAX(MAX(safeAreaInsets.top, safeAreaInsets.bottom), MAX(safeAreaInsets.left, safeAreaInsets.right));
-    return UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
+    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        CGFloat safeInset = MAX(MAX(safeAreaInsets.top, safeAreaInsets.bottom), MAX(safeAreaInsets.left, safeAreaInsets.right));
+        return UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
+    }
+    if (bounds.size.width < bounds.size.height && safeAreaInsets.left == 0.0 && safeAreaInsets.right == 0.0 && safeAreaInsets.bottom > 0.0) {
+        // UIKit reports no horizontal safe area in iPhone portrait, but the bottom rounded corners still clip full-width content.
+        CGFloat cornerInset = MIN(6.0, MAX(2.0, ceil(safeAreaInsets.bottom * 0.125)));
+        safeAreaInsets.left = cornerInset;
+        safeAreaInsets.right = cornerInset;
+    }
+    return UIEdgeInsetsInsetRect(bounds, safeAreaInsets);
+}
+
+- (CGRect)integralRectInsideBounds:(CGRect)rect bounds:(CGRect)bounds {
+    CGRect integralRect = CGRectMake(ceil(rect.origin.x),
+                                     ceil(rect.origin.y),
+                                     floor(rect.size.width),
+                                     floor(rect.size.height));
+    integralRect.size.width = MIN(integralRect.size.width, CGRectGetMaxX(bounds) - integralRect.origin.x);
+    integralRect.size.height = MIN(integralRect.size.height, CGRectGetMaxY(bounds) - integralRect.origin.y);
+    return integralRect;
 }
 
 - (CGSize)videoSizeForPreset:(NSString *)preset {
@@ -186,16 +216,25 @@ NSString * const B2VideoSizePresetLarge = @"large";
         return presetSize;
     }
 
-    CGRect bounds = self.bounds;
-    CGFloat divisor = 1.0;
     if ([preset isEqualToString:B2VideoSizePresetStandard]) {
         return [self videoSizeForSafeLayoutWithDivisor:2.0];
     } else if ([preset isEqualToString:B2VideoSizePresetLarge]) {
-        divisor = 4.0;
+        return [self videoSizeForEdgeLayoutWithDivisor:4.0];
     } else {
         return CGSizeZero;
     }
-    
+}
+
+- (CGSize)videoSizeForEdgeLayoutWithDivisor:(CGFloat)divisor {
+    if (![NSThread isMainThread]) {
+        __block CGSize presetSize;
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            presetSize = [self videoSizeForEdgeLayoutWithDivisor:divisor];
+        });
+        return presetSize;
+    }
+
+    CGRect bounds = self.bounds;
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
@@ -203,6 +242,21 @@ NSString * const B2VideoSizePresetLarge = @"large";
     uint32_t w = (uint32_t)(bounds.size.width * nativeScale / divisor) &~ 1;
     uint32_t h = (uint32_t)(bounds.size.height * nativeScale / divisor) &~ 1;
     return CGSizeMake(w, h);
+}
+
+- (BOOL)screenSizeMatchesEdgePreset:(CGSize)screenSize {
+    if (CGSizeEqualToSize(screenSize, CGSizeZero)) {
+        return NO;
+    }
+
+    const CGFloat divisors[] = {1.0, 2.0, 4.0};
+    for (NSUInteger i = 0; i < sizeof(divisors) / sizeof(divisors[0]); i++) {
+        CGSize presetSize = [self videoSizeForEdgeLayoutWithDivisor:divisors[i]];
+        if ((uint32_t)screenSize.width == (uint32_t)presetSize.width && (uint32_t)screenSize.height == (uint32_t)presetSize.height) {
+            return YES;
+        }
+    }
+    return NO;
 }
 
 - (CGSize)videoSizeForSafeLayoutWithDivisor:(CGFloat)divisor {

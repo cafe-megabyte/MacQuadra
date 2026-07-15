@@ -24,6 +24,7 @@
 #endif
 
 static B2ViewController *_sharedB2ViewController = nil;
+static const uint32_t B2MinimumInteractiveScreenDimension = 128;
 
 typedef NS_ENUM(NSInteger, B2ResizeAreaMode) {
     B2ResizeAreaModeEdge,
@@ -330,12 +331,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 - (CGSize)baseSizeForResizeAreaMode:(B2ResizeAreaMode)areaMode {
     CGRect bounds = self.view.bounds;
     if (areaMode == B2ResizeAreaModeSafeArea) {
-        UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
-        if (@available(iOS 11, *)) {
-            safeAreaInsets = self.view.safeAreaInsets;
-        }
-        CGFloat safeInset = MAX(MAX(safeAreaInsets.top, safeAreaInsets.bottom), MAX(safeAreaInsets.left, safeAreaInsets.right));
-        bounds = UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
+        bounds = [sharedScreenView safeLayoutBoundsWithinBounds:bounds];
     }
     
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
@@ -398,7 +394,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 - (BOOL)updateInteractiveScreenResize:(CGSize)size {
     uint32_t w = (uint32_t)size.width &~ 1;
     uint32_t h = (uint32_t)size.height &~ 1;
-    if (w < 240 || h < 240 || w * h > 3840 * 2160) {
+    if (w < B2MinimumInteractiveScreenDimension || h < B2MinimumInteractiveScreenDimension || w * h > 3840 * 2160) {
         // invalid size
         return NO;
     }
