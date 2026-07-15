@@ -15,6 +15,8 @@ B2ScreenView *sharedScreenView = nil;
 NSString * const B2VideoSizePresetDefaultsKey = @"videoSizePreset";
 NSString * const B2VideoSizePresetStandard = @"standard";
 NSString * const B2VideoSizePresetLarge = @"large";
+NSString * const B2VideoSizePresetStandardLandscape = @"standardLandscape";
+NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 
 @implementation B2ScreenView
 {
@@ -61,6 +63,8 @@ NSString * const B2VideoSizePresetLarge = @"large";
     // dynamic resolutions
     [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandard] to:videoModes];
     [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLarge] to:videoModes];
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandardLandscape] to:videoModes];
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLargeLandscape] to:videoModes];
     
     // default resolutions
     [self addVideoMode:CGSizeMake(512, 384) to:videoModes];
@@ -217,24 +221,36 @@ NSString * const B2VideoSizePresetLarge = @"large";
     }
 
     if ([preset isEqualToString:B2VideoSizePresetStandard]) {
-        return [self videoSizeForSafeLayoutWithDivisor:2.0];
+        return [self videoSizeForSafeLayoutWithDivisor:2.0 landscape:NO];
     } else if ([preset isEqualToString:B2VideoSizePresetLarge]) {
-        return [self videoSizeForEdgeLayoutWithDivisor:4.0];
+        return [self videoSizeForEdgeLayoutWithDivisor:4.0 landscape:NO];
+    } else if ([preset isEqualToString:B2VideoSizePresetStandardLandscape]) {
+        return [self videoSizeForSafeLayoutWithDivisor:2.0 landscape:YES];
+    } else if ([preset isEqualToString:B2VideoSizePresetLargeLandscape]) {
+        return [self videoSizeForEdgeLayoutWithDivisor:4.0 landscape:YES];
     } else {
         return CGSizeZero;
     }
 }
 
-- (CGSize)videoSizeForEdgeLayoutWithDivisor:(CGFloat)divisor {
+- (CGRect)boundsForLandscape:(BOOL)landscape {
+    CGRect bounds = self.bounds;
+    if (landscape && bounds.size.width < bounds.size.height) {
+        bounds.size = CGSizeMake(bounds.size.height, bounds.size.width);
+    }
+    return bounds;
+}
+
+- (CGSize)videoSizeForEdgeLayoutWithDivisor:(CGFloat)divisor landscape:(BOOL)landscape {
     if (![NSThread isMainThread]) {
         __block CGSize presetSize;
         dispatch_sync(dispatch_get_main_queue(), ^{
-            presetSize = [self videoSizeForEdgeLayoutWithDivisor:divisor];
+            presetSize = [self videoSizeForEdgeLayoutWithDivisor:divisor landscape:landscape];
         });
         return presetSize;
     }
 
-    CGRect bounds = self.bounds;
+    CGRect bounds = [self boundsForLandscape:landscape];
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
@@ -251,7 +267,7 @@ NSString * const B2VideoSizePresetLarge = @"large";
 
     const CGFloat divisors[] = {1.0, 2.0, 4.0};
     for (NSUInteger i = 0; i < sizeof(divisors) / sizeof(divisors[0]); i++) {
-        CGSize presetSize = [self videoSizeForEdgeLayoutWithDivisor:divisors[i]];
+        CGSize presetSize = [self videoSizeForEdgeLayoutWithDivisor:divisors[i] landscape:NO];
         if ((uint32_t)screenSize.width == (uint32_t)presetSize.width && (uint32_t)screenSize.height == (uint32_t)presetSize.height) {
             return YES;
         }
@@ -259,16 +275,16 @@ NSString * const B2VideoSizePresetLarge = @"large";
     return NO;
 }
 
-- (CGSize)videoSizeForSafeLayoutWithDivisor:(CGFloat)divisor {
+- (CGSize)videoSizeForSafeLayoutWithDivisor:(CGFloat)divisor landscape:(BOOL)landscape {
     if (![NSThread isMainThread]) {
         __block CGSize presetSize;
         dispatch_sync(dispatch_get_main_queue(), ^{
-            presetSize = [self videoSizeForSafeLayoutWithDivisor:divisor];
+            presetSize = [self videoSizeForSafeLayoutWithDivisor:divisor landscape:landscape];
         });
         return presetSize;
     }
 
-    CGRect bounds = [self safeLayoutBoundsWithinBounds:self.bounds];
+    CGRect bounds = [self safeLayoutBoundsWithinBounds:[self boundsForLandscape:landscape]];
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
@@ -285,7 +301,7 @@ NSString * const B2VideoSizePresetLarge = @"large";
 
     const CGFloat divisors[] = {1.0, 2.0, 4.0};
     for (NSUInteger i = 0; i < sizeof(divisors) / sizeof(divisors[0]); i++) {
-        CGSize presetSize = [self videoSizeForSafeLayoutWithDivisor:divisors[i]];
+        CGSize presetSize = [self videoSizeForSafeLayoutWithDivisor:divisors[i] landscape:NO];
         if ((uint32_t)screenSize.width == (uint32_t)presetSize.width && (uint32_t)screenSize.height == (uint32_t)presetSize.height) {
             return YES;
         }

@@ -34,8 +34,10 @@
 "settings.gfx.size.item" = "%@ × %@";
 "settings.gfx.size.standard" = "Standard";
 "settings.gfx.size.large" = "Groß";
+"settings.gfx.size.standard.landscape" = "Standard – Quer";
+"settings.gfx.size.large.landscape" = "Groß – Quer";
 "settings.gfx.size.dynamic.detail" = "Dynamisch";
-"settings.gfx.size.footer" = "Dynamische Optionen setzen die Auflösung beim App-Start passend zur Geräteausrichtung. Sie entsprechen Rand 4× und Sicher 2× unter Eigene.";
+"settings.gfx.size.footer" = "Dynamische Optionen setzen die Auflösung beim App-Start. Standard entspricht Sicher 2×, Groß entspricht Rand 4×. Quer-Varianten bleiben fest im Querformat.";
 "settings.gfx.size.custom" = "Eigene…";
 "settings.gfx.size.customize.title" = "Bildschirmgröße";
 "settings.gfx.size.customize.message" = "Eigene Bildschirmgröße in Pixeln eingeben";

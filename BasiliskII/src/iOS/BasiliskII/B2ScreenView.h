@@ -31,5 +31,7 @@ extern B2ScreenView* _Nullable sharedScreenView;
 extern NSString * const B2VideoSizePresetDefaultsKey;
 extern NSString * const B2VideoSizePresetStandard;
 extern NSString * const B2VideoSizePresetLarge;
+extern NSString * const B2VideoSizePresetStandardLandscape;
+extern NSString * const B2VideoSizePresetLargeLandscape;
 
 NS_ASSUME_NONNULL_END

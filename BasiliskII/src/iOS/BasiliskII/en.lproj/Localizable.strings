@@ -34,8 +34,10 @@
 "settings.gfx.size.item" = "%@ × %@";
 "settings.gfx.size.standard" = "Standard";
 "settings.gfx.size.large" = "Large";
+"settings.gfx.size.standard.landscape" = "Standard – Landscape";
+"settings.gfx.size.large.landscape" = "Large – Landscape";
 "settings.gfx.size.dynamic.detail" = "Dynamic";
-"settings.gfx.size.footer" = "Dynamic choices set the resolution when the app starts, based on the device orientation. They match Edge 4× and Safe 2× under Custom.";
+"settings.gfx.size.footer" = "Dynamic choices set the resolution when the app starts. Standard matches Safe 2×; Large matches Edge 4×. Landscape variants keep that orientation fixed.";
 "settings.gfx.size.custom" = "Custom…";
 "settings.gfx.size.customize.title" = "Screen Size";
 "settings.gfx.size.customize.message" = "Enter custom screen size in pixels";

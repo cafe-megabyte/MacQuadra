@@ -30,6 +30,31 @@ typedef enum : NSInteger {
     UIAlertAction *screenSizeSaveAction;
 }
 
+- (NSArray<NSString *> *)dynamicVideoSizePresets {
+    return @[B2VideoSizePresetStandard, B2VideoSizePresetLarge, B2VideoSizePresetStandardLandscape, B2VideoSizePresetLargeLandscape];
+}
+
+- (NSString *)localizationKeyForDynamicVideoSizePreset:(NSString *)preset {
+    if ([preset isEqualToString:B2VideoSizePresetStandard]) {
+        return @"settings.gfx.size.standard";
+    } else if ([preset isEqualToString:B2VideoSizePresetLarge]) {
+        return @"settings.gfx.size.large";
+    } else if ([preset isEqualToString:B2VideoSizePresetStandardLandscape]) {
+        return @"settings.gfx.size.standard.landscape";
+    } else if ([preset isEqualToString:B2VideoSizePresetLargeLandscape]) {
+        return @"settings.gfx.size.large.landscape";
+    }
+    return @"";
+}
+
+- (NSString *)localizedStringForKey:(NSString *)key {
+    return [[NSBundle mainBundle] localizedStringForKey:key value:@"" table:nil];
+}
+
+- (NSString *)defaultDynamicVideoSizePreset {
+    return [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad ? B2VideoSizePresetStandard : B2VideoSizePresetStandardLandscape;
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.title = L(@"settings.root.graphicsAndSound");
@@ -93,7 +118,7 @@ typedef enum : NSInteger {
         CGSize currentSize = CGSizeFromString(currentSizeString);
         NSString *currentPreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
         if (currentPreset == nil && currentSizeString == nil) {
-            currentPreset = B2VideoSizePresetStandard;
+            currentPreset = [self defaultDynamicVideoSizePreset];
         }
         NSUInteger nonCustomVideoModes = sharedScreenView.videoModes.count;
         if (sharedScreenView.hasCustomVideoMode) {
@@ -102,14 +127,11 @@ typedef enum : NSInteger {
         if (indexPath.row < nonCustomVideoModes) {
             CGSize size = [sharedScreenView.videoModes[indexPath.row] CGSizeValue];
             NSString *sizeString = [self stringForScreenSize:size];
-            if (indexPath.row == 0) {
-                cellText = L(@"settings.gfx.size.standard");
-                cellSelected = [currentPreset isEqualToString:B2VideoSizePresetStandard];
-                cellDetail = L(@"settings.gfx.size.dynamic.detail");
-                cellIdentifier = @"detail";
-            } else if (indexPath.row == 1) {
-                cellText = L(@"settings.gfx.size.large");
-                cellSelected = [currentPreset isEqualToString:B2VideoSizePresetLarge];
+            NSArray<NSString *> *dynamicPresets = [self dynamicVideoSizePresets];
+            if (indexPath.row < dynamicPresets.count) {
+                NSString *preset = dynamicPresets[indexPath.row];
+                cellText = [self localizedStringForKey:[self localizationKeyForDynamicVideoSizePreset:preset]];
+                cellSelected = [currentPreset isEqualToString:preset];
                 cellDetail = L(@"settings.gfx.size.dynamic.detail");
                 cellIdentifier = @"detail";
             } else {
@@ -196,11 +218,9 @@ typedef enum : NSInteger {
         if (indexPath.row < nonCustomVideoModes) {
             // selected size
             CGSize size = [sharedScreenView.videoModes[indexPath.row] CGSizeValue];
-            if (indexPath.row == 0) {
-                [defaults setValue:B2VideoSizePresetStandard forKey:B2VideoSizePresetDefaultsKey];
-                [defaults removeObjectForKey:@"videoSize"];
-            } else if (indexPath.row == 1) {
-                [defaults setValue:B2VideoSizePresetLarge forKey:B2VideoSizePresetDefaultsKey];
+            NSArray<NSString *> *dynamicPresets = [self dynamicVideoSizePresets];
+            if (indexPath.row < dynamicPresets.count) {
+                [defaults setValue:dynamicPresets[indexPath.row] forKey:B2VideoSizePresetDefaultsKey];
                 [defaults removeObjectForKey:@"videoSize"];
             } else {
                 [defaults removeObjectForKey:B2VideoSizePresetDefaultsKey];

@@ -300,7 +300,7 @@ bool VideoInit(bool classic)
     NSString *videoSizeString = [defaults stringForKey:@"videoSize"];
     NSString *videoSizePreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
     if (videoSizePreset == nil && videoSizeString == nil) {
-        videoSizePreset = B2VideoSizePresetStandard;
+        videoSizePreset = [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad ? B2VideoSizePresetStandard : B2VideoSizePresetStandardLandscape;
     }
     CGSize init_size = videoSizePreset != nil ? [sharedScreenView videoSizeForPreset:videoSizePreset] : CGSizeFromString(videoSizeString);
     if (VideoModes.size() > 0)
