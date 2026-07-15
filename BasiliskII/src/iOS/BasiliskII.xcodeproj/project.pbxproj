@@ -24,6 +24,8 @@
 
 /* Begin PBXBuildFile section */
 		2814CEF82DE876CF005024E7 /* DefaultSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2814CEF72DE876CF005024E7 /* DefaultSceneDelegate.swift */; };
+		28E000032F00000000000001 /* B2PrivateResources.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28E000022F00000000000001 /* B2PrivateResources.mm */; };
+		28E000052F00000000000001 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 28E000042F00000000000001 /* libz.tbd */; };
 		281509101CC57F81004ECA0A /* B2TouchScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */; };
 		281509131CC5836A004ECA0A /* B2TrackPad.mm in Sources */ = {isa = PBXBuildFile; fileRef = 281509121CC5836A004ECA0A /* B2TrackPad.mm */; };
 		281A4C9D1CA965B000A380A7 /* B2DocumentsSettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 281A4C9C1CA965B000A380A7 /* B2DocumentsSettingsController.m */; };
@@ -180,6 +182,9 @@
 /* Begin PBXFileReference section */
 		2814CEF72DE876CF005024E7 /* DefaultSceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultSceneDelegate.swift; sourceTree = "<group>"; };
 		2814CEF92DE876D2005024E7 /* BasiliskII-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BasiliskII-Bridging-Header.h"; sourceTree = "<group>"; };
+		28E000012F00000000000001 /* B2PrivateResources.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = B2PrivateResources.h; sourceTree = "<group>"; };
+		28E000022F00000000000001 /* B2PrivateResources.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = B2PrivateResources.mm; sourceTree = "<group>"; };
+		28E000042F00000000000001 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		2815090E1CC57F81004ECA0A /* B2TouchScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2TouchScreen.h; sourceTree = "<group>"; };
 		2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2TouchScreen.mm; sourceTree = "<group>"; };
 		281509111CC5836A004ECA0A /* B2TrackPad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2TrackPad.h; sourceTree = "<group>"; };
@@ -419,6 +424,7 @@
 				2854D53419AA4822001B7858 /* libresolv.dylib in Frameworks */,
 				28AD37D319A6769B00ADF203 /* MobileCoreServices.framework in Frameworks */,
 				284E59242744344F00E014B9 /* libslirp.a in Frameworks */,
+				28E000052F00000000000001 /* libz.tbd in Frameworks */,
 				2898F58918CCACD500FE7806 /* AudioToolbox.framework in Frameworks */,
 				2898F58618CCAC6C00FE7806 /* CoreAudio.framework in Frameworks */,
 				2898F45418CB719600FE7806 /* CoreGraphics.framework in Frameworks */,
@@ -558,6 +564,7 @@
 			isa = PBXGroup;
 			children = (
 				2854D53319AA4822001B7858 /* libresolv.dylib */,
+				28E000042F00000000000001 /* libz.tbd */,
 				2898F58718CCACD500FE7806 /* AudioToolbox.framework */,
 				2898F58818CCACD500FE7806 /* AudioUnit.framework */,
 				2898F58518CCAC6C00FE7806 /* CoreAudio.framework */,
@@ -575,6 +582,8 @@
 			children = (
 				2898F46018CB719600FE7806 /* B2AppDelegate.h */,
 				2898F46118CB719600FE7806 /* B2AppDelegate.mm */,
+				28E000012F00000000000001 /* B2PrivateResources.h */,
+				28E000022F00000000000001 /* B2PrivateResources.mm */,
 				28FA0B751CC829A900481FE8 /* B2Application.h */,
 				28FA0B761CC829A900481FE8 /* B2Application.mm */,
 				28621F1D19ABADC2009615FC /* UI */,
@@ -1017,6 +1026,7 @@
 			files = (
 				288455D01CBAF7C7004EF2E6 /* KBKeyboardView.m in Sources */,
 				2898F46218CB719600FE7806 /* B2AppDelegate.mm in Sources */,
+				28E000032F00000000000001 /* B2PrivateResources.mm in Sources */,
 				2898F56D18CB92DA00FE7806 /* sys_ios.cpp in Sources */,
 				287A15E11CAEF9B700D84E02 /* res.c in Sources */,
 				281509131CC5836A004ECA0A /* B2TrackPad.mm in Sources */,

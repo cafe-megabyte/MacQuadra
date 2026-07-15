@@ -10,6 +10,7 @@
 #import "B2ViewController.h"
 #import "B2ScreenView.h"
 #import "B2DocumentsSettingsController.h"
+#import "B2PrivateResources.h"
 #import "KBKeyboardView.h"
 
 #include "sysdeps.h"
@@ -132,7 +133,14 @@ static B2AppDelegate *sharedDelegate = nil;
     
     // Show settings if emulator is not running
     if (self.emulatorRunning == NO && self.window.rootViewController.presentedViewController == nil) {
-        [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+        BOOL preparingResources = [[B2PrivateResources sharedInstance] prepareResourcesIfNeededFromViewController:self.window.rootViewController completion:^{
+            if (self.emulatorRunning == NO && self.window.rootViewController.presentedViewController == nil) {
+                [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+            }
+        }];
+        if (!preparingResources) {
+            [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+        }
     }
 }
 

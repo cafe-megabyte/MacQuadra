@@ -120,3 +120,26 @@
 "dir.rename.message" = "Neuen Namen eingeben";
 "dir.rename.rename" = "Umbenennen";
 "dir.rename.error" = "%@ konnte nicht umbenannt werden";
+
+"privateResources.romFile" = "ROM-Datei";
+"privateResources.diskImage" = "Festplattenabbild";
+"privateResources.download.action" = "Laden";
+"privateResources.download.prompt.title" = "%@ laden?";
+"privateResources.download.prompt.message" = "In „Dokumente“ wurde keine konfigurierte %@ gefunden.";
+"privateResources.download.error.title" = "%@ konnte nicht geladen werden";
+"privateResources.missingURL.title" = "Private Ressource fehlt";
+"privateResources.missingURL.message" = "Es wurde keine %@ gefunden und es ist keine private Download-URL konfiguriert.";
+"privateResources.invalidURL.title" = "Ungültige private URL";
+"privateResources.progress.title" = "%@ wird geladen";
+"privateResources.progress.starting" = "Download wird gestartet...";
+"privateResources.progress.withExpected" = "%@ von %@\n%@";
+"privateResources.progress.downloaded" = "%@ geladen";
+"privateResources.error.destinationFile" = "Zieldatei konnte nicht erstellt werden.";
+"privateResources.error.zipIncomplete" = "Das ZIP-Archiv endete, bevor die erste Datei vollständig war.";
+"privateResources.error.httpStatus" = "Download fehlgeschlagen mit HTTP-Status %ld.";
+"privateResources.error.zipMethod" = "Nicht unterstützte ZIP-Kompressionsmethode.";
+"privateResources.error.notZip" = "Die geladene Datei ist kein ZIP-Archiv.";
+"privateResources.error.zipEncrypted" = "Verschlüsselte ZIP-Dateien werden nicht unterstützt.";
+"privateResources.error.zipStoredSize" = "Gespeicherte ZIP-Einträge benötigen eine Größenangabe im lokalen Header.";
+"privateResources.error.zipInit" = "ZIP-Entpacker konnte nicht initialisiert werden.";
+"privateResources.error.zipDecompress" = "ZIP-Daten konnten nicht entpackt werden.";

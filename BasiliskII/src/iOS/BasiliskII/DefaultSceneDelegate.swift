@@ -54,7 +54,14 @@ class DefaultSceneDelegate: UIResponder, UIWindowSceneDelegate {
             return
         }
         if !appDelegate.emulatorRunning && rootViewController.presentedViewController == nil {
-            rootViewController.perform(#selector(B2ViewController.showSettings(_:)), with: appDelegate, afterDelay: 0.0)
+            let preparingResources = B2PrivateResources.shared.prepareResourcesIfNeeded(from: rootViewController) {
+                if !appDelegate.emulatorRunning && rootViewController.presentedViewController == nil {
+                    rootViewController.perform(#selector(B2ViewController.showSettings(_:)), with: appDelegate, afterDelay: 0.0)
+                }
+            }
+            if !preparingResources {
+                rootViewController.perform(#selector(B2ViewController.showSettings(_:)), with: appDelegate, afterDelay: 0.0)
+            }
         }
     }
 
