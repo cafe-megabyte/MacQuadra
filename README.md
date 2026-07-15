@@ -19,6 +19,7 @@ BasiliskII/src/iOS
 - German localization
 - Additional keyboard reveal gestures from side edges with one finger or pencil
 - Version and build information exposed in the iOS Settings app
+- App Icon for Light and Dark
 
 ## Legal note
 
