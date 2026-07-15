@@ -56,15 +56,15 @@ void PrefsInit(const char *vmdir, int &argc, char **&argv)
                                                  @"idlewait": @YES,
                                                  @"ether": @"slirp",
                                                  @"rom": @"ROM",
-                                                 @"frameskip": @2,
+                                                 @"frameskip": @1,
                                                  @"modelid": @14,
                                                  @"cpu": @4,
                                                  @"fpu": @YES,
                                                  @"ramsize": @(128 * 1024 * 1024),
                                                  @"trackpad": @([UIDevice currentDevice].userInterfaceIdiom != UIUserInterfaceIdiomPad),
                                                  @"keyboardLayout": DefaultKeyboardLayoutName(),
-                                                 @"videoDepth": @(8),
-                                                 @"screenFilter": kCAFilterLinear,
+                                                 @"videoDepth": @(32),
+                                                 @"screenFilter": kCAFilterNearest,
                                                  }];
         [defaults registerDefaults:defaultPrefs];
         defaultPrefs = nil;
