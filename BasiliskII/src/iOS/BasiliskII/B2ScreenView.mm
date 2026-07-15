@@ -12,6 +12,9 @@
 #import "B2AppDelegate.h"
 
 B2ScreenView *sharedScreenView = nil;
+NSString * const B2VideoSizePresetDefaultsKey = @"videoSizePreset";
+NSString * const B2VideoSizePresetStandard = @"standard";
+NSString * const B2VideoSizePresetLarge = @"large";
 
 @implementation B2ScreenView
 {
@@ -51,30 +54,13 @@ B2ScreenView *sharedScreenView = nil;
     [[NSUserDefaults standardUserDefaults] removeObserver:self forKeyPath:@"screenFilter" context:NULL];
 }
 
-- (BOOL)hasRetinaVideoMode {
-    return [UIDevice currentDevice].userInterfaceIdiom != UIUserInterfaceIdiomPad && (int)[UIScreen mainScreen].scale >= 2;
-}
-
 - (void)initVideoModes {
     NSMutableArray<NSValue*> *videoModes = [[NSMutableArray alloc] initWithCapacity:8];
-    CGSize screenSize = [UIScreen mainScreen].bounds.size;
-    if (screenSize.width < screenSize.height) {
-        auto swp = screenSize.width;
-        screenSize.width = screenSize.height;
-        screenSize.height = swp;
-    }
-    CGSize landscapeScreenSize = screenSize;
-    CGSize portraitScreenSize = CGSizeMake(screenSize.height, screenSize.width);
-    
-    // current screen size
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    [defaults registerDefaults:@{@"screenSize": NSStringFromCGSize(screenSize)}];
-    [self addVideoMode:landscapeScreenSize to:videoModes];
-    [self addVideoMode:portraitScreenSize to:videoModes];
-    if ([self hasRetinaVideoMode]) {
-        [self addVideoMode:CGSizeMake(landscapeScreenSize.width * 2, landscapeScreenSize.height * 2) to:videoModes];
-        [self addVideoMode:CGSizeMake(portraitScreenSize.width * 2, portraitScreenSize.height * 2) to:videoModes];
-    }
+
+    // dynamic resolutions
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandard] to:videoModes];
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLarge] to:videoModes];
     
     // default resolutions
     [self addVideoMode:CGSizeMake(512, 384) to:videoModes];
@@ -191,23 +177,62 @@ B2ScreenView *sharedScreenView = nil;
     return UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
 }
 
-- (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize {
-    if (CGSizeEqualToSize(screenSize, CGSizeZero)) {
-        return NO;
+- (CGSize)videoSizeForPreset:(NSString *)preset {
+    if (![NSThread isMainThread]) {
+        __block CGSize presetSize;
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            presetSize = [self videoSizeForPreset:preset];
+        });
+        return presetSize;
+    }
+
+    CGRect bounds = self.bounds;
+    CGFloat divisor = 1.0;
+    if ([preset isEqualToString:B2VideoSizePresetStandard]) {
+        return [self videoSizeForSafeLayoutWithDivisor:2.0];
+    } else if ([preset isEqualToString:B2VideoSizePresetLarge]) {
+        divisor = 4.0;
+    } else {
+        return CGSizeZero;
     }
     
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
     }
-    
-    CGRect safeBounds = [self safeLayoutBoundsWithinBounds:self.bounds];
-    CGSize safePixelSize = CGSizeMake(safeBounds.size.width * nativeScale, safeBounds.size.height * nativeScale);
+    uint32_t w = (uint32_t)(bounds.size.width * nativeScale / divisor) &~ 1;
+    uint32_t h = (uint32_t)(bounds.size.height * nativeScale / divisor) &~ 1;
+    return CGSizeMake(w, h);
+}
+
+- (CGSize)videoSizeForSafeLayoutWithDivisor:(CGFloat)divisor {
+    if (![NSThread isMainThread]) {
+        __block CGSize presetSize;
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            presetSize = [self videoSizeForSafeLayoutWithDivisor:divisor];
+        });
+        return presetSize;
+    }
+
+    CGRect bounds = [self safeLayoutBoundsWithinBounds:self.bounds];
+    CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
+    if (nativeScale <= 0.0) {
+        nativeScale = [UIScreen mainScreen].scale;
+    }
+    uint32_t w = (uint32_t)(bounds.size.width * nativeScale / divisor) &~ 1;
+    uint32_t h = (uint32_t)(bounds.size.height * nativeScale / divisor) &~ 1;
+    return CGSizeMake(w, h);
+}
+
+- (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize {
+    if (CGSizeEqualToSize(screenSize, CGSizeZero)) {
+        return NO;
+    }
+
     const CGFloat divisors[] = {1.0, 2.0, 4.0};
     for (NSUInteger i = 0; i < sizeof(divisors) / sizeof(divisors[0]); i++) {
-        uint32_t w = (uint32_t)(safePixelSize.width / divisors[i]) &~ 1;
-        uint32_t h = (uint32_t)(safePixelSize.height / divisors[i]) &~ 1;
-        if ((uint32_t)screenSize.width == w && (uint32_t)screenSize.height == h) {
+        CGSize presetSize = [self videoSizeForSafeLayoutWithDivisor:divisors[i]];
+        if ((uint32_t)screenSize.width == (uint32_t)presetSize.width && (uint32_t)screenSize.height == (uint32_t)presetSize.height) {
             return YES;
         }
     }

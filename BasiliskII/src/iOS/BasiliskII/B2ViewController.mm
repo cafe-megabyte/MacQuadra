@@ -211,6 +211,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     
     CGSize newScreenSize = sharedScreenView.screenSize;
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    [defaults removeObjectForKey:B2VideoSizePresetDefaultsKey];
     [defaults setObject:NSStringFromCGSize(newScreenSize) forKey:@"videoSize"];
     [sharedScreenView updateCustomSize:newScreenSize];
     [sharedScreenView updateImage:nil];

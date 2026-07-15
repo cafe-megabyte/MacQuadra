@@ -297,7 +297,12 @@ bool VideoInit(bool classic)
     video_mode init_mode = VideoModes[0];
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     video_depth init_depth = DepthModeForPixelDepth((int)[defaults integerForKey:@"videoDepth"]);
-    CGSize init_size = CGSizeFromString([defaults stringForKey:@"videoSize"]);
+    NSString *videoSizeString = [defaults stringForKey:@"videoSize"];
+    NSString *videoSizePreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
+    if (videoSizePreset == nil && videoSizeString == nil) {
+        videoSizePreset = B2VideoSizePresetStandard;
+    }
+    CGSize init_size = videoSizePreset != nil ? [sharedScreenView videoSizeForPreset:videoSizePreset] : CGSizeFromString(videoSizeString);
     if (VideoModes.size() > 0)
 	{
 		std::vector<video_mode>::const_iterator i, end = VideoModes.end();

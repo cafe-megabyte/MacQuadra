@@ -16,15 +16,19 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) CGRect screenBounds;
 @property (nonatomic, readonly) NSArray<NSValue*> *videoModes;
 @property (nonatomic, readonly) BOOL hasCustomVideoMode;
-@property (nonatomic, readonly) BOOL hasRetinaVideoMode;
 @property (nonatomic, strong) IBOutletCollection(NSLayoutConstraint) NSArray<NSLayoutConstraint*> *fullScreenConstraints;
 @property (nonatomic, strong) IBOutletCollection(NSLayoutConstraint) NSArray<NSLayoutConstraint*> *marginConstraints;
 
+- (CGSize)videoSizeForPreset:(NSString *)preset;
+- (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize;
 - (void)updateImage:(nullable CGImageRef)newImage;
 - (void)updateCustomSize:(CGSize)customSize;
 
 @end
 
 extern B2ScreenView* _Nullable sharedScreenView;
+extern NSString * const B2VideoSizePresetDefaultsKey;
+extern NSString * const B2VideoSizePresetStandard;
+extern NSString * const B2VideoSizePresetLarge;
 
 NS_ASSUME_NONNULL_END

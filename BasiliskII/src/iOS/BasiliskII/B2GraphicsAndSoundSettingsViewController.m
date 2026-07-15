@@ -75,6 +75,13 @@ typedef enum : NSInteger {
     }
 }
 
+- (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
+    if (section == B2GraphicsAndSoundSettingsSectionScreenSize) {
+        return L(@"settings.gfx.size.footer");
+    }
+    return nil;
+}
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
     NSString *cellText, *cellDetail = nil;
     BOOL cellSelected = NO;
@@ -82,34 +89,37 @@ typedef enum : NSInteger {
     NSString *cellIdentifier = @"basic";
     
     if (indexPath.section == B2GraphicsAndSoundSettingsSectionScreenSize) {
-        CGSize currentSize = CGSizeFromString([defaults stringForKey:@"videoSize"]);
+        NSString *currentSizeString = [defaults stringForKey:@"videoSize"];
+        CGSize currentSize = CGSizeFromString(currentSizeString);
+        NSString *currentPreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
+        if (currentPreset == nil && currentSizeString == nil) {
+            currentPreset = B2VideoSizePresetStandard;
+        }
         NSUInteger nonCustomVideoModes = sharedScreenView.videoModes.count;
         if (sharedScreenView.hasCustomVideoMode) {
             nonCustomVideoModes--;
         }
         if (indexPath.row < nonCustomVideoModes) {
             CGSize size = [sharedScreenView.videoModes[indexPath.row] CGSizeValue];
-            cellSelected = CGSizeEqualToSize(size, currentSize);
             NSString *sizeString = [self stringForScreenSize:size];
             if (indexPath.row == 0) {
-                cellText = L(@"settings.gfx.size.landscape");
+                cellText = L(@"settings.gfx.size.standard");
+                cellSelected = [currentPreset isEqualToString:B2VideoSizePresetStandard];
+                cellDetail = L(@"settings.gfx.size.dynamic.detail");
+                cellIdentifier = @"detail";
             } else if (indexPath.row == 1) {
-                cellText = L(@"settings.gfx.size.portrait");
-            } else if (indexPath.row == 2 && sharedScreenView.hasRetinaVideoMode) {
-                cellText = L(@"settings.gfx.size.landscape2x");
-            } else if (indexPath.row == 3 && sharedScreenView.hasRetinaVideoMode) {
-                cellText = L(@"settings.gfx.size.portrait2x");
+                cellText = L(@"settings.gfx.size.large");
+                cellSelected = [currentPreset isEqualToString:B2VideoSizePresetLarge];
+                cellDetail = L(@"settings.gfx.size.dynamic.detail");
+                cellIdentifier = @"detail";
             } else {
                 cellText = sizeString;
-            }
-            if (indexPath.row < 2 || (sharedScreenView.hasRetinaVideoMode && indexPath.row < 4)) {
-                cellDetail = sizeString;
-                cellIdentifier = @"detail";
+                cellSelected = currentPreset == nil && currentSizeString != nil && CGSizeEqualToSize(size, currentSize);
             }
         } else {
             // custom size
             CGSize customSize = sharedScreenView.videoModes.lastObject.CGSizeValue;
-            cellSelected = sharedScreenView.hasCustomVideoMode && CGSizeEqualToSize(currentSize, customSize);
+            cellSelected = currentPreset == nil && currentSizeString != nil && sharedScreenView.hasCustomVideoMode && CGSizeEqualToSize(currentSize, customSize);
             cellText = L(@"settings.gfx.size.custom");
             cellDetail = sharedScreenView.hasCustomVideoMode ? [self stringForScreenSize:customSize] : nil;
             cellIdentifier = @"detail";
@@ -186,7 +196,16 @@ typedef enum : NSInteger {
         if (indexPath.row < nonCustomVideoModes) {
             // selected size
             CGSize size = [sharedScreenView.videoModes[indexPath.row] CGSizeValue];
-            [defaults setValue:NSStringFromCGSize(size) forKey:@"videoSize"];
+            if (indexPath.row == 0) {
+                [defaults setValue:B2VideoSizePresetStandard forKey:B2VideoSizePresetDefaultsKey];
+                [defaults removeObjectForKey:@"videoSize"];
+            } else if (indexPath.row == 1) {
+                [defaults setValue:B2VideoSizePresetLarge forKey:B2VideoSizePresetDefaultsKey];
+                [defaults removeObjectForKey:@"videoSize"];
+            } else {
+                [defaults removeObjectForKey:B2VideoSizePresetDefaultsKey];
+                [defaults setValue:NSStringFromCGSize(size) forKey:@"videoSize"];
+            }
         } else {
             // custom size (interactive)
             [[B2ViewController sharedViewController] startChoosingCustomSizeUI];
