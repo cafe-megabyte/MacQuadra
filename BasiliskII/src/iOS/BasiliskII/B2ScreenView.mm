@@ -372,15 +372,18 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 }
 
 - (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds landscape:(BOOL)landscape {
-    UIEdgeInsets safeAreaInsets = UIEdgeInsetsZero;
-    if (@available(iOS 11, *)) {
-        safeAreaInsets = self.safeAreaInsets;
-    }
+    return [self safeLayoutBoundsWithinBounds:bounds
+                               safeAreaInsets:[self safeAreaInsetsForLayout]
+                                    landscape:landscape
+                              referenceBounds:self.bounds];
+}
+
+- (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds safeAreaInsets:(UIEdgeInsets)safeAreaInsets landscape:(BOOL)landscape referenceBounds:(CGRect)referenceBounds {
     if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         CGFloat safeInset = MAX(MAX(safeAreaInsets.top, safeAreaInsets.bottom), MAX(safeAreaInsets.left, safeAreaInsets.right));
         return UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
     }
-    if (landscape && self.bounds.size.width < self.bounds.size.height) {
+    if (landscape && referenceBounds.size.width < referenceBounds.size.height) {
         // Landscape presets may be calculated while the app is still portrait; rotate the current safe area for sizing.
         safeAreaInsets = UIEdgeInsetsMake(safeAreaInsets.left, safeAreaInsets.top, safeAreaInsets.right, safeAreaInsets.bottom);
     }
@@ -391,6 +394,20 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
         safeAreaInsets.right = cornerInset;
     }
     return UIEdgeInsetsInsetRect(bounds, safeAreaInsets);
+}
+
+- (UIEdgeInsets)safeAreaInsetsForLayout {
+    if (@available(iOS 11, *)) {
+        return self.safeAreaInsets;
+    }
+    return UIEdgeInsetsZero;
+}
+
+- (UIEdgeInsets)safeAreaInsetsForPresetLayout {
+    if (@available(iOS 11, *)) {
+        return self.superview ? self.superview.safeAreaInsets : self.safeAreaInsets;
+    }
+    return UIEdgeInsetsZero;
 }
 
 - (CGRect)integralRectInsideBounds:(CGRect)rect bounds:(CGRect)bounds {
@@ -415,22 +432,37 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     if ([preset isEqualToString:B2VideoSizePresetStandard]) {
         return [self videoSizeForSafeLayoutWithDivisor:2.0 landscape:NO];
     } else if ([preset isEqualToString:B2VideoSizePresetLarge]) {
-        return [self videoSizeForEdgeLayoutWithDivisor:4.0 landscape:NO];
+        return [self videoSizeForLargeLayoutWithDivisor:4.0 landscape:NO];
     } else if ([preset isEqualToString:B2VideoSizePresetStandardLandscape]) {
         return [self videoSizeForSafeLayoutWithDivisor:2.0 landscape:YES];
     } else if ([preset isEqualToString:B2VideoSizePresetLargeLandscape]) {
-        return [self videoSizeForEdgeLayoutWithDivisor:4.0 landscape:YES];
+        return [self videoSizeForLargeLayoutWithDivisor:4.0 landscape:YES];
     } else {
         return CGSizeZero;
     }
 }
 
 - (CGRect)boundsForLandscape:(BOOL)landscape {
-    CGRect bounds = self.bounds;
+    return [self bounds:self.bounds forLandscape:landscape];
+}
+
+- (CGRect)boundsForPresetLandscape:(BOOL)landscape {
+    CGRect bounds = self.superview ? self.superview.bounds : self.bounds;
+    return [self bounds:bounds forLandscape:landscape];
+}
+
+- (CGRect)bounds:(CGRect)bounds forLandscape:(BOOL)landscape {
     if (landscape && bounds.size.width < bounds.size.height) {
         bounds.size = CGSizeMake(bounds.size.height, bounds.size.width);
     }
     return bounds;
+}
+
+- (CGSize)videoSizeForLargeLayoutWithDivisor:(CGFloat)divisor landscape:(BOOL)landscape {
+    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
+        return [self videoSizeForSafeLayoutWithDivisor:divisor landscape:landscape];
+    }
+    return [self videoSizeForEdgeLayoutWithDivisor:divisor landscape:landscape];
 }
 
 - (CGSize)videoSizeForEdgeLayoutWithDivisor:(CGFloat)divisor landscape:(BOOL)landscape {
@@ -442,7 +474,7 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
         return presetSize;
     }
 
-    CGRect bounds = [self boundsForLandscape:landscape];
+    CGRect bounds = [self boundsForPresetLandscape:landscape];
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
@@ -476,7 +508,11 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
         return presetSize;
     }
 
-    CGRect bounds = [self safeLayoutBoundsWithinBounds:[self boundsForLandscape:landscape] landscape:landscape];
+    CGRect presetBounds = [self boundsForPresetLandscape:landscape];
+    CGRect bounds = [self safeLayoutBoundsWithinBounds:presetBounds
+                                       safeAreaInsets:[self safeAreaInsetsForPresetLayout]
+                                            landscape:landscape
+                                      referenceBounds:(self.superview ? self.superview.bounds : self.bounds)];
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
