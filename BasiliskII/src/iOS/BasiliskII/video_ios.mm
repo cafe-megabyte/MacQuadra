@@ -24,6 +24,16 @@ static uint8 bits_from_depth(const video_depth depth)
 // Supported video modes
 static vector<video_mode> VideoModes;
 
+static void release_frame_buffer(void *info, const void *data, size_t size)
+{
+    free((void *)data);
+}
+
+static bool size_matches(CGSize lhs, CGSize rhs)
+{
+    return (uint16)lhs.width == (uint16)rhs.width && (uint16)lhs.height == (uint16)rhs.height;
+}
+
 // Add mode to list of supported modes
 static void
 add_mode(const uint16 width, const uint16 height,
@@ -59,14 +69,17 @@ add_mode(const uint16 width, const uint16 height,
 }
 
 // Add standard list of windowed modes for given color depth
-static void add_standard_modes(const video_depth depth)
+static void add_standard_modes(const video_depth depth, CGSize only_size)
 {
 	int mode = 0x80;
     for (NSValue *modeValue in sharedScreenView.videoModes) {
         CGSize modeSize = modeValue.CGSizeValue;
         uint16 width = modeSize.width;
         uint16 height = modeSize.height;
-        add_mode(width,  height,  mode++, TrivialBytesPerRow(width,  depth), 0, depth);
+        if (CGSizeEqualToSize(only_size, CGSizeZero) || size_matches(modeSize, only_size)) {
+            add_mode(width,  height,  mode, TrivialBytesPerRow(width,  depth), 0, depth);
+        }
+        mode++;
     }
 }
 
@@ -137,13 +150,17 @@ bool IOS_monitor::video_open(const video_mode &mode)
 	if (colorSpace == NULL)
 	{
 		ErrorAlert("No valid color space");
+        free(the_buffer);
+        the_buffer = NULL;
 		return false;
 	}
     
-	provider = CGDataProviderCreateWithData(NULL, the_buffer, the_buffer_size, NULL);
+	provider = CGDataProviderCreateWithData(NULL, the_buffer, the_buffer_size, release_frame_buffer);
 	if (provider == NULL)
 	{
 		ErrorAlert("Could not create CGDataProvider from buffer data");
+        free(the_buffer);
+        the_buffer = NULL;
 		return false;
 	}
 
@@ -197,7 +214,6 @@ void IOS_monitor::video_close()
         CGColorSpaceRelease(colorSpace);
     if (provider != nil)
         CGDataProviderRelease(provider);
-    free(the_buffer);
     colorSpace = nil;
     provider = nil;
     the_buffer = NULL;
@@ -266,13 +282,11 @@ void IOS_monitor::switch_to_current_mode(void)
     
     CGColorSpaceRef		oldColorSpace	= colorSpace;
     CGDataProviderRef	oldProvider		= provider;
-    void				*oldBuffer		= the_buffer;
     
     if (video_open(mode))
     {
         CGColorSpaceRelease(oldColorSpace);
         CGDataProviderRelease(oldProvider);
-        free(oldBuffer);
         set_mac_frame_buffer(mode);
     }
     else
@@ -290,14 +304,7 @@ bool VideoInit(bool classic)
 {
     frame_skip = PrefsFindInt32("frameskip");
     [sharedScreenView reloadVideoModes];
-    add_standard_modes(VDEPTH_1BIT);
-    add_standard_modes(VDEPTH_2BIT);
-    add_standard_modes(VDEPTH_4BIT);
-    add_standard_modes(VDEPTH_8BIT);
-    add_standard_modes(VDEPTH_16BIT);
-    add_standard_modes(VDEPTH_32BIT);
 
-    video_mode init_mode = VideoModes[0];
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     video_depth init_depth = DepthModeForPixelDepth((int)[defaults integerForKey:@"videoDepth"]);
     NSString *videoSizeString = [defaults stringForKey:@"videoSize"];
@@ -306,6 +313,21 @@ bool VideoInit(bool classic)
         videoSizePreset = [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad ? B2VideoSizePresetStandard : B2VideoSizePresetStandardLandscape;
     }
     CGSize init_size = videoSizePreset != nil ? [sharedScreenView videoSizeForPreset:videoSizePreset] : CGSizeFromString(videoSizeString);
+    CGSize only_size = videoSizePreset != nil ? init_size : CGSizeZero;
+
+    add_standard_modes(VDEPTH_1BIT, only_size);
+    add_standard_modes(VDEPTH_2BIT, only_size);
+    add_standard_modes(VDEPTH_4BIT, only_size);
+    add_standard_modes(VDEPTH_8BIT, only_size);
+    add_standard_modes(VDEPTH_16BIT, only_size);
+    add_standard_modes(VDEPTH_32BIT, only_size);
+
+    if (VideoModes.empty()) {
+        ErrorAlert("No valid video modes");
+        return false;
+    }
+
+    video_mode init_mode = VideoModes[0];
     if (VideoModes.size() > 0)
 	{
 		std::vector<video_mode>::const_iterator i, end = VideoModes.end();
