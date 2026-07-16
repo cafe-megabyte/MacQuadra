@@ -37,7 +37,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     B2ResizeScaleMode4x,
 };
 
-@interface B2ViewController () <UITextFieldDelegate>
+@interface B2ViewController () <UITextFieldDelegate, UIGestureRecognizerDelegate>
 
 @end
 
@@ -46,6 +46,8 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     KBKeyboardView *keyboardView;
     UISwipeGestureRecognizer *showKeyboardGesture, *hideKeyboardGesture;
     UIScreenEdgePanGestureRecognizer *showKeyboardLeftEdgeGesture, *showKeyboardRightEdgeGesture;
+    UIPinchGestureRecognizer *screenZoomGesture;
+    UIPanGestureRecognizer *screenPanGesture;
     UIControl *pointingDeviceView;
     #ifdef __IPHONE_13_4
     id pointerInteraction;
@@ -79,6 +81,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 - (void)viewDidLoad {
     [super viewDidLoad];
     [self installKeyboardGestures];
+    [self installScreenViewportGestures];
     _sharedB2ViewController = self;
 }
 
@@ -119,6 +122,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
             [self setKeyboardVisible:YES animated:YES];
         }];
     }
+    [sharedScreenView resetViewportAnimated:NO];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -141,6 +145,8 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     Class pointingDeviceClass = useTrackPad ? [B2TrackPad class] : [B2TouchScreen class];
     pointingDeviceView = [[pointingDeviceClass alloc] initWithFrame:self.view.bounds];
     [self.view insertSubview:pointingDeviceView aboveSubview:sharedScreenView];
+    screenZoomGesture.cancelsTouchesInView = YES;
+    screenPanGesture.cancelsTouchesInView = YES;
     if (@available(iOS 13.4, *)) {
         pointerInteraction = [[UIPointerInteraction alloc] initWithDelegate:self];
         [pointingDeviceView addInteraction:pointerInteraction];
@@ -185,6 +191,8 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     [self.presentedViewController dismissViewControllerAnimated:YES completion:nil];
     self.keyboardVisible = NO;
     [self setKeyboardGesturesEnabled:NO];
+    [self setScreenViewportGesturesEnabled:NO];
+    [sharedScreenView resetViewportAnimated:NO];
     resizeAreaMode = B2ResizeAreaModeEdge;
     resizeScaleMode = B2ResizeScaleMode2x;
     [self installResizeControls];
@@ -203,6 +211,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 - (IBAction)endChoosingCustomSizeUI:(id)sender {
     self.keyboardVisible = NO;
     [self setKeyboardGesturesEnabled:YES];
+    [self setScreenViewportGesturesEnabled:YES];
     [resizeControlsView removeFromSuperview];
     resizeControlsView = nil;
     resizeAreaControl = nil;
@@ -415,6 +424,70 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 
 #pragma mark - Keyboard
 
+- (void)installScreenViewportGestures {
+    screenZoomGesture = [[UIPinchGestureRecognizer alloc] initWithTarget:self action:@selector(handleScreenZoom:)];
+    screenZoomGesture.delegate = self;
+    [self.view addGestureRecognizer:screenZoomGesture];
+
+    screenPanGesture = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleScreenPan:)];
+    screenPanGesture.minimumNumberOfTouches = 2;
+    screenPanGesture.maximumNumberOfTouches = 2;
+    screenPanGesture.delegate = self;
+    [self.view addGestureRecognizer:screenPanGesture];
+}
+
+- (void)setScreenViewportGesturesEnabled:(BOOL)enabled {
+    screenZoomGesture.enabled = enabled;
+    screenPanGesture.enabled = enabled;
+}
+
+- (void)handleScreenZoom:(UIPinchGestureRecognizer *)recognizer {
+    if (![B2AppDelegate sharedInstance].emulatorRunning) {
+        return;
+    }
+
+    CGPoint anchorPoint = [recognizer locationInView:sharedScreenView];
+    if (recognizer.state == UIGestureRecognizerStateBegan || recognizer.state == UIGestureRecognizerStateChanged) {
+        [sharedScreenView setViewportScale:sharedScreenView.viewportScale * recognizer.scale anchoredAtPoint:anchorPoint];
+        recognizer.scale = 1.0;
+    } else if (recognizer.state == UIGestureRecognizerStateEnded ||
+               recognizer.state == UIGestureRecognizerStateCancelled ||
+               recognizer.state == UIGestureRecognizerStateFailed) {
+        if (sharedScreenView.viewportScale <= 1.0) {
+            [sharedScreenView resetViewportAnimated:YES];
+        }
+    }
+}
+
+- (void)handleScreenPan:(UIPanGestureRecognizer *)recognizer {
+    if (![B2AppDelegate sharedInstance].emulatorRunning || sharedScreenView.viewportScale <= 1.0) {
+        [recognizer setTranslation:CGPointZero inView:sharedScreenView];
+        return;
+    }
+
+    if (recognizer.state == UIGestureRecognizerStateBegan || recognizer.state == UIGestureRecognizerStateChanged) {
+        CGPoint translation = [recognizer translationInView:sharedScreenView];
+        [sharedScreenView panViewportByTranslation:translation];
+        [recognizer setTranslation:CGPointZero inView:sharedScreenView];
+    }
+}
+
+- (BOOL)gestureRecognizerShouldBegin:(UIGestureRecognizer *)gestureRecognizer {
+    if (gestureRecognizer == screenZoomGesture) {
+        return [B2AppDelegate sharedInstance].emulatorRunning;
+    }
+    if (gestureRecognizer == screenPanGesture) {
+        return [B2AppDelegate sharedInstance].emulatorRunning && sharedScreenView.viewportScale > 1.0;
+    }
+    return YES;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer {
+    BOOL usesViewportGesture = (gestureRecognizer == screenZoomGesture || gestureRecognizer == screenPanGesture);
+    BOOL otherUsesViewportGesture = (otherGestureRecognizer == screenZoomGesture || otherGestureRecognizer == screenPanGesture);
+    return usesViewportGesture && otherUsesViewportGesture;
+}
+
 - (void)setKeyboardGesturesEnabled:(BOOL)enabled {
     showKeyboardGesture.enabled = enabled;
     showKeyboardLeftEdgeGesture.enabled = enabled;
@@ -423,11 +496,6 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 }
 
 - (void)installKeyboardGestures {
-    showKeyboardGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard:)];
-    showKeyboardGesture.direction = UISwipeGestureRecognizerDirectionUp;
-    showKeyboardGesture.numberOfTouchesRequired = 2;
-    [self.view addGestureRecognizer:showKeyboardGesture];
-
     showKeyboardLeftEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard:)];
     showKeyboardLeftEdgeGesture.edges = UIRectEdgeLeft;
     [self.view addGestureRecognizer:showKeyboardLeftEdgeGesture];
@@ -435,11 +503,6 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     showKeyboardRightEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard:)];
     showKeyboardRightEdgeGesture.edges = UIRectEdgeRight;
     [self.view addGestureRecognizer:showKeyboardRightEdgeGesture];
-    
-    hideKeyboardGesture = [[UISwipeGestureRecognizer alloc] initWithTarget:self action:@selector(hideKeyboard:)];
-    hideKeyboardGesture.direction = UISwipeGestureRecognizerDirectionDown;
-    hideKeyboardGesture.numberOfTouchesRequired = 2;
-    [self.view addGestureRecognizer:hideKeyboardGesture];
 }
 
 - (BOOL)isKeyboardVisible {

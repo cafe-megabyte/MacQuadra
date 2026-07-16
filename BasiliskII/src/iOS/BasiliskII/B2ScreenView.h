@@ -14,11 +14,16 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nonatomic, assign) CGSize screenSize;
 @property (nonatomic, assign) CGRect screenBounds;
+@property (nonatomic, assign) CGFloat viewportScale;
+@property (nonatomic, assign) CGPoint viewportOffset;
 @property (nonatomic, readonly) NSArray<NSValue*> *videoModes;
 @property (nonatomic, readonly) BOOL hasCustomVideoMode;
 @property (nonatomic, strong) IBOutletCollection(NSLayoutConstraint) NSArray<NSLayoutConstraint*> *fullScreenConstraints;
 @property (nonatomic, strong) IBOutletCollection(NSLayoutConstraint) NSArray<NSLayoutConstraint*> *marginConstraints;
 
+- (void)setViewportScale:(CGFloat)viewportScale anchoredAtPoint:(CGPoint)anchorPoint;
+- (void)panViewportByTranslation:(CGPoint)translation;
+- (void)resetViewportAnimated:(BOOL)animated;
 - (CGSize)videoSizeForPreset:(NSString *)preset;
 - (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds;
 - (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize;

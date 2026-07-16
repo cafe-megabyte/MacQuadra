@@ -24,16 +24,19 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     CALayer *videoLayer;
     UIGestureRecognizer *pinchGestureRecognizer;
     CGSize initialSize;
+    CGRect baseScreenBounds;
 }
 
 - (void)awakeFromNib {
     [super awakeFromNib];
     sharedScreenView = self;
+    _viewportScale = 1.0;
     videoLayer = [CALayer layer];
     NSString *screenFilter = [[NSUserDefaults standardUserDefaults] stringForKey:@"screenFilter"];
     videoLayer.magnificationFilter = screenFilter;
     videoLayer.minificationFilter = screenFilter;
     [self.layer addSublayer:videoLayer];
+    self.clipsToBounds = YES;
     [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:@"screenFilter" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld context:NULL];
 }
 
@@ -129,22 +132,25 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
         screenScale = 1.0;
     }
 
-    _screenBounds = CGRectMake(0, 0, screenSize.width * screenScale, screenSize.height * screenScale);
-    _screenBounds.origin.x = viewBounds.origin.x + (viewBounds.size.width - _screenBounds.size.width)/2;
+    baseScreenBounds = CGRectMake(0, 0, screenSize.width * screenScale, screenSize.height * screenScale);
+    baseScreenBounds.origin.x = viewBounds.origin.x + (viewBounds.size.width - baseScreenBounds.size.width)/2;
     if (usesSafeLayoutBounds) {
-        _screenBounds.origin.y = viewBounds.origin.y + (viewBounds.size.height - _screenBounds.size.height)/2;
+        baseScreenBounds.origin.y = viewBounds.origin.y + (viewBounds.size.height - baseScreenBounds.size.height)/2;
     }
     if (usesSafeLayoutBounds) {
-        _screenBounds = [self integralRectInsideBounds:_screenBounds bounds:viewBounds];
+        baseScreenBounds = [self integralRectInsideBounds:baseScreenBounds bounds:viewBounds];
     } else {
-        _screenBounds = CGRectIntegral(_screenBounds);
+        baseScreenBounds = CGRectIntegral(baseScreenBounds);
     }
 
-    if (!usesSafeLayoutBounds && [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad && (viewBounds.size.height - _screenBounds.size.height) >= 30.0) {
+    if (!usesSafeLayoutBounds && [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad && (viewBounds.size.height - baseScreenBounds.size.height) >= 30.0) {
         // move under multitasking indicator on iPad
-        _screenBounds.origin.y += 30;
+        baseScreenBounds.origin.y += 30;
     }
-    videoLayer.frame = _screenBounds;
+    _viewportOffset = [self clampedViewportOffset:_viewportOffset scale:_viewportScale];
+    CGRect screenBounds = [self screenBoundsForViewportScale:_viewportScale offset:_viewportOffset];
+    videoLayer.frame = screenBounds;
+    _screenBounds = screenBounds;
     _screenBounds.origin.y += self.frame.origin.y;
     BOOL scaleIsIntegral = (floor(screenScale) == screenScale);
     if (scaleIsIntegral) screenFilter = kCAFilterNearest;
@@ -163,6 +169,107 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     _screenSize = screenSize;
     [self updateConstraints];
     [self setNeedsLayout];
+}
+
+- (void)setViewportScale:(CGFloat)viewportScale {
+    [self setViewportScale:viewportScale anchoredAtPoint:CGPointMake(CGRectGetMidX(baseScreenBounds), CGRectGetMidY(baseScreenBounds))];
+}
+
+- (void)setViewportScale:(CGFloat)viewportScale anchoredAtPoint:(CGPoint)anchorPoint {
+    CGFloat oldScale = MAX(_viewportScale, 1.0);
+    CGFloat newScale = MAX(1.0, MIN(viewportScale, 6.0));
+    if (newScale <= 1.0) {
+        _viewportScale = 1.0;
+        _viewportOffset = CGPointZero;
+        [self setNeedsLayout];
+        return;
+    }
+
+    CGPoint baseCenter = CGPointMake(CGRectGetMidX(baseScreenBounds), CGRectGetMidY(baseScreenBounds));
+    CGPoint oldCenter = CGPointMake(baseCenter.x + _viewportOffset.x, baseCenter.y + _viewportOffset.y);
+    CGFloat scaleRatio = newScale / oldScale;
+    CGPoint newCenter = CGPointMake(anchorPoint.x - (anchorPoint.x - oldCenter.x) * scaleRatio,
+                                    anchorPoint.y - (anchorPoint.y - oldCenter.y) * scaleRatio);
+    _viewportScale = newScale;
+    _viewportOffset = CGPointMake(newCenter.x - baseCenter.x, newCenter.y - baseCenter.y);
+    _viewportOffset = [self clampedViewportOffset:_viewportOffset scale:_viewportScale];
+    [self setNeedsLayout];
+}
+
+- (void)panViewportByTranslation:(CGPoint)translation {
+    if (_viewportScale <= 1.0) {
+        return;
+    }
+    _viewportOffset = CGPointMake(_viewportOffset.x + translation.x, _viewportOffset.y + translation.y);
+    _viewportOffset = [self clampedViewportOffset:_viewportOffset scale:_viewportScale];
+    [self setNeedsLayout];
+}
+
+- (void)resetViewportAnimated:(BOOL)animated {
+    void (^resetBlock)(void) = ^{
+        self->_viewportScale = 1.0;
+        self->_viewportOffset = CGPointZero;
+        [self layoutIfNeeded];
+    };
+
+    [self setNeedsLayout];
+    if (animated) {
+        [UIView animateWithDuration:0.2 delay:0.0 options:UIViewAnimationOptionCurveEaseOut animations:resetBlock completion:nil];
+    } else {
+        resetBlock();
+    }
+}
+
+- (CGRect)screenBoundsForViewportScale:(CGFloat)scale offset:(CGPoint)offset {
+    if (scale <= 1.0 || CGRectIsEmpty(baseScreenBounds)) {
+        return baseScreenBounds;
+    }
+
+    CGSize scaledSize = CGSizeMake(baseScreenBounds.size.width * scale, baseScreenBounds.size.height * scale);
+    CGPoint center = CGPointMake(CGRectGetMidX(baseScreenBounds) + offset.x, CGRectGetMidY(baseScreenBounds) + offset.y);
+    return CGRectIntegral(CGRectMake(center.x - scaledSize.width / 2.0,
+                                    center.y - scaledSize.height / 2.0,
+                                    scaledSize.width,
+                                    scaledSize.height));
+}
+
+- (CGPoint)clampedViewportOffset:(CGPoint)offset scale:(CGFloat)scale {
+    if (scale <= 1.0 || CGRectIsEmpty(baseScreenBounds)) {
+        return CGPointZero;
+    }
+
+    CGRect bounds = self.bounds;
+    CGSize scaledSize = CGSizeMake(baseScreenBounds.size.width * scale, baseScreenBounds.size.height * scale);
+    CGPoint baseCenter = CGPointMake(CGRectGetMidX(baseScreenBounds), CGRectGetMidY(baseScreenBounds));
+    CGPoint center = CGPointMake(baseCenter.x + offset.x, baseCenter.y + offset.y);
+
+    center.x = [self clampedCenterCoordinate:center.x
+                                      length:scaledSize.width
+                                 boundsStart:CGRectGetMinX(bounds)
+                                   boundsEnd:CGRectGetMaxX(bounds)
+                                  baseCenter:baseCenter.x];
+    center.y = [self clampedCenterCoordinate:center.y
+                                      length:scaledSize.height
+                                 boundsStart:CGRectGetMinY(bounds)
+                                   boundsEnd:CGRectGetMaxY(bounds)
+                                  baseCenter:baseCenter.y];
+    return CGPointMake(center.x - baseCenter.x, center.y - baseCenter.y);
+}
+
+- (CGFloat)clampedCenterCoordinate:(CGFloat)center
+                            length:(CGFloat)length
+                       boundsStart:(CGFloat)boundsStart
+                         boundsEnd:(CGFloat)boundsEnd
+                        baseCenter:(CGFloat)baseCenter {
+    CGFloat boundsLength = boundsEnd - boundsStart;
+    if (length <= boundsLength) {
+        return baseCenter;
+    }
+
+    CGFloat halfLength = length / 2.0;
+    CGFloat minimumCenter = boundsEnd - halfLength;
+    CGFloat maximumCenter = boundsStart + halfLength;
+    return MIN(MAX(center, minimumCenter), maximumCenter);
 }
 
 - (void)updateConstraints {

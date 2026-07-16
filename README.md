@@ -14,12 +14,13 @@ BasiliskII/src/iOS
 - Play sound at startup decoded from ROM file
 - Optional private ZIP download URLs for a ROM file and disk image with on-the-fly deflate
 - Improved interactive custom screen sizing with different preset-options
+- Zoom and pinch to enlarge and move the view
+- New keyboard reveal gestures than don't interfere with the zoom gestures (from side edges with one finger or pencil)
 - Dynamic screen sizes that are re-calculated on emulator start
 - New defaults
 - Higher max. RAM size (512 MB)
 - On-screen keyboard for German
 - German localization
-- Additional keyboard reveal gestures from side edges with one finger or pencil
 - Version and build information exposed in the iOS Settings app
 - App Icon for Light and Dark
 
