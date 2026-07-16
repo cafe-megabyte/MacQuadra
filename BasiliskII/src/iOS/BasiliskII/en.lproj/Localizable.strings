@@ -37,6 +37,10 @@
 "settings.gfx.size.standard.landscape" = "Standard – Landscape";
 "settings.gfx.size.large.landscape" = "Large – Landscape";
 "settings.gfx.size.dynamic.detail" = "Dynamic";
+"settings.gfx.size.monitor.640.480" = "AppleColor Hi-Res RGB";
+"settings.gfx.size.monitor.832.624" = "Macintosh 16\" Color";
+"settings.gfx.size.monitor.1024.768" = "MultipleScan 17";
+"settings.gfx.size.monitor.1280.1024" = "MultipleScan 20";
 "settings.gfx.size.footer" = "Dynamic choices set the resolution when the app starts. Standard matches Safe 2×; Large matches Edge 4×. Landscape variants keep that orientation fixed.";
 "settings.gfx.size.custom" = "Custom…";
 "settings.gfx.size.customize.title" = "Screen Size";
@@ -56,6 +60,8 @@
 "settings.gfx.depth.8" = "256 Colors";
 "settings.gfx.depth.16" = "Thousands of Colors";
 "settings.gfx.depth.32" = "Millions of Colors";
+"settings.gfx.depth.33" = "Millions of Colors (fixed)";
+"settings.gfx.depth.footer" = "When a dynamic resolution is selected, only that one resolution is available to Mac OS. When a fixed resolution is selected, all resolutions are available to Mac OS and can therefore be changed by the emulator.";
 "settings.gfx.frameskip" = "Refresh Rate";
 "settings.gfx.frameskip.1" = "60 Hz";
 "settings.gfx.frameskip.2" = "30 Hz";

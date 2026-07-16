@@ -63,10 +63,13 @@ void PrefsInit(const char *vmdir, int &argc, char **&argv)
                                                  @"ramsize": @(512 * 1024 * 1024),
                                                  @"trackpad": @([UIDevice currentDevice].userInterfaceIdiom != UIUserInterfaceIdiomPad),
                                                  @"keyboardLayout": DefaultKeyboardLayoutName(),
-                                                 @"videoDepth": @(32),
+                                                 @"videoDepth": @(33),
                                                  @"screenFilter": kCAFilterNearest,
                                                  }];
         [defaults registerDefaults:defaultPrefs];
+        if ([defaults objectForKey:@"videoDepth"] == nil) {
+            [defaults setInteger:33 forKey:@"videoDepth"];
+        }
         defaultPrefs = nil;
     }
 

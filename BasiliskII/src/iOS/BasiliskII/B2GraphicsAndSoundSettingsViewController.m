@@ -18,6 +18,8 @@ typedef enum : NSInteger {
     B2GraphicsAndSoundSettingsSectionSound,
 } B2GraphicsAndSoundSettingsSection;
 
+static const NSInteger B2VideoDepthMillionsFixed = 33;
+
 @interface B2GraphicsAndSoundSettingsViewController () <UITextFieldDelegate>
 
 @end
@@ -71,7 +73,7 @@ typedef enum : NSInteger {
         case B2GraphicsAndSoundSettingsSectionScreenSize:
             return sharedScreenView.videoModes.count + (sharedScreenView.hasCustomVideoMode ? 0 : 1);
         case B2GraphicsAndSoundSettingsSectionScreenDepth:
-            return 6;
+            return 7;
         case B2GraphicsAndSoundSettingsSectionScalingFilter:
             return 3;
         case B2GraphicsAndSoundSettingsSectionFrameSkip:
@@ -103,6 +105,8 @@ typedef enum : NSInteger {
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     if (section == B2GraphicsAndSoundSettingsSectionScreenSize) {
         return L(@"settings.gfx.size.footer");
+    } else if (section == B2GraphicsAndSoundSettingsSectionScreenDepth) {
+        return L(@"settings.gfx.depth.footer");
     }
     return nil;
 }
@@ -137,6 +141,8 @@ typedef enum : NSInteger {
             } else {
                 cellText = sizeString;
                 cellSelected = currentPreset == nil && currentSizeString != nil && CGSizeEqualToSize(size, currentSize);
+                cellDetail = [self monitorNameForScreenSize:size];
+                cellIdentifier = @"detail";
             }
         } else {
             // custom size
@@ -185,8 +191,16 @@ typedef enum : NSInteger {
     return LX(@"settings.gfx.size.item", @((int)size.width), @((int)size.height));
 }
 
+- (NSString *)monitorNameForScreenSize:(CGSize)size {
+    int width = (int)size.width;
+    int height = (int)size.height;
+    NSString *key = [NSString stringWithFormat:@"settings.gfx.size.monitor.%d.%d", width, height];
+    NSString *value = [self localizedStringForKey:key];
+    return [value isEqualToString:key] ? nil : value;
+}
+
 - (NSInteger)depthValueAtIndex:(NSInteger)index {
-    NSInteger values[] = {1,2,4,8,16,32};
+    NSInteger values[] = {1,2,4,8,16,32,B2VideoDepthMillionsFixed};
     return values[index];
 }
 

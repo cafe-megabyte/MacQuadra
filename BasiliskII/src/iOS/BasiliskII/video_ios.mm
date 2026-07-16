@@ -23,6 +23,7 @@ static uint8 bits_from_depth(const video_depth depth)
 
 // Supported video modes
 static vector<video_mode> VideoModes;
+static const NSInteger B2VideoDepthMillionsFixed = 33;
 
 static void release_frame_buffer(void *info, const void *data, size_t size)
 {
@@ -306,7 +307,9 @@ bool VideoInit(bool classic)
     [sharedScreenView reloadVideoModes];
 
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-    video_depth init_depth = DepthModeForPixelDepth((int)[defaults integerForKey:@"videoDepth"]);
+    NSInteger requestedDepth = [defaults integerForKey:@"videoDepth"];
+    BOOL fixedMillions = requestedDepth == B2VideoDepthMillionsFixed;
+    video_depth init_depth = DepthModeForPixelDepth(fixedMillions ? 32 : (int)requestedDepth);
     NSString *videoSizeString = [defaults stringForKey:@"videoSize"];
     NSString *videoSizePreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
     if (videoSizePreset == nil && videoSizeString == nil) {
@@ -315,11 +318,13 @@ bool VideoInit(bool classic)
     CGSize init_size = videoSizePreset != nil ? [sharedScreenView videoSizeForPreset:videoSizePreset] : CGSizeFromString(videoSizeString);
     CGSize only_size = videoSizePreset != nil ? init_size : CGSizeZero;
 
-    add_standard_modes(VDEPTH_1BIT, only_size);
-    add_standard_modes(VDEPTH_2BIT, only_size);
-    add_standard_modes(VDEPTH_4BIT, only_size);
-    add_standard_modes(VDEPTH_8BIT, only_size);
-    add_standard_modes(VDEPTH_16BIT, only_size);
+    if (!fixedMillions) {
+        add_standard_modes(VDEPTH_1BIT, only_size);
+        add_standard_modes(VDEPTH_2BIT, only_size);
+        add_standard_modes(VDEPTH_4BIT, only_size);
+        add_standard_modes(VDEPTH_8BIT, only_size);
+        add_standard_modes(VDEPTH_16BIT, only_size);
+    }
     add_standard_modes(VDEPTH_32BIT, only_size);
 
     if (VideoModes.empty()) {

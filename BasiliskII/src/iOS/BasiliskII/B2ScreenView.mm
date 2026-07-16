@@ -63,21 +63,20 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 }
 
 - (void)initVideoModes {
-    NSMutableArray<NSValue*> *videoModes = [[NSMutableArray alloc] initWithCapacity:8];
+    NSMutableArray<NSValue*> *videoModes = [[NSMutableArray alloc] initWithCapacity:9];
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
 
     // dynamic resolutions
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandard] to:videoModes];
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandardLandscape] to:videoModes];
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLarge] to:videoModes];
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLargeLandscape] to:videoModes];
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandard] to:videoModes allowDuplicate:YES];
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandardLandscape] to:videoModes allowDuplicate:YES];
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLarge] to:videoModes allowDuplicate:YES];
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLargeLandscape] to:videoModes allowDuplicate:YES];
     
     // default resolutions
-    [self addVideoMode:CGSizeMake(512, 384) to:videoModes];
-    [self addVideoMode:CGSizeMake(640, 480) to:videoModes];
-    [self addVideoMode:CGSizeMake(800, 600) to:videoModes];
-    [self addVideoMode:CGSizeMake(832, 624) to:videoModes];
-    [self addVideoMode:CGSizeMake(1024, 768) to:videoModes];
+    [self addVideoMode:CGSizeMake(640, 480) to:videoModes allowDuplicate:YES];
+    [self addVideoMode:CGSizeMake(832, 624) to:videoModes allowDuplicate:YES];
+    [self addVideoMode:CGSizeMake(1024, 768) to:videoModes allowDuplicate:YES];
+    [self addVideoMode:CGSizeMake(1280, 1024) to:videoModes allowDuplicate:YES];
     
     // custom size
     CGSize customSize = CGSizeFromString([defaults valueForKey:@"videoSize"]);
@@ -86,11 +85,15 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 }
 
 - (BOOL)addVideoMode:(CGSize)size to:(NSMutableArray<NSValue*>*)videoModes {
+    return [self addVideoMode:size to:videoModes allowDuplicate:NO];
+}
+
+- (BOOL)addVideoMode:(CGSize)size to:(NSMutableArray<NSValue*>*)videoModes allowDuplicate:(BOOL)allowDuplicate {
     if (size.width <= 0 || size.height <= 0) {
         return NO;
     }
     NSValue *value = [NSValue valueWithCGSize:size];
-    if (![videoModes containsObject:value]) {
+    if (allowDuplicate || ![videoModes containsObject:value]) {
         [videoModes addObject:value];
         return YES;
     }
