@@ -42,6 +42,10 @@
 #include "extfs.h"
 #include "emul_op.h"
 
+#ifdef B2_IOS
+extern void audio_play_rom_startup_sound(void);
+#endif
+
 #ifdef ENABLE_MON
 #include "mon.h"
 #endif
@@ -87,6 +91,9 @@ void EmulOp(uint16 opcode, M68kRegisters *r)
 			TimerReset();
 			EtherReset();
 			AudioReset();
+#ifdef B2_IOS
+			audio_play_rom_startup_sound();
+#endif
 
 			// Create BootGlobs at top of memory
 			Mac_memset(RAMBaseMac + RAMSize - 4096, 0, 4096);

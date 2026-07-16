@@ -202,8 +202,11 @@ static bool decode_easc_compressed_sound(const uint8 *header, uint32 dataSize, s
 	return !out.empty();
 }
 
-static void play_rom_startup_sound(void)
+void audio_play_rom_startup_sound(void)
 {
+	if (!audio_open || AudioStatus.sample_size == 0 || AudioStatus.channels == 0)
+		return;
+
 	uint32 eascDataSize = 0;
 	const uint8 *eascHeader = find_easc_startup_sound_header(&eascDataSize);
 	std::vector<uint8> pcm;
@@ -248,7 +251,7 @@ void AudioInit(void)
 	audio_frames_per_block = 4096;
     
 	open_audio(AudioStatus.sample_rate >> 16, AudioStatus.sample_size, AudioStatus.channels);
-	play_rom_startup_sound();
+	audio_play_rom_startup_sound();
 }
 
 
