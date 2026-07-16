@@ -30,9 +30,142 @@ static int8_t usb_to_adb_scancode[] = {
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1
 };
 
+static NSDictionary<NSString *, NSNumber *> *B2KeyCommandUSBKeyCodes(void) API_AVAILABLE(ios(13.4)) {
+    static NSDictionary<NSString *, NSNumber *> *keyCodes = nil;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        NSMutableDictionary<NSString *, NSNumber *> *codes = [NSMutableDictionary dictionary];
+        for (NSUInteger i = 0; i < 26; i++) {
+            codes[[NSString stringWithFormat:@"%c", (char)('a' + i)]] = @(4 + i);
+        }
+        for (NSUInteger i = 0; i < 9; i++) {
+            codes[[NSString stringWithFormat:@"%lu", (unsigned long)(i + 1)]] = @(30 + i);
+        }
+        [codes addEntriesFromDictionary:@{
+            @"0": @39,
+            @"\r": @40,
+            UIKeyInputEscape: @41,
+            @"\b": @42,
+            @"\t": @43,
+            @" ": @44,
+            @"-": @45,
+            @"=": @46,
+            @"[": @47,
+            @"]": @48,
+            @"\\": @49,
+            @";": @51,
+            @"'": @52,
+            @"`": @53,
+            @",": @54,
+            @".": @55,
+            @"/": @56,
+            UIKeyInputRightArrow: @79,
+            UIKeyInputLeftArrow: @80,
+            UIKeyInputDownArrow: @81,
+            UIKeyInputUpArrow: @82,
+            UIKeyInputPageUp: @75,
+            UIKeyInputPageDown: @78,
+            UIKeyInputHome: @74,
+            UIKeyInputEnd: @77,
+            UIKeyInputF1: @58,
+            UIKeyInputF2: @59,
+            UIKeyInputF3: @60,
+            UIKeyInputF4: @61,
+            UIKeyInputF5: @62,
+            UIKeyInputF6: @63,
+            UIKeyInputF7: @64,
+            UIKeyInputF8: @65,
+            UIKeyInputF9: @66,
+            UIKeyInputF10: @67,
+            UIKeyInputF11: @68,
+            UIKeyInputF12: @69,
+        }];
+        if (@available(iOS 15.0, *)) {
+            codes[UIKeyInputDelete] = @76;
+        }
+        keyCodes = codes.copy;
+    });
+    return keyCodes;
+}
+
 @implementation B2Application
 {
     BOOL physicalCapsLocked;
+}
+
+- (BOOL)canPerformAction:(SEL)action withSender:(id)sender {
+    if (action == @selector(handleBasiliskKeyCommand:)) {
+        return [B2AppDelegate sharedInstance].emulatorRunning;
+    }
+    return [super canPerformAction:action withSender:sender];
+}
+
+- (NSArray<UIKeyCommand *> *)keyCommands {
+    if (![B2AppDelegate sharedInstance].emulatorRunning) {
+        return nil;
+    }
+
+    if (@available(iOS 13.4, *)) {
+        static NSArray<UIKeyCommand *> *commands = nil;
+        static dispatch_once_t onceToken;
+        dispatch_once(&onceToken, ^{
+            NSArray<NSString *> *inputs = B2KeyCommandUSBKeyCodes().allKeys;
+            UIKeyModifierFlags requiredModifierFlags[] = {
+                UIKeyModifierCommand,
+                UIKeyModifierControl,
+                UIKeyModifierAlternate,
+                UIKeyModifierCommand | UIKeyModifierShift,
+                UIKeyModifierControl | UIKeyModifierShift,
+                UIKeyModifierAlternate | UIKeyModifierShift,
+                UIKeyModifierCommand | UIKeyModifierControl,
+                UIKeyModifierCommand | UIKeyModifierAlternate,
+                UIKeyModifierControl | UIKeyModifierAlternate,
+                UIKeyModifierCommand | UIKeyModifierControl | UIKeyModifierShift,
+                UIKeyModifierCommand | UIKeyModifierAlternate | UIKeyModifierShift,
+                UIKeyModifierControl | UIKeyModifierAlternate | UIKeyModifierShift,
+                UIKeyModifierCommand | UIKeyModifierControl | UIKeyModifierAlternate,
+                UIKeyModifierCommand | UIKeyModifierControl | UIKeyModifierAlternate | UIKeyModifierShift,
+            };
+            NSMutableArray<UIKeyCommand *> *generatedCommands = [NSMutableArray arrayWithCapacity:inputs.count * 14];
+            for (NSString *input in inputs) {
+                for (NSUInteger i = 0; i < sizeof(requiredModifierFlags) / sizeof(requiredModifierFlags[0]); i++) {
+                    UIKeyCommand *command = [UIKeyCommand keyCommandWithInput:input
+                                                                 modifierFlags:requiredModifierFlags[i]
+                                                                        action:@selector(handleBasiliskKeyCommand:)];
+                    if (@available(iOS 15.0, *)) {
+                        command.wantsPriorityOverSystemBehavior = YES;
+                    }
+                    [generatedCommands addObject:command];
+                }
+            }
+            commands = generatedCommands.copy;
+        });
+        return commands;
+    } else {
+        return nil;
+    }
+}
+
+- (void)handleBasiliskKeyCommand:(UIKeyCommand *)command API_AVAILABLE(ios(13.4)) {
+    if (![B2AppDelegate sharedInstance].emulatorRunning) {
+        return;
+    }
+
+    NSNumber *usbKeyCode = B2KeyCommandUSBKeyCodes()[command.input];
+    if (usbKeyCode == nil) {
+        return;
+    }
+
+    long keycode = usbKeyCode.longValue;
+    if (keycode < 0 || keycode >= sizeof(usb_to_adb_scancode)) {
+        return;
+    }
+
+    int scancode = usb_to_adb_scancode[keycode];
+    if (scancode >= 0) {
+        ADBKeyDown(scancode);
+        ADBKeyUp(scancode);
+    }
 }
 
 - (BOOL)handleKeyboardPress:(UIPress *)press keyDown:(BOOL)keyDown API_AVAILABLE(ios(13.4)) {
@@ -47,7 +180,7 @@ static int8_t usb_to_adb_scancode[] = {
     if (keycode >= 0 && keycode < sizeof(usb_to_adb_scancode)) {
         scancode = usb_to_adb_scancode[keycode];
     }
-    
+
     if (scancode == 57) {
         // caps lock
         if (keyDown && !physicalCapsLocked) {
