@@ -73,6 +73,13 @@ bool GetTypeAndCreatorForFileName(const char *path, uint32_t *type, uint32_t *cr
 
 static B2AppDelegate *sharedDelegate = nil;
 
+@interface B2AppDelegate ()
+
+- (void)requestSettingsPresentation;
+- (void)showBasiliskSettings:(id)sender;
+
+@end
+
 @implementation B2AppDelegate
 {
     NSTimer *redrawTimer, *pramTimer;
@@ -100,6 +107,27 @@ static B2AppDelegate *sharedDelegate = nil;
     [self populateDocumentsDirectory];
 
     return YES;
+}
+
+- (void)buildMenuWithBuilder:(id<UIMenuBuilder>)builder {
+    [super buildMenuWithBuilder:builder];
+
+    if (@available(iOS 13.0, *)) {
+        if (builder.system != UIMenuSystem.mainSystem) {
+            return;
+        }
+
+        UICommand *settingsCommand = [UICommand commandWithTitle:L(@"settings.root.title")
+                                                           image:nil
+                                                          action:@selector(showBasiliskSettings:)
+                                                    propertyList:nil];
+        UIMenu *settingsMenu = [UIMenu menuWithTitle:@""
+                                               image:nil
+                                          identifier:nil
+                                             options:UIMenuOptionsDisplayInline
+                                            children:@[settingsCommand]];
+        [builder insertSiblingMenu:settingsMenu afterMenuForIdentifier:UIMenuPreferences];
+    }
 }
 
 - (void)updateSettingsBundleVersionInfo {
@@ -191,11 +219,19 @@ static B2AppDelegate *sharedDelegate = nil;
 - (void)application:(UIApplication *)application performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL))completionHandler {
     BOOL success = NO;
     if ([shortcutItem.type isEqualToString:@"settings"]) {
-        settingsRequested = YES;
-        [self activateMainScreen];
+        [self requestSettingsPresentation];
         success = YES;
     }
     completionHandler(success);
+}
+
+- (void)showBasiliskSettings:(id)sender {
+    [self requestSettingsPresentation];
+}
+
+- (void)requestSettingsPresentation {
+    settingsRequested = YES;
+    [self activateMainScreen];
 }
 
 - (void)activateMainScreen {
