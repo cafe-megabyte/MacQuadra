@@ -16,6 +16,7 @@ BasiliskII/src/iOS
 - Improved interactive custom screen sizing with different preset-options
 - Dynamic screen sizes that are re-calculated on emulator start
 - New defaults
+- Higher max. RAM size (512 MB)
 - On-screen keyboard for German
 - German localization
 - Additional keyboard reveal gestures from side edges with one finger or pencil
