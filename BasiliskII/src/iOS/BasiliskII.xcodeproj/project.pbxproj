@@ -23,7 +23,6 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		2814CEF82DE876CF005024E7 /* DefaultSceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2814CEF72DE876CF005024E7 /* DefaultSceneDelegate.swift */; };
 		281509101CC57F81004ECA0A /* B2TouchScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */; };
 		281509131CC5836A004ECA0A /* B2TrackPad.mm in Sources */ = {isa = PBXBuildFile; fileRef = 281509121CC5836A004ECA0A /* B2TrackPad.mm */; };
 		281A4C9D1CA965B000A380A7 /* B2DocumentsSettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 281A4C9C1CA965B000A380A7 /* B2DocumentsSettingsController.m */; };
@@ -52,6 +51,7 @@
 		285033201B488EF90061C869 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 282A8E8D1A500A79008F8F71 /* Main.storyboard */; };
 		285033591B496B2B0061C869 /* B2SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 285033581B496B2B0061C869 /* B2SettingsViewController.m */; };
 		2850335F1B4B270A0061C869 /* B2VolumesSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2850335E1B4B270A0061C869 /* B2VolumesSettingsViewController.m */; };
+		2850D3003008BFBB00859E72 /* DefaultSceneDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 2850D2FF3008BFBB00859E72 /* DefaultSceneDelegate.m */; };
 		2854D53419AA4822001B7858 /* libresolv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2854D53319AA4822001B7858 /* libresolv.dylib */; };
 		2866A76730069070006D1FF3 /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 2866A76630069070006D1FF3 /* Settings.bundle */; };
 		287A15E11CAEF9B700D84E02 /* res.c in Sources */ = {isa = PBXBuildFile; fileRef = 287A15DF1CAEF9B700D84E02 /* res.c */; };
@@ -180,7 +180,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		2814CEF72DE876CF005024E7 /* DefaultSceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DefaultSceneDelegate.swift; sourceTree = "<group>"; };
 		2814CEF92DE876D2005024E7 /* BasiliskII-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BasiliskII-Bridging-Header.h"; sourceTree = "<group>"; };
 		2815090E1CC57F81004ECA0A /* B2TouchScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2TouchScreen.h; sourceTree = "<group>"; };
 		2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2TouchScreen.mm; sourceTree = "<group>"; };
@@ -202,6 +201,8 @@
 		285033581B496B2B0061C869 /* B2SettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = B2SettingsViewController.m; sourceTree = "<group>"; };
 		2850335D1B4B270A0061C869 /* B2VolumesSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2VolumesSettingsViewController.h; sourceTree = "<group>"; };
 		2850335E1B4B270A0061C869 /* B2VolumesSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = B2VolumesSettingsViewController.m; sourceTree = "<group>"; };
+		2850D2FE3008BFBA00859E72 /* DefaultSceneDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DefaultSceneDelegate.h; sourceTree = "<group>"; };
+		2850D2FF3008BFBB00859E72 /* DefaultSceneDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DefaultSceneDelegate.m; sourceTree = "<group>"; };
 		2854D53319AA4822001B7858 /* libresolv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libresolv.dylib; path = usr/lib/libresolv.dylib; sourceTree = SDKROOT; };
 		2866A76330068CAC006D1FF3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2866A76430068CAC006D1FF3 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
@@ -484,7 +485,6 @@
 		28621F1D19ABADC2009615FC /* UI */ = {
 			isa = PBXGroup;
 			children = (
-				2814CEF72DE876CF005024E7 /* DefaultSceneDelegate.swift */,
 				282A8E8D1A500A79008F8F71 /* Main.storyboard */,
 				2898F46918CB719600FE7806 /* B2ViewController.h */,
 				2898F46A18CB719600FE7806 /* B2ViewController.mm */,
@@ -500,6 +500,8 @@
 				28CC0DED1A500A380040A788 /* Launch Screen.xib */,
 				288C50181B9CADF900EA91F3 /* Localizable.strings */,
 				2814CEF92DE876D2005024E7 /* BasiliskII-Bridging-Header.h */,
+				2850D2FE3008BFBA00859E72 /* DefaultSceneDelegate.h */,
+				2850D2FF3008BFBB00859E72 /* DefaultSceneDelegate.m */,
 			);
 			name = UI;
 			sourceTree = "<group>";
@@ -1043,6 +1045,7 @@
 				2898F51A18CB76C000FE7806 /* basilisk_glue.cpp in Sources */,
 				28B5C12618D27536006583B9 /* audio_ios_impl.cpp in Sources */,
 				288C501D1B9CD0A000EA91F3 /* B2VolumeInfoViewController.m in Sources */,
+				2850D3003008BFBB00859E72 /* DefaultSceneDelegate.m in Sources */,
 				2898F49C18CB72C100FE7806 /* audio.cpp in Sources */,
 				2898F53518CB76F100FE7806 /* fpu_uae.cpp in Sources */,
 				2898F55118CB879400FE7806 /* prefs_ios.mm in Sources */,
@@ -1066,7 +1069,6 @@
 				288455CE1CBAF7C7004EF2E6 /* KBKey.m in Sources */,
 				281A4C9D1CA965B000A380A7 /* B2DocumentsSettingsController.m in Sources */,
 				2898F55518CB879400FE7806 /* xpram_ios.mm in Sources */,
-				2814CEF82DE876CF005024E7 /* DefaultSceneDelegate.swift in Sources */,
 				288C50171B9C6E8B00EA91F3 /* vm_alloc.cpp in Sources */,
 				288455CF1CBAF7C7004EF2E6 /* KBKeyboardLayout.m in Sources */,
 				2898F49B18CB72C100FE7806 /* adb.cpp in Sources */,

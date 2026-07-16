@@ -102,7 +102,7 @@
 					<key>UISceneConfigurationName</key>
 					<string>Default</string>
 					<key>UISceneDelegateClassName</key>
-					<string>$(PRODUCT_MODULE_NAME).DefaultSceneDelegate</string>
+					<string>DefaultSceneDelegate</string>
 				</dict>
 			</array>
 		</dict>
