@@ -13,6 +13,7 @@ BasiliskII/src/iOS
 - Automatic emulator boot once a ROM and boot disk are available in the file system
 - Play sound at startup decoded from ROM file
 - Optional private ZIP download URLs for a ROM file and disk image with on-the-fly deflate
+- Make copy before first use of a disk image + restore option in Drive settings, strictly using APFS copy-on-write
 - Improved interactive custom screen sizing with different preset-options
 - Zoom and pinch to enlarge and move the view
 - New keyboard reveal gestures than don't interfere with the zoom gestures (from side edges with one finger or pencil)

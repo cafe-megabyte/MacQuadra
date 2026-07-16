@@ -10,6 +10,7 @@
 #import "B2VolumeInfoViewController.h"
 #import "NSUserDefaults+B2Accessors.h"
 #import "B2AppDelegate.h"
+#import "B2DiskImageSnapshots.h"
 
 NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     switch (volumeType) {
@@ -269,6 +270,44 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     }
 }
 
+- (void)askResetDiskImage:(NSString *)imageName {
+    if ([B2AppDelegate sharedInstance].emulatorRunning) {
+        [[B2AppDelegate sharedInstance] showAlertWithTitle:L(@"settings.volumes.reset.running.title") message:L(@"settings.volumes.reset.running.message")];
+        return;
+    }
+
+    NSString *imageFileName = [imageName hasPrefix:@"*"] ? [imageName substringFromIndex:1] : imageName;
+    UIAlertController *alertController = [UIAlertController alertControllerWithTitle:L(@"settings.volumes.reset.confirmation.title") message:LX(@"settings.volumes.reset.confirmation.message", imageFileName) preferredStyle:UIAlertControllerStyleAlert];
+    [alertController addAction:[UIAlertAction actionWithTitle:L(@"settings.volumes.reset.confirmation.reset") style:UIAlertActionStyleDestructive handler:^(__unused UIAlertAction *action) {
+        [self resetDiskImage:imageName];
+    }]];
+    [alertController addAction:[UIAlertAction actionWithTitle:L(@"misc.cancel") style:UIAlertActionStyleCancel handler:nil]];
+    [self presentViewController:alertController animated:YES completion:nil];
+}
+
+- (void)resetDiskImage:(NSString *)imageName {
+    [B2DiskImageSnapshots restoreSnapshotForVolumePath:imageName documentsPath:[B2AppDelegate sharedInstance].documentsPath completion:^(BOOL success, NSError * _Nullable error) {
+        if (success) {
+            [self.tableView reloadData];
+        } else {
+            [[B2AppDelegate sharedInstance] showAlertWithTitle:L(@"settings.volumes.reset.error.title") message:error.localizedDescription];
+        }
+    }];
+}
+
+- (void)resetDiskImageFromButton:(UIButton *)sender {
+    CGPoint point = [sender convertPoint:CGPointZero toView:self.tableView];
+    NSIndexPath *indexPath = [self.tableView indexPathForRowAtPoint:point];
+    if (indexPath == nil) {
+        return;
+    }
+
+    NSMutableArray *source = [self volumesOfType:indexPath.section];
+    if (indexPath.row < source.count) {
+        [self askResetDiskImage:source[indexPath.row]];
+    }
+}
+
 - (NSMutableArray*)availableDiskImages {
     NSMutableArray *availableDiskImages = [B2AppDelegate sharedInstance].availableDiskImages.mutableCopy;
     NSMutableArray *usedDiskImages = diskVolumes.mutableCopy;
@@ -326,12 +365,26 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     if (indexPath.row < source.count) {
         // disk image
         cell = [tableView dequeueReusableCellWithIdentifier:@"disk" forIndexPath:indexPath];
-        cell.textLabel.text = [self titleForVolume:source[indexPath.row] withType:volumeType];
-        cell.detailTextLabel.text = [self detailForVolume:source[indexPath.row] withType:volumeType];
+        NSString *volumePath = source[indexPath.row];
+        cell.textLabel.text = [self titleForVolume:volumePath withType:volumeType];
+        cell.detailTextLabel.text = [self detailForVolume:volumePath withType:volumeType];
         cell.imageView.image = [self imageForVolumeType:volumeType];
+        if (!tableView.editing && volumeType != B2VolumeTypeUnused && [B2DiskImageSnapshots snapshotExistsForVolumePath:volumePath documentsPath:[B2AppDelegate sharedInstance].documentsPath]) {
+            UIButton *resetButton = [UIButton buttonWithType:UIButtonTypeSystem];
+            [resetButton setTitle:L(@"settings.volumes.reset") forState:UIControlStateNormal];
+            [resetButton sizeToFit];
+            [resetButton addTarget:self action:@selector(resetDiskImageFromButton:) forControlEvents:UIControlEventTouchUpInside];
+            cell.accessoryView = resetButton;
+            cell.accessoryType = UITableViewCellAccessoryNone;
+        } else {
+            cell.accessoryView = nil;
+            cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        }
     } else {
         cell = [tableView dequeueReusableCellWithIdentifier:@"default" forIndexPath:indexPath];
         cell.textLabel.text = L(@"settings.volumes.create");
+        cell.accessoryView = nil;
+        cell.accessoryType = UITableViewCellAccessoryNone;
     }
     return cell;
 }

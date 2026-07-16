@@ -29,6 +29,17 @@
 "settings.volumes.delete.confirmation.title" = "Delete Disk Image";
 "settings.volumes.delete.confirmation.message" = "Are you sure you want to delete %@? This operation cannot be undone.";
 "settings.volumes.delete.confirmation.delete" = "Delete";
+"settings.volumes.reset" = "Reset";
+"settings.volumes.reset.confirmation.title" = "Reset Disk Image";
+"settings.volumes.reset.confirmation.message" = "Are you sure you want to reset %@? All changes since the first use will be lost.";
+"settings.volumes.reset.confirmation.reset" = "Reset";
+"settings.volumes.reset.error.title" = "Could not reset disk image";
+"settings.volumes.reset.error.noSnapshot" = "No snapshot exists for this disk image.";
+"settings.volumes.reset.error.snapshotSource" = "Disk images in the snapshot folder cannot be reset.";
+"settings.volumes.reset.running.title" = "Emulator Running";
+"settings.volumes.reset.running.message" = "Quit the emulator before resetting a disk image.";
+"settings.volumes.snapshot.prepare.error.title" = "Could not prepare disk image snapshots";
+"settings.volumes.snapshot.prepare.error.directory" = "A folder already exists where the disk image snapshot should be created.";
 
 "settings.gfx.size" = "Screen Resolution";
 "settings.gfx.size.item" = "%@ × %@";

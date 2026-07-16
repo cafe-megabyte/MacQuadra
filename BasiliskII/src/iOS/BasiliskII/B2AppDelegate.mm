@@ -11,6 +11,7 @@
 #import "B2ScreenView.h"
 #import "B2DocumentsSettingsController.h"
 #import "B2PrivateResources.h"
+#import "B2DiskImageSnapshots.h"
 #import "KBKeyboardView.h"
 
 #include "sysdeps.h"
@@ -114,6 +115,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     NSMutableArray *videoModes;
     BOOL settingsRequested;
     BOOL activationInProgress;
+    BOOL snapshotPreparationInProgress;
 }
 
 + (instancetype)sharedInstance {
@@ -364,6 +366,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     [self addHiddenFiles:[defaults objectForKey:@"floppy"] relativeToPath:baseDir];
     [self addHiddenFiles:[defaults objectForKey:@"cdrom"] relativeToPath:baseDir];
     [self addHiddenFiles:[self.documentsPath stringByAppendingPathComponent:@"Inbox"] relativeToPath:baseDir];
+    [self addHiddenFiles:[B2DiskImageSnapshots snapshotsPathInDocumentsPath:self.documentsPath] relativeToPath:baseDir];
 }
 
 - (void)addHiddenFiles:(id)paths relativeToPath:(NSString*)baseDir {
@@ -451,6 +454,22 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 }
 
 - (void)startEmulator {
+    if (emulThread != nil || snapshotPreparationInProgress) {
+        return;
+    }
+
+    snapshotPreparationInProgress = YES;
+    [B2DiskImageSnapshots ensureSnapshotsForConfiguredVolumesInDocumentsPath:self.documentsPath completion:^(BOOL success, NSError * _Nullable error) {
+        self->snapshotPreparationInProgress = NO;
+        if (success) {
+            [self startEmulatorAfterSnapshotPreparation];
+        } else {
+            [self showAlertWithTitle:L(@"settings.volumes.snapshot.prepare.error.title") message:error.localizedDescription];
+        }
+    }];
+}
+
+- (void)startEmulatorAfterSnapshotPreparation {
     // create threads and timer
     if (emulThread == nil) {
         [self initExtFS:self.documentsPath];

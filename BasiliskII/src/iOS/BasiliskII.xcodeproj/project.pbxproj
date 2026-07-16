@@ -126,6 +126,7 @@
 		28B5C11818D2499D006583B9 /* readcpu.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2898F51718CB76C000FE7806 /* readcpu.cpp */; };
 		28B5C11918D249B1006583B9 /* cpudefs.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2898F53918CB866900FE7806 /* cpudefs.cpp */; };
 		28B5C12618D27536006583B9 /* audio_ios_impl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 28B5C12418D27536006583B9 /* audio_ios_impl.cpp */; };
+		28CB0BF03008F9720092596D /* B2DiskImageSnapshots.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28CB0BEF3008F9720092596D /* B2DiskImageSnapshots.mm */; };
 		28CC0DEE1A500A380040A788 /* Launch Screen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 28CC0DED1A500A380040A788 /* Launch Screen.xib */; };
 		28D5559F1C8E3BF800059DDE /* B2GraphicsAndSoundSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 28D5559E1C8E3BF800059DDE /* B2GraphicsAndSoundSettingsViewController.m */; };
 		28D555A21C934F0400059DDE /* B2NetworkSettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 28D555A11C934F0400059DDE /* B2NetworkSettingsViewController.m */; };
@@ -396,6 +397,8 @@
 		28B5C11A18D249D8006583B9 /* table68k */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = table68k; sourceTree = "<group>"; };
 		28B5C12418D27536006583B9 /* audio_ios_impl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audio_ios_impl.cpp; sourceTree = "<group>"; };
 		28B5C12518D27536006583B9 /* audio_ios_impl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audio_ios_impl.h; sourceTree = "<group>"; };
+		28CB0BEE3008F9460092596D /* B2DiskImageSnapshots.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = B2DiskImageSnapshots.h; sourceTree = "<group>"; };
+		28CB0BEF3008F9720092596D /* B2DiskImageSnapshots.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = B2DiskImageSnapshots.mm; sourceTree = "<group>"; };
 		28CC0DED1A500A380040A788 /* Launch Screen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "Launch Screen.xib"; sourceTree = "<group>"; };
 		28D5559D1C8E3BF800059DDE /* B2GraphicsAndSoundSettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2GraphicsAndSoundSettingsViewController.h; sourceTree = "<group>"; };
 		28D5559E1C8E3BF800059DDE /* B2GraphicsAndSoundSettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = B2GraphicsAndSoundSettingsViewController.m; sourceTree = "<group>"; };
@@ -614,6 +617,8 @@
 				287A15DD1CAEF9B700D84E02 /* libres */,
 				2898F45818CB719600FE7806 /* Supporting Files */,
 				2866A76630069070006D1FF3 /* Settings.bundle */,
+				28CB0BEE3008F9460092596D /* B2DiskImageSnapshots.h */,
+				28CB0BEF3008F9720092596D /* B2DiskImageSnapshots.mm */,
 			);
 			name = iOS;
 			path = iOS/BasiliskII;
@@ -1066,6 +1071,7 @@
 				2898F4A718CB72C100FE7806 /* slot_rom.cpp in Sources */,
 				2898F53E18CB866900FE7806 /* cpuemu.cpp in Sources */,
 				2898F4A318CB72C100FE7806 /* rom_patches.cpp in Sources */,
+				28CB0BF03008F9720092596D /* B2DiskImageSnapshots.mm in Sources */,
 				288455CE1CBAF7C7004EF2E6 /* KBKey.m in Sources */,
 				281A4C9D1CA965B000A380A7 /* B2DocumentsSettingsController.m in Sources */,
 				2898F55518CB879400FE7806 /* xpram_ios.mm in Sources */,

@@ -29,6 +29,17 @@
 "settings.volumes.delete.confirmation.title" = "Festplattenabbild löschen";
 "settings.volumes.delete.confirmation.message" = "Möchten Sie %@ wirklich löschen? Dieser Vorgang kann nicht rückgängig gemacht werden.";
 "settings.volumes.delete.confirmation.delete" = "Löschen";
+"settings.volumes.reset" = "Zurücksetzen";
+"settings.volumes.reset.confirmation.title" = "Festplattenabbild zurücksetzen";
+"settings.volumes.reset.confirmation.message" = "Möchten Sie %@ wirklich zurücksetzen? Alle Änderungen seit der ersten Verwendung gehen verloren.";
+"settings.volumes.reset.confirmation.reset" = "Zurücksetzen";
+"settings.volumes.reset.error.title" = "Festplattenabbild konnte nicht zurückgesetzt werden";
+"settings.volumes.reset.error.noSnapshot" = "Für dieses Festplattenabbild ist kein Snapshot vorhanden.";
+"settings.volumes.reset.error.snapshotSource" = "Festplattenabbilder im Snapshot-Ordner können nicht zurückgesetzt werden.";
+"settings.volumes.reset.running.title" = "Emulator läuft";
+"settings.volumes.reset.running.message" = "Beenden Sie den Emulator, bevor Sie ein Festplattenabbild zurücksetzen.";
+"settings.volumes.snapshot.prepare.error.title" = "Snapshots für Festplattenabbilder konnten nicht vorbereitet werden";
+"settings.volumes.snapshot.prepare.error.directory" = "An der Stelle des Snapshots existiert bereits ein Ordner.";
 
 "settings.gfx.size" = "Bildschirmauflösung";
 "settings.gfx.size.item" = "%@ × %@";
