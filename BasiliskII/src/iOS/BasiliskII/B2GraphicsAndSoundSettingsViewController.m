@@ -31,7 +31,7 @@ typedef enum : NSInteger {
 }
 
 - (NSArray<NSString *> *)dynamicVideoSizePresets {
-    return @[B2VideoSizePresetStandard, B2VideoSizePresetLarge, B2VideoSizePresetStandardLandscape, B2VideoSizePresetLargeLandscape];
+    return @[B2VideoSizePresetStandard, B2VideoSizePresetStandardLandscape, B2VideoSizePresetLarge, B2VideoSizePresetLargeLandscape];
 }
 
 - (NSString *)localizationKeyForDynamicVideoSizePreset:(NSString *)preset {

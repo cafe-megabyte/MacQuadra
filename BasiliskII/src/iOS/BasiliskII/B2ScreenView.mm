@@ -68,8 +68,8 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 
     // dynamic resolutions
     [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandard] to:videoModes];
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLarge] to:videoModes];
     [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandardLandscape] to:videoModes];
+    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLarge] to:videoModes];
     [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLargeLandscape] to:videoModes];
     
     // default resolutions
