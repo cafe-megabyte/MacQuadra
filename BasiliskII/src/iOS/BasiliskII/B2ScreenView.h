@@ -24,6 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)setViewportScale:(CGFloat)viewportScale anchoredAtPoint:(CGPoint)anchorPoint;
 - (void)panViewportByTranslation:(CGPoint)translation;
 - (void)resetViewportAnimated:(BOOL)animated;
+- (void)refreshLayout;
+- (void)restoreActiveLayoutFrameIfNeeded;
+- (void)reloadVideoModes;
 - (CGSize)videoSizeForPreset:(NSString *)preset;
 - (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds;
 - (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize;

@@ -192,9 +192,11 @@ bool IOS_monitor::update_image()
 void IOS_monitor::video_close()
 {
 	D(bug("video_close()\n"));
-    
-    CGColorSpaceRelease(colorSpace);
-    CGDataProviderRelease(provider);
+
+    if (colorSpace != nil)
+        CGColorSpaceRelease(colorSpace);
+    if (provider != nil)
+        CGDataProviderRelease(provider);
     free(the_buffer);
     colorSpace = nil;
     provider = nil;
@@ -287,6 +289,7 @@ static int32 frame_skip;
 bool VideoInit(bool classic)
 {
     frame_skip = PrefsFindInt32("frameskip");
+    [sharedScreenView reloadVideoModes];
     add_standard_modes(VDEPTH_1BIT);
     add_standard_modes(VDEPTH_2BIT);
     add_standard_modes(VDEPTH_4BIT);
@@ -337,6 +340,13 @@ void VideoInterrupt(void)
 
 void VideoExit(void)
 {
+    if (mainMonitor != NULL) {
+        mainMonitor->video_close();
+        delete mainMonitor;
+        mainMonitor = NULL;
+    }
+    VideoMonitors.clear();
+    VideoModes.clear();
 }
 
 void VideoQuitFullScreen(void)

@@ -29,8 +29,11 @@
 #include <mach/mach_time.h>
 #include <pthread.h>
 
+extern bool quit_program;
+
 static NSMutableSet *hiddenExtFSFiles = nil;
 static NSString * const B2KeyboardLayoutsReadmeFileName = @"README.txt";
+static BOOL coldRestartRequestedForMacReset = NO;
 
 bool ShouldHideExtFSFile(const char *path) {
     return [hiddenExtFSFiles containsObject:@(path)] ? true : false;
@@ -72,6 +75,28 @@ bool GetTypeAndCreatorForFileName(const char *path, uint32_t *type, uint32_t *cr
 }
 
 static B2AppDelegate *sharedDelegate = nil;
+
+extern "C" bool B2ShouldColdRestartOnMacReset(void)
+{
+    @autoreleasepool {
+        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+        NSString *videoSizePreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
+        NSString *videoSizeString = [defaults stringForKey:@"videoSize"];
+        return videoSizePreset != nil || videoSizeString == nil;
+    }
+}
+
+extern "C" void B2RequestColdRestartOnMacReset(void)
+{
+    coldRestartRequestedForMacReset = YES;
+}
+
+extern "C" bool B2ConsumeColdRestartOnMacReset(void)
+{
+    BOOL requested = coldRestartRequestedForMacReset;
+    coldRestartRequestedForMacReset = NO;
+    return requested;
+}
 
 @interface B2AppDelegate ()
 
@@ -251,6 +276,9 @@ static B2AppDelegate *sharedDelegate = nil;
     }
 
     if (activationInProgress || self.emulatorRunning) {
+        if (self.emulatorRunning) {
+            [sharedScreenView refreshLayout];
+        }
         return;
     }
 
@@ -440,27 +468,44 @@ static B2AppDelegate *sharedDelegate = nil;
 
 - (void)emulThread {
     @autoreleasepool {
-        if (!InitEmulator()) {
-            NSLog(@"Could not init emulator");
-            emulThread = nil;
-            tickThread = nil;
-            [pramTimer invalidate];
-            pramTimer = nil;
-            dispatch_async(dispatch_get_main_queue(), ^{
-                if (self.window.rootViewController.presentedViewController == nil) {
-                    [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
-                }
-            });
-            return;
+        BOOL tickThreadStarted = NO;
+
+        for (;;) {
+            if (!InitEmulator()) {
+                NSLog(@"Could not init emulator");
+                emulThread = nil;
+                tickThread = nil;
+                [pramTimer invalidate];
+                pramTimer = nil;
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    if (self.window.rootViewController.presentedViewController == nil) {
+                        [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+                    }
+                });
+                return;
+            }
+
+            [self pramBackup:nil];
+            _emulatorRunning = YES;
+            if (!tickThreadStarted) {
+                tickThreadStarted = YES;
+                [tickThread start];
+            }
+
+            quit_program = false;
+            Start680x0();
+            _emulatorRunning = NO;
+
+            if (B2ConsumeColdRestartOnMacReset()) {
+                [self pramBackup:nil];
+                QuitEmuNoExit();
+                [self initEmulator];
+                continue;
+            }
+
+            NSLog(@"Emulator exited normally");
+            break;
         }
-        
-        [self pramBackup:nil];
-        _emulatorRunning = YES;
-        [tickThread start];
-        
-        Start680x0();
-        _emulatorRunning = NO;
-        NSLog(@"Emulator exited normally");
     }
 }
 
@@ -489,6 +534,11 @@ static B2AppDelegate *sharedDelegate = nil;
     uint64_t tick_time = 16666667ULL * timebase_info.denom / timebase_info.numer;
     int ticks = 0;
     for (;;) {
+        if (!self.emulatorRunning) {
+            mach_wait_until(mach_absolute_time() + tick_time);
+            continue;
+        }
+
         if (ROMVersion != ROM_VERSION_CLASSIC || HasMacStarted() ) {
             SetInterruptFlag(INTFLAG_60HZ);
             TriggerInterrupt();

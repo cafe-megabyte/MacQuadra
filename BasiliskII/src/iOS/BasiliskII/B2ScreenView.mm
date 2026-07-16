@@ -25,6 +25,9 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     UIGestureRecognizer *pinchGestureRecognizer;
     CGSize initialSize;
     CGRect baseScreenBounds;
+    CGRect activeScreenViewFrame;
+    BOOL hasActiveScreenLayout;
+    BOOL activeLayoutWantsMargins;
 }
 
 - (void)awakeFromNib {
@@ -104,6 +107,17 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     _videoModes = [NSArray arrayWithArray:videoModes];
 }
 
+- (void)reloadVideoModes {
+    if (![NSThread isMainThread]) {
+        dispatch_sync(dispatch_get_main_queue(), ^{
+            [self reloadVideoModes];
+        });
+        return;
+    }
+
+    [self initVideoModes];
+}
+
 - (void)layoutSubviews {
     [super layoutSubviews];
     static dispatch_once_t onceToken;
@@ -112,6 +126,11 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     });
 
     if (CGSizeEqualToSize(_screenSize, CGSizeZero)) {
+        return;
+    }
+
+    if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive && hasActiveScreenLayout) {
+        [self restoreActiveLayoutFrameIfNeeded];
         return;
     }
 
@@ -149,13 +168,18 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     }
     _viewportOffset = [self clampedViewportOffset:_viewportOffset scale:_viewportScale];
     CGRect screenBounds = [self screenBoundsForViewportScale:_viewportScale offset:_viewportOffset];
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
     videoLayer.frame = screenBounds;
+    [CATransaction commit];
     _screenBounds = screenBounds;
     _screenBounds.origin.y += self.frame.origin.y;
+    hasActiveScreenLayout = YES;
     BOOL scaleIsIntegral = (floor(screenScale) == screenScale);
     if (scaleIsIntegral) screenFilter = kCAFilterNearest;
     videoLayer.magnificationFilter = screenFilter;
     videoLayer.minificationFilter = screenFilter;
+    activeScreenViewFrame = self.frame;
 }
 
 - (void)setScreenSize:(CGSize)screenSize {
@@ -220,6 +244,24 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     }
 }
 
+- (void)refreshLayout {
+    [UIView performWithoutAnimation:^{
+        [self setNeedsUpdateConstraints];
+        [self setNeedsLayout];
+        [self layoutIfNeeded];
+    }];
+}
+
+- (void)restoreActiveLayoutFrameIfNeeded {
+    if (!hasActiveScreenLayout || CGRectIsEmpty(activeScreenViewFrame) || CGRectEqualToRect(self.frame, activeScreenViewFrame)) {
+        return;
+    }
+
+    [UIView performWithoutAnimation:^{
+        self.frame = self->activeScreenViewFrame;
+    }];
+}
+
 - (CGRect)screenBoundsForViewportScale:(CGFloat)scale offset:(CGPoint)offset {
     if (scale <= 1.0 || CGRectIsEmpty(baseScreenBounds)) {
         return baseScreenBounds;
@@ -273,7 +315,13 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 }
 
 - (void)updateConstraints {
-    [super updateConstraints];
+    if ([UIApplication sharedApplication].applicationState != UIApplicationStateActive && hasActiveScreenLayout) {
+        [self applyScreenViewConstraintsWantsMargins:activeLayoutWantsMargins];
+        [self restoreActiveLayoutFrameIfNeeded];
+        [super updateConstraints];
+        return;
+    }
+
     CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
@@ -281,6 +329,32 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     CGFloat scale = _screenSize.height / (self.superview.bounds.size.height * nativeScale);
     BOOL matchesDynamicLayoutPreset = [self screenSizeMatchesEdgePreset:_screenSize] || [self screenSizeMatchesSafeAreaPreset:_screenSize];
     BOOL wantsMargins = !matchesDynamicLayoutPreset && scale > 1.0 && floor(scale) != scale;
+    activeLayoutWantsMargins = wantsMargins;
+    [self applyScreenViewConstraintsWantsMargins:wantsMargins];
+    [super updateConstraints];
+}
+
+- (void)applyScreenViewConstraintsWantsMargins:(BOOL)wantsMargins {
+    BOOL marginConstraintsNeedUpdate = NO;
+    for (NSLayoutConstraint *constraint in self.marginConstraints) {
+        if (constraint.active != wantsMargins) {
+            marginConstraintsNeedUpdate = YES;
+            break;
+        }
+    }
+
+    BOOL fullScreenConstraintsNeedUpdate = NO;
+    for (NSLayoutConstraint *constraint in self.fullScreenConstraints) {
+        if (constraint.active == wantsMargins) {
+            fullScreenConstraintsNeedUpdate = YES;
+            break;
+        }
+    }
+
+    if (!marginConstraintsNeedUpdate && !fullScreenConstraintsNeedUpdate) {
+        return;
+    }
+
     if (wantsMargins) {
         [NSLayoutConstraint deactivateConstraints:self.fullScreenConstraints];
         [NSLayoutConstraint activateConstraints:self.marginConstraints];

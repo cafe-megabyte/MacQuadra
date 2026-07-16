@@ -44,6 +44,9 @@
 
 #ifdef B2_IOS
 extern void audio_play_rom_startup_sound(void);
+extern "C" bool B2ShouldColdRestartOnMacReset(void);
+extern "C" void B2RequestColdRestartOnMacReset(void);
+extern void m68k_emulop_return(void);
 #endif
 
 #ifdef ENABLE_MON
@@ -87,6 +90,13 @@ void EmulOp(uint16 opcode, M68kRegisters *r)
 			break;
 
 		case M68K_EMUL_OP_RESET: {			// MacOS reset
+#ifdef B2_IOS
+			if (B2ShouldColdRestartOnMacReset() && HasMacStarted()) {
+				B2RequestColdRestartOnMacReset();
+				m68k_emulop_return();
+				break;
+			}
+#endif
 			D(bug("*** RESET ***\n"));
 			TimerReset();
 			EtherReset();

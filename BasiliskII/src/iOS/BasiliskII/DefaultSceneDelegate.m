@@ -8,6 +8,7 @@
 
 #import "DefaultSceneDelegate.h"
 #import "B2AppDelegate.h"
+#import "B2ScreenView.h"
 
 API_AVAILABLE(ios(13.0))
 @interface DefaultSceneDelegate ()
@@ -66,11 +67,17 @@ API_AVAILABLE(ios(13.0))
 }
 
 - (void)sceneDidEnterBackground:(UIScene *)scene {
+}
 
+- (void)sceneWillEnterForeground:(UIScene *)scene {
+    [sharedScreenView restoreActiveLayoutFrameIfNeeded];
 }
 
 - (void)sceneDidBecomeActive:(UIScene *)scene {
-    [B2AppDelegate.sharedInstance activateMainScreen];
+    [sharedScreenView restoreActiveLayoutFrameIfNeeded];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [B2AppDelegate.sharedInstance activateMainScreen];
+    });
 }
 
 - (void)windowScene:(UIWindowScene *)windowScene performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL succeeded))completionHandler {
