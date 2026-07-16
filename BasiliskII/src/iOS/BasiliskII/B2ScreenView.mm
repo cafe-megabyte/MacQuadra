@@ -21,10 +21,12 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 @implementation B2ScreenView
 {
     CGImageRef screenImage;
+    CALayer *viewportClippingLayer;
     CALayer *videoLayer;
     UIGestureRecognizer *pinchGestureRecognizer;
     CGSize initialSize;
     CGRect baseScreenBounds;
+    CGRect viewportClampingBounds;
     CGRect activeScreenViewFrame;
     BOOL hasActiveScreenLayout;
     BOOL activeLayoutWantsMargins;
@@ -34,11 +36,14 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     [super awakeFromNib];
     sharedScreenView = self;
     _viewportScale = 1.0;
+    viewportClippingLayer = [CALayer layer];
+    viewportClippingLayer.masksToBounds = YES;
+    [self.layer addSublayer:viewportClippingLayer];
     videoLayer = [CALayer layer];
     NSString *screenFilter = [[NSUserDefaults standardUserDefaults] stringForKey:@"screenFilter"];
     videoLayer.magnificationFilter = screenFilter;
     videoLayer.minificationFilter = screenFilter;
-    [self.layer addSublayer:videoLayer];
+    [viewportClippingLayer addSublayer:videoLayer];
     self.clipsToBounds = YES;
     [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:@"screenFilter" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld context:NULL];
 }
@@ -169,11 +174,52 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
         // move under multitasking indicator on iPad
         baseScreenBounds.origin.y += 30;
     }
+    CGRect safeBounds = [self safeViewportBoundsWithinBounds:self.bounds];
+    BOOL baseScreenFitsSafeAreaLeft = CGRectGetMinX(baseScreenBounds) >= CGRectGetMinX(safeBounds);
+    BOOL baseScreenFitsSafeAreaRight = CGRectGetMaxX(baseScreenBounds) <= CGRectGetMaxX(safeBounds);
+    BOOL baseScreenFitsSafeAreaTop = CGRectGetMinY(baseScreenBounds) >= CGRectGetMinY(safeBounds);
+    BOOL baseScreenFitsSafeAreaBottom = CGRectGetMaxY(baseScreenBounds) <= CGRectGetMaxY(safeBounds);
+    CGFloat clampingMinX = baseScreenFitsSafeAreaLeft ? CGRectGetMinX(safeBounds) : CGRectGetMinX(self.bounds);
+    CGFloat clampingMaxX = baseScreenFitsSafeAreaRight ? CGRectGetMaxX(safeBounds) : CGRectGetMaxX(self.bounds);
+    CGFloat clampingMinY = baseScreenFitsSafeAreaTop ? CGRectGetMinY(safeBounds) : CGRectGetMinY(self.bounds);
+    CGFloat clampingMaxY = baseScreenFitsSafeAreaBottom ? CGRectGetMaxY(safeBounds) : CGRectGetMaxY(self.bounds);
+    viewportClampingBounds = CGRectMake(clampingMinX,
+                                        clampingMinY,
+                                        clampingMaxX - clampingMinX,
+                                        clampingMaxY - clampingMinY);
+    [self updateViewportClippingMask];
+    NSLog(@"B2ScreenView viewport layout: screenSize=%@ bounds=%@ superviewBounds=%@ safeInsets=%@ superviewSafeInsets=%@ safeBounds=%@ viewBounds=%@ baseScreenBounds=%@ usesEdgePreset=%d usesSafePreset=%d fitsSafeAreaLeft=%d fitsSafeAreaRight=%d fitsSafeAreaTop=%d fitsSafeAreaBottom=%d clampBounds=%@ clipsToClampBounds=%d",
+          NSStringFromCGSize(_screenSize),
+          NSStringFromCGRect(self.bounds),
+          NSStringFromCGRect(self.superview.bounds),
+          NSStringFromUIEdgeInsets([self safeAreaInsetsForLayout]),
+          NSStringFromUIEdgeInsets([self safeAreaInsetsForPresetLayout]),
+          NSStringFromCGRect(safeBounds),
+          NSStringFromCGRect(viewBounds),
+          NSStringFromCGRect(baseScreenBounds),
+          usesEdgeLayoutBounds,
+          usesSafeLayoutBounds,
+          baseScreenFitsSafeAreaLeft,
+          baseScreenFitsSafeAreaRight,
+          baseScreenFitsSafeAreaTop,
+          baseScreenFitsSafeAreaBottom,
+          NSStringFromCGRect(viewportClampingBounds),
+          !CGRectEqualToRect(viewportClampingBounds, self.bounds));
     _viewportOffset = [self clampedViewportOffset:_viewportOffset scale:_viewportScale];
     CGRect screenBounds = [self screenBoundsForViewportScale:_viewportScale offset:_viewportOffset];
+    CGRect clippingBounds = CGRectIsEmpty(viewportClampingBounds) ? self.bounds : viewportClampingBounds;
+    CGRect layerScreenBounds = CGRectOffset(screenBounds, -clippingBounds.origin.x, -clippingBounds.origin.y);
+    NSLog(@"B2ScreenView viewport frame: scale=%.3f offset=%@ screenBounds=%@ clampBounds=%@ clippingLayerFrame=%@ layerScreenBounds=%@",
+          _viewportScale,
+          NSStringFromCGPoint(_viewportOffset),
+          NSStringFromCGRect(screenBounds),
+          NSStringFromCGRect(viewportClampingBounds),
+          viewportClippingLayer ? NSStringFromCGRect(viewportClippingLayer.frame) : @"<none>",
+          NSStringFromCGRect(layerScreenBounds));
     [CATransaction begin];
     [CATransaction setDisableActions:YES];
-    videoLayer.frame = screenBounds;
+    viewportClippingLayer.frame = clippingBounds;
+    videoLayer.frame = layerScreenBounds;
     [CATransaction commit];
     _screenBounds = screenBounds;
     _screenBounds.origin.y += self.frame.origin.y;
@@ -278,12 +324,23 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
                                     scaledSize.height));
 }
 
+- (CGRect)safeViewportBoundsWithinBounds:(CGRect)bounds {
+    return [self safeLayoutBoundsWithinBounds:bounds
+                               safeAreaInsets:[self safeAreaInsetsForPresetLayout]
+                                    landscape:NO
+                              referenceBounds:(self.superview ? self.superview.bounds : self.bounds)];
+}
+
+- (void)updateViewportClippingMask {
+    viewportClippingLayer.frame = CGRectIsEmpty(viewportClampingBounds) ? self.bounds : viewportClampingBounds;
+}
+
 - (CGPoint)clampedViewportOffset:(CGPoint)offset scale:(CGFloat)scale {
     if (scale <= 1.0 || CGRectIsEmpty(baseScreenBounds)) {
         return CGPointZero;
     }
 
-    CGRect bounds = self.bounds;
+    CGRect bounds = CGRectIsEmpty(viewportClampingBounds) ? self.bounds : viewportClampingBounds;
     CGSize scaledSize = CGSizeMake(baseScreenBounds.size.width * scale, baseScreenBounds.size.height * scale);
     CGPoint baseCenter = CGPointMake(CGRectGetMidX(baseScreenBounds), CGRectGetMidY(baseScreenBounds));
     CGPoint center = CGPointMake(baseCenter.x + offset.x, baseCenter.y + offset.y);
@@ -298,7 +355,17 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
                                  boundsStart:CGRectGetMinY(bounds)
                                    boundsEnd:CGRectGetMaxY(bounds)
                                   baseCenter:baseCenter.y];
-    return CGPointMake(center.x - baseCenter.x, center.y - baseCenter.y);
+    CGPoint clampedOffset = CGPointMake(center.x - baseCenter.x, center.y - baseCenter.y);
+    if (!CGPointEqualToPoint(offset, clampedOffset)) {
+        NSLog(@"B2ScreenView viewport clamped: scale=%.3f requestedOffset=%@ clampedOffset=%@ baseScreenBounds=%@ clampBounds=%@ scaledSize=%@",
+              scale,
+              NSStringFromCGPoint(offset),
+              NSStringFromCGPoint(clampedOffset),
+              NSStringFromCGRect(baseScreenBounds),
+              NSStringFromCGRect(bounds),
+              NSStringFromCGSize(scaledSize));
+    }
+    return clampedOffset;
 }
 
 - (CGFloat)clampedCenterCoordinate:(CGFloat)center

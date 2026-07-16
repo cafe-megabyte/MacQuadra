@@ -77,16 +77,6 @@ bool GetTypeAndCreatorForFileName(const char *path, uint32_t *type, uint32_t *cr
 
 static B2AppDelegate *sharedDelegate = nil;
 
-extern "C" bool B2ShouldColdRestartOnMacReset(void)
-{
-    @autoreleasepool {
-        NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
-        NSString *videoSizePreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
-        NSString *videoSizeString = [defaults stringForKey:@"videoSize"];
-        return videoSizePreset != nil || videoSizeString == nil;
-    }
-}
-
 extern "C" void B2RequestColdRestartOnMacReset(void)
 {
     coldRestartRequestedForMacReset = YES;
