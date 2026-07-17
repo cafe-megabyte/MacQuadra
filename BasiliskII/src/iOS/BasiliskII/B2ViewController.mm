@@ -62,6 +62,8 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     UISegmentedControl *resizeAreaControl;
     UISegmentedControl *resizeScaleControl;
     UISegmentedControl *resizeModeControl;
+    UIVisualEffectView *landscapeStartView;
+    void (^pendingLandscapeStartCompletion)(BOOL ready);
 }
 
 
@@ -125,6 +127,13 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     [sharedScreenView resetViewportAnimated:NO];
 }
 
+- (void)viewDidLayoutSubviews {
+    [super viewDidLayoutSubviews];
+    pointingDeviceView.frame = self.view.bounds;
+    [sharedScreenView setNeedsUpdateConstraints];
+    [self completePendingLandscapeStartIfReady];
+}
+
 - (void)viewDidAppear:(BOOL)animated {
     [super viewDidAppear:animated];
     [self becomeFirstResponder];
@@ -153,12 +162,6 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     }
 }
 
-- (void)viewDidLayoutSubviews {
-    [super viewDidLayoutSubviews];
-    pointingDeviceView.frame = self.view.bounds;
-    [sharedScreenView setNeedsUpdateConstraints];
-}
-
 - (BOOL)canBecomeFirstResponder {
     return YES;
 }
@@ -183,6 +186,134 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 
 - (void)showSettings:(id)sender {
     [self performSegueWithIdentifier:@"settings" sender:sender];
+}
+
+#pragma mark - Emulator Start Orientation
+
+- (void)prepareForEmulatorStartWithCompletion:(void (^)(BOOL ready))completion {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self prepareForEmulatorStartWithCompletion:completion];
+        });
+        return;
+    }
+
+    if (![self selectedVideoPresetRequiresLandscape]) {
+        completion(YES);
+        return;
+    }
+
+    if ([self currentLayoutIsLandscape]) {
+        [self hideLandscapeStartMessage];
+        completion(YES);
+        return;
+    }
+
+    if (pendingLandscapeStartCompletion != nil) {
+        pendingLandscapeStartCompletion = [completion copy];
+        return;
+    }
+
+    pendingLandscapeStartCompletion = [completion copy];
+    [self showLandscapeStartMessage];
+    [self requestLandscapeGeometryForEmulatorStart];
+}
+
+- (BOOL)selectedVideoPresetRequiresLandscape {
+    NSString *preset = [[NSUserDefaults standardUserDefaults] stringForKey:B2VideoSizePresetDefaultsKey];
+    return [preset isEqualToString:B2VideoSizePresetStandardLandscape] || [preset isEqualToString:B2VideoSizePresetLargeLandscape];
+}
+
+- (BOOL)currentLayoutIsLandscape {
+    return self.view.bounds.size.width > self.view.bounds.size.height;
+}
+
+- (void)requestLandscapeGeometryForEmulatorStart {
+    // Dynamic landscape resolutions are fixed when the emulator boots. Rotate first
+    // so UIKit reports the real landscape safe area before VideoInit calculates modes.
+    if (@available(iOS 16.0, *)) {
+        UIWindowScene *windowScene = self.view.window.windowScene;
+        if (windowScene != nil) {
+            UIWindowSceneGeometryPreferencesIOS *preferences = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscape];
+            [windowScene requestGeometryUpdateWithPreferences:preferences errorHandler:^(NSError * _Nonnull error) {
+                dispatch_async(dispatch_get_main_queue(), ^{
+                    [self showLandscapeStartMessage];
+                });
+            }];
+        }
+    }
+}
+
+- (void)completePendingLandscapeStartIfReady {
+    if (pendingLandscapeStartCompletion == nil || ![self currentLayoutIsLandscape]) {
+        return;
+    }
+
+    void (^completion)(BOOL ready) = pendingLandscapeStartCompletion;
+    pendingLandscapeStartCompletion = nil;
+    [self hideLandscapeStartMessage];
+    completion(YES);
+}
+
+- (void)showLandscapeStartMessage {
+    [self installLandscapeStartViewIfNeeded];
+    landscapeStartView.hidden = NO;
+}
+
+- (void)hideLandscapeStartMessage {
+    landscapeStartView.hidden = YES;
+}
+
+- (void)installLandscapeStartViewIfNeeded {
+    if (landscapeStartView != nil) {
+        return;
+    }
+
+    UIBlurEffect *blurEffect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleRegular];
+    landscapeStartView = [[UIVisualEffectView alloc] initWithEffect:blurEffect];
+    landscapeStartView.translatesAutoresizingMaskIntoConstraints = NO;
+    landscapeStartView.layer.cornerRadius = 12.0;
+    landscapeStartView.clipsToBounds = YES;
+    landscapeStartView.hidden = YES;
+
+    UIImageView *imageView = [[UIImageView alloc] initWithImage:[UIImage systemImageNamed:@"rectangle.portrait.rotate"]];
+    imageView.translatesAutoresizingMaskIntoConstraints = NO;
+    imageView.contentMode = UIViewContentModeScaleAspectFit;
+    imageView.tintColor = UIColor.labelColor;
+
+    UILabel *messageLabel = [UILabel new];
+    messageLabel.translatesAutoresizingMaskIntoConstraints = NO;
+    messageLabel.text = L(@"emulator.start.rotateLandscape.message");
+    messageLabel.textAlignment = NSTextAlignmentCenter;
+    messageLabel.numberOfLines = 0;
+    messageLabel.adjustsFontForContentSizeCategory = YES;
+    messageLabel.font = [UIFont preferredFontForTextStyle:UIFontTextStyleCallout];
+
+    UIStackView *stackView = [[UIStackView alloc] initWithArrangedSubviews:@[imageView, messageLabel]];
+    stackView.translatesAutoresizingMaskIntoConstraints = NO;
+    stackView.axis = UILayoutConstraintAxisVertical;
+    stackView.alignment = UIStackViewAlignmentCenter;
+    stackView.spacing = 12.0;
+    stackView.layoutMargins = UIEdgeInsetsMake(20.0, 20.0, 20.0, 20.0);
+    stackView.layoutMarginsRelativeArrangement = YES;
+
+    [landscapeStartView.contentView addSubview:stackView];
+    [self.view addSubview:landscapeStartView];
+
+    [NSLayoutConstraint activateConstraints:@[
+        [stackView.leadingAnchor constraintEqualToAnchor:landscapeStartView.contentView.leadingAnchor],
+        [stackView.trailingAnchor constraintEqualToAnchor:landscapeStartView.contentView.trailingAnchor],
+        [stackView.topAnchor constraintEqualToAnchor:landscapeStartView.contentView.topAnchor],
+        [stackView.bottomAnchor constraintEqualToAnchor:landscapeStartView.contentView.bottomAnchor],
+        [imageView.widthAnchor constraintEqualToConstant:52.0],
+        [imageView.heightAnchor constraintEqualToConstant:52.0],
+        [landscapeStartView.centerXAnchor constraintEqualToAnchor:self.view.centerXAnchor],
+        [landscapeStartView.centerYAnchor constraintEqualToAnchor:self.view.centerYAnchor],
+        [landscapeStartView.widthAnchor constraintLessThanOrEqualToAnchor:self.view.widthAnchor constant:-48.0],
+        [landscapeStartView.widthAnchor constraintGreaterThanOrEqualToConstant:260.0],
+    ]];
+
+    landscapeStartView.accessibilityLabel = messageLabel.text;
 }
 
 #pragma mark - Interactive Resizing

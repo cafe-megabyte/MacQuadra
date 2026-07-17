@@ -448,6 +448,16 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
         return;
     }
 
+    [self prepareForEmulatorStartWithCompletion:^{
+        [self prepareSnapshotsAndStartEmulator];
+    }];
+}
+
+- (void)prepareSnapshotsAndStartEmulator {
+    if (emulThread != nil || snapshotPreparationInProgress) {
+        return;
+    }
+
     snapshotPreparationInProgress = YES;
     [B2DiskImageSnapshots ensureSnapshotsForConfiguredVolumesInDocumentsPath:self.documentsPath completion:^(BOOL success, NSError * _Nullable error) {
         self->snapshotPreparationInProgress = NO;
@@ -457,6 +467,34 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
             [self showAlertWithTitle:L(@"settings.volumes.snapshot.prepare.error.title") message:error.localizedDescription];
         }
     }];
+}
+
+- (void)prepareForEmulatorStartWithCompletion:(void (^)(void))completion {
+    B2ViewController *viewController = [B2ViewController sharedViewController];
+    if (viewController == nil) {
+        completion();
+        return;
+    }
+
+    [viewController prepareForEmulatorStartWithCompletion:^(BOOL ready) {
+        if (ready) {
+            completion();
+        }
+    }];
+}
+
+- (void)prepareForEmulatorRestartSynchronously {
+    if ([NSThread isMainThread]) {
+        return;
+    }
+
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [self prepareForEmulatorStartWithCompletion:^{
+            dispatch_semaphore_signal(semaphore);
+        }];
+    });
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
 }
 
 - (void)startEmulatorAfterSnapshotPreparation {
@@ -508,6 +546,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
             if (B2ConsumeColdRestartOnMacReset()) {
                 [self pramBackup:nil];
                 QuitEmuNoExit();
+                [self prepareForEmulatorRestartSynchronously];
                 [self initEmulator];
                 continue;
             }

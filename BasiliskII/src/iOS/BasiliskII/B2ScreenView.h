@@ -29,7 +29,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)reloadVideoModes;
 - (CGSize)videoSizeForPreset:(NSString *)preset;
 - (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds;
-- (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize;
 - (void)updateImage:(nullable CGImageRef)newImage;
 - (void)updateCustomSize:(CGSize)customSize;
 

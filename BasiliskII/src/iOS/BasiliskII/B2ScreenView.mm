@@ -17,6 +17,18 @@ NSString * const B2VideoSizePresetStandard = @"standard";
 NSString * const B2VideoSizePresetLarge = @"large";
 NSString * const B2VideoSizePresetStandardLandscape = @"standardLandscape";
 NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
+static const CGFloat B2LayoutEpsilon = 1.0;
+
+typedef struct {
+    CGRect containerBounds;
+    CGRect safeBounds;
+} B2ScreenLayoutMetrics;
+
+typedef struct {
+    CGRect baseScreenBounds;
+    CGRect viewportClampingBounds;
+    CGFloat screenScale;
+} B2ScreenLayout;
 
 @implementation B2ScreenView
 {
@@ -30,6 +42,8 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     CGRect activeScreenViewFrame;
     BOOL hasActiveScreenLayout;
     BOOL activeLayoutWantsMargins;
+    BOOL hasStableLayoutMetrics;
+    B2ScreenLayoutMetrics stableLayoutMetrics;
 }
 
 - (void)awakeFromNib {
@@ -142,51 +156,15 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
         return;
     }
 
-    // Resize screen view after updating constraints
-    CGRect viewBounds = self.bounds;
-    BOOL usesEdgeLayoutBounds = [self screenSizeMatchesEdgePreset:_screenSize];
-    BOOL usesSafeLayoutBounds = [self screenSizeMatchesSafeAreaPreset:_screenSize];
-    BOOL usesDynamicLayoutBounds = usesEdgeLayoutBounds || usesSafeLayoutBounds;
-    if (usesSafeLayoutBounds) {
-        viewBounds = [self safeLayoutBoundsWithinBounds:viewBounds];
-    }
+    [self updateStableLayoutMetricsIfNeeded];
+
     CGSize screenSize = _screenSize;
-    CGFloat screenScale = MIN(viewBounds.size.width / screenSize.width, viewBounds.size.height / screenSize.height);
+    B2ScreenLayout screenLayout = [self screenLayoutForScreenSize:screenSize];
+    baseScreenBounds = screenLayout.baseScreenBounds;
+    viewportClampingBounds = screenLayout.viewportClampingBounds;
+    CGFloat screenScale = screenLayout.screenScale;
+
     NSString *screenFilter = [[NSUserDefaults standardUserDefaults] stringForKey:@"screenFilter"];
-    if (!usesDynamicLayoutBounds && [screenFilter isEqualToString:kCAFilterNearest] && screenScale > 1.0) {
-        screenScale = floor(screenScale);
-    } else if (!usesDynamicLayoutBounds && screenScale > 1.0 && screenScale <= 1.1) {
-        screenScale = 1.0;
-    }
-
-    baseScreenBounds = CGRectMake(0, 0, screenSize.width * screenScale, screenSize.height * screenScale);
-    baseScreenBounds.origin.x = viewBounds.origin.x + (viewBounds.size.width - baseScreenBounds.size.width)/2;
-    if (usesSafeLayoutBounds) {
-        baseScreenBounds.origin.y = viewBounds.origin.y + (viewBounds.size.height - baseScreenBounds.size.height)/2;
-    }
-    if (usesSafeLayoutBounds) {
-        baseScreenBounds = [self integralRectInsideBounds:baseScreenBounds bounds:viewBounds];
-    } else {
-        baseScreenBounds = CGRectIntegral(baseScreenBounds);
-    }
-
-    if (!usesSafeLayoutBounds && [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad && (viewBounds.size.height - baseScreenBounds.size.height) >= 30.0) {
-        // move under multitasking indicator on iPad
-        baseScreenBounds.origin.y += 30;
-    }
-    CGRect safeBounds = [self safeViewportBoundsWithinBounds:self.bounds];
-    BOOL baseScreenFitsSafeAreaLeft = CGRectGetMinX(baseScreenBounds) >= CGRectGetMinX(safeBounds);
-    BOOL baseScreenFitsSafeAreaRight = CGRectGetMaxX(baseScreenBounds) <= CGRectGetMaxX(safeBounds);
-    BOOL baseScreenFitsSafeAreaTop = CGRectGetMinY(baseScreenBounds) >= CGRectGetMinY(safeBounds);
-    BOOL baseScreenFitsSafeAreaBottom = CGRectGetMaxY(baseScreenBounds) <= CGRectGetMaxY(safeBounds);
-    CGFloat clampingMinX = baseScreenFitsSafeAreaLeft ? CGRectGetMinX(safeBounds) : CGRectGetMinX(self.bounds);
-    CGFloat clampingMaxX = baseScreenFitsSafeAreaRight ? CGRectGetMaxX(safeBounds) : CGRectGetMaxX(self.bounds);
-    CGFloat clampingMinY = baseScreenFitsSafeAreaTop ? CGRectGetMinY(safeBounds) : CGRectGetMinY(self.bounds);
-    CGFloat clampingMaxY = baseScreenFitsSafeAreaBottom ? CGRectGetMaxY(safeBounds) : CGRectGetMaxY(self.bounds);
-    viewportClampingBounds = CGRectMake(clampingMinX,
-                                        clampingMinY,
-                                        clampingMaxX - clampingMinX,
-                                        clampingMaxY - clampingMinY);
     [self updateViewportClippingMask];
     _viewportOffset = [self clampedViewportOffset:_viewportOffset scale:_viewportScale];
     CGRect screenBounds = [self screenBoundsForViewportScale:_viewportScale offset:_viewportOffset];
@@ -307,6 +285,157 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
                               referenceBounds:(self.superview ? self.superview.bounds : self.bounds)];
 }
 
+- (void)updateStableLayoutMetricsIfNeeded {
+    CGRect containerBounds = self.bounds;
+    if (CGRectIsEmpty(containerBounds)) {
+        return;
+    }
+
+    if (hasStableLayoutMetrics && CGSizeEqualToSize(stableLayoutMetrics.containerBounds.size, containerBounds.size)) {
+        return;
+    }
+
+    stableLayoutMetrics.containerBounds = containerBounds;
+    stableLayoutMetrics.safeBounds = [self safeViewportBoundsWithinBounds:containerBounds];
+    hasStableLayoutMetrics = YES;
+}
+
+- (B2ScreenLayout)screenLayoutForScreenSize:(CGSize)screenSize {
+    B2ScreenLayout layout;
+    layout.baseScreenBounds = CGRectZero;
+    layout.viewportClampingBounds = CGRectZero;
+    layout.screenScale = 1.0;
+
+    CGRect containerBounds = hasStableLayoutMetrics ? stableLayoutMetrics.containerBounds : self.bounds;
+    CGRect safeBounds = hasStableLayoutMetrics ? stableLayoutMetrics.safeBounds : [self safeViewportBoundsWithinBounds:self.bounds];
+    if (CGRectIsEmpty(containerBounds) || CGSizeEqualToSize(screenSize, CGSizeZero)) {
+        return layout;
+    }
+
+    BOOL usesEdgeLayoutBounds = [self screenSize:screenSize matchesLayoutBounds:containerBounds];
+    BOOL usesSafeLayoutBounds = [self screenSize:screenSize matchesLayoutBounds:safeBounds];
+    BOOL usesDynamicLayoutBounds = usesEdgeLayoutBounds || usesSafeLayoutBounds;
+    CGRect layoutBounds = usesSafeLayoutBounds ? safeBounds : containerBounds;
+
+    CGFloat screenScale = MIN(layoutBounds.size.width / screenSize.width,
+                              layoutBounds.size.height / screenSize.height);
+    NSString *screenFilter = [[NSUserDefaults standardUserDefaults] stringForKey:@"screenFilter"];
+    if (!usesDynamicLayoutBounds && [screenFilter isEqualToString:kCAFilterNearest] && screenScale > 1.0) {
+        screenScale = floor(screenScale);
+    } else if (!usesDynamicLayoutBounds && screenScale > 1.0 && screenScale <= 1.1) {
+        screenScale = 1.0;
+    }
+
+    CGSize screenBoundsSize = CGSizeMake(screenSize.width * screenScale, screenSize.height * screenScale);
+
+    CGRect baseBounds = CGRectMake(0.0, 0.0, screenBoundsSize.width, screenBoundsSize.height);
+    baseBounds.origin.x = [self originForLength:screenBoundsSize.width
+                                  preferredMin:CGRectGetMinX(layoutBounds)
+                                  preferredMax:CGRectGetMaxX(layoutBounds)
+                                   containerMin:CGRectGetMinX(containerBounds)
+                                   containerMax:CGRectGetMaxX(containerBounds)
+                                      alignment:0.5];
+    CGFloat topPreferredMinY = usesSafeLayoutBounds ? CGRectGetMinY(safeBounds) : [self topPreferredMinYForScreenWidth:screenBoundsSize.width
+                                                                                                                originX:baseBounds.origin.x
+                                                                                                                 height:screenBoundsSize.height
+                                                                                                         containerBounds:containerBounds
+                                                                                                              safeBounds:safeBounds];
+    baseBounds.origin.y = [self originForLength:screenBoundsSize.height
+                                  preferredMin:topPreferredMinY
+                                  preferredMax:CGRectGetMaxY(layoutBounds)
+                                   containerMin:CGRectGetMinY(containerBounds)
+                                   containerMax:CGRectGetMaxY(containerBounds)
+                                      alignment:0.0];
+    if (usesSafeLayoutBounds) {
+        baseBounds = [self integralRectInsideBounds:baseBounds bounds:safeBounds];
+    } else {
+        baseBounds = CGRectIntegral(baseBounds);
+    }
+
+    BOOL baseScreenFitsSafeAreaLeft = CGRectGetMinX(baseBounds) >= CGRectGetMinX(safeBounds) - B2LayoutEpsilon;
+    BOOL baseScreenFitsSafeAreaRight = CGRectGetMaxX(baseBounds) <= CGRectGetMaxX(safeBounds) + B2LayoutEpsilon;
+    BOOL baseScreenFitsSafeAreaTop = CGRectGetMinY(baseBounds) >= CGRectGetMinY(safeBounds) - B2LayoutEpsilon;
+    BOOL baseScreenFitsSafeAreaBottom = CGRectGetMaxY(baseBounds) <= CGRectGetMaxY(safeBounds) + B2LayoutEpsilon;
+    CGFloat clampingMinX = baseScreenFitsSafeAreaLeft ? CGRectGetMinX(safeBounds) : CGRectGetMinX(containerBounds);
+    CGFloat clampingMaxX = baseScreenFitsSafeAreaRight ? CGRectGetMaxX(safeBounds) : CGRectGetMaxX(containerBounds);
+    CGFloat clampingMinY = baseScreenFitsSafeAreaTop ? CGRectGetMinY(safeBounds) : CGRectGetMinY(containerBounds);
+    CGFloat clampingMaxY = baseScreenFitsSafeAreaBottom ? CGRectGetMaxY(safeBounds) : CGRectGetMaxY(containerBounds);
+
+    layout.baseScreenBounds = baseBounds;
+    layout.viewportClampingBounds = CGRectMake(clampingMinX,
+                                               clampingMinY,
+                                               clampingMaxX - clampingMinX,
+                                               clampingMaxY - clampingMinY);
+    layout.screenScale = screenScale;
+    return layout;
+}
+
+- (BOOL)screenSize:(CGSize)screenSize matchesLayoutBounds:(CGRect)bounds {
+    if (CGRectIsEmpty(bounds) || CGSizeEqualToSize(screenSize, CGSizeZero)) {
+        return NO;
+    }
+
+    CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
+    if (nativeScale <= 0.0) {
+        nativeScale = [UIScreen mainScreen].scale;
+    }
+
+    const CGFloat divisors[] = {1.0, 2.0, 4.0};
+    for (NSUInteger i = 0; i < sizeof(divisors) / sizeof(divisors[0]); i++) {
+        uint32_t width = [self pixelDimensionForLength:bounds.size.width nativeScale:nativeScale divisor:divisors[i]];
+        uint32_t height = [self pixelDimensionForLength:bounds.size.height nativeScale:nativeScale divisor:divisors[i]];
+        if ((uint32_t)screenSize.width == width && (uint32_t)screenSize.height == height) {
+            return YES;
+        }
+    }
+    return NO;
+}
+
+- (CGFloat)topPreferredMinYForScreenWidth:(CGFloat)screenWidth
+                                  originX:(CGFloat)originX
+                                   height:(CGFloat)screenHeight
+                          containerBounds:(CGRect)containerBounds
+                               safeBounds:(CGRect)safeBounds {
+    if (screenHeight > safeBounds.size.height + B2LayoutEpsilon) {
+        return CGRectGetMinY(containerBounds);
+    }
+
+    // We use the idiom as a cutout heuristic: iPhones may have notches or islands,
+    // so reduced screens must stay inside the top safe area. iPads currently only
+    // have rounded corners/system indicators, so a narrow emulator can safely sit
+    // above the reported safe area when it does not reach the risky side regions.
+    if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
+        return CGRectGetMinY(safeBounds);
+    }
+
+    CGFloat screenMinX = originX;
+    CGFloat screenMaxX = originX + screenWidth;
+    BOOL screenFitsSafeAreaHorizontally = screenMinX >= CGRectGetMinX(safeBounds) - B2LayoutEpsilon &&
+                                          screenMaxX <= CGRectGetMaxX(safeBounds) + B2LayoutEpsilon;
+    if (screenFitsSafeAreaHorizontally) {
+        return CGRectGetMinY(containerBounds);
+    }
+
+    return CGRectGetMinY(safeBounds);
+}
+
+- (CGFloat)originForLength:(CGFloat)length
+             preferredMin:(CGFloat)preferredMin
+             preferredMax:(CGFloat)preferredMax
+              containerMin:(CGFloat)containerMin
+              containerMax:(CGFloat)containerMax
+                alignment:(CGFloat)alignment {
+    CGFloat preferredLength = preferredMax - preferredMin;
+    CGFloat containerLength = containerMax - containerMin;
+    CGFloat origin;
+    if (length <= preferredLength + B2LayoutEpsilon) {
+        origin = preferredMin + (preferredLength - length) * alignment;
+    } else {
+        origin = containerMin + (containerLength - length) * alignment;
+    }
+    return origin;
+}
+
 - (void)updateViewportClippingMask {
     viewportClippingLayer.frame = CGRectIsEmpty(viewportClampingBounds) ? self.bounds : viewportClampingBounds;
 }
@@ -341,7 +470,7 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
                          boundsEnd:(CGFloat)boundsEnd
                         baseCenter:(CGFloat)baseCenter {
     CGFloat boundsLength = boundsEnd - boundsStart;
-    if (length <= boundsLength) {
+    if (length <= boundsLength + B2LayoutEpsilon) {
         return baseCenter;
     }
 
@@ -359,13 +488,7 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
         return;
     }
 
-    CGFloat nativeScale = [UIScreen mainScreen].nativeScale;
-    if (nativeScale <= 0.0) {
-        nativeScale = [UIScreen mainScreen].scale;
-    }
-    CGFloat scale = _screenSize.height / (self.superview.bounds.size.height * nativeScale);
-    BOOL matchesDynamicLayoutPreset = [self screenSizeMatchesEdgePreset:_screenSize] || [self screenSizeMatchesSafeAreaPreset:_screenSize];
-    BOOL wantsMargins = !matchesDynamicLayoutPreset && scale > 1.0 && floor(scale) != scale;
+    BOOL wantsMargins = NO;
     activeLayoutWantsMargins = wantsMargins;
     [self applyScreenViewConstraintsWantsMargins:wantsMargins];
     [super updateConstraints];
@@ -414,6 +537,10 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 
 - (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds safeAreaInsets:(UIEdgeInsets)safeAreaInsets landscape:(BOOL)landscape referenceBounds:(CGRect)referenceBounds {
     if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad) {
+        // There is no clean cutout API. Use the idiom as a display-shape heuristic:
+        // iPad safe areas usually describe rounded corners or system indicators, not
+        // notches. Keep iPad presets symmetric and let the placement solver bypass
+        // the top safe area when the emulator is narrow enough.
         CGFloat safeInset = MAX(MAX(safeAreaInsets.top, safeAreaInsets.bottom), MAX(safeAreaInsets.left, safeAreaInsets.right));
         return UIEdgeInsetsInsetRect(bounds, UIEdgeInsetsMake(safeInset, safeInset, safeInset, safeInset));
     }
@@ -452,6 +579,10 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     integralRect.size.width = MIN(integralRect.size.width, CGRectGetMaxX(bounds) - integralRect.origin.x);
     integralRect.size.height = MIN(integralRect.size.height, CGRectGetMaxY(bounds) - integralRect.origin.y);
     return integralRect;
+}
+
+- (uint32_t)pixelDimensionForLength:(CGFloat)length nativeScale:(CGFloat)nativeScale divisor:(CGFloat)divisor {
+    return (uint32_t)(length * nativeScale / divisor) &~ 1;
 }
 
 - (CGSize)videoSizeForPreset:(NSString *)preset {
@@ -493,6 +624,8 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
 }
 
 - (CGSize)videoSizeForLargeLayoutWithDivisor:(CGFloat)divisor landscape:(BOOL)landscape {
+    // Same cutout heuristic as above: large iPhone modes stay inside the safe area
+    // because a notch/island may intrude; iPad large modes may use the full edge area.
     if ([UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone) {
         return [self videoSizeForSafeLayoutWithDivisor:divisor landscape:landscape];
     }
@@ -513,24 +646,9 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
     }
-    uint32_t w = (uint32_t)(bounds.size.width * nativeScale / divisor) &~ 1;
-    uint32_t h = (uint32_t)(bounds.size.height * nativeScale / divisor) &~ 1;
+    uint32_t w = [self pixelDimensionForLength:bounds.size.width nativeScale:nativeScale divisor:divisor];
+    uint32_t h = [self pixelDimensionForLength:bounds.size.height nativeScale:nativeScale divisor:divisor];
     return CGSizeMake(w, h);
-}
-
-- (BOOL)screenSizeMatchesEdgePreset:(CGSize)screenSize {
-    if (CGSizeEqualToSize(screenSize, CGSizeZero)) {
-        return NO;
-    }
-
-    const CGFloat divisors[] = {1.0, 2.0, 4.0};
-    for (NSUInteger i = 0; i < sizeof(divisors) / sizeof(divisors[0]); i++) {
-        CGSize presetSize = [self videoSizeForEdgeLayoutWithDivisor:divisors[i] landscape:NO];
-        if ((uint32_t)screenSize.width == (uint32_t)presetSize.width && (uint32_t)screenSize.height == (uint32_t)presetSize.height) {
-            return YES;
-        }
-    }
-    return NO;
 }
 
 - (CGSize)videoSizeForSafeLayoutWithDivisor:(CGFloat)divisor landscape:(BOOL)landscape {
@@ -551,24 +669,9 @@ NSString * const B2VideoSizePresetLargeLandscape = @"largeLandscape";
     if (nativeScale <= 0.0) {
         nativeScale = [UIScreen mainScreen].scale;
     }
-    uint32_t w = (uint32_t)(bounds.size.width * nativeScale / divisor) &~ 1;
-    uint32_t h = (uint32_t)(bounds.size.height * nativeScale / divisor) &~ 1;
+    uint32_t w = [self pixelDimensionForLength:bounds.size.width nativeScale:nativeScale divisor:divisor];
+    uint32_t h = [self pixelDimensionForLength:bounds.size.height nativeScale:nativeScale divisor:divisor];
     return CGSizeMake(w, h);
-}
-
-- (BOOL)screenSizeMatchesSafeAreaPreset:(CGSize)screenSize {
-    if (CGSizeEqualToSize(screenSize, CGSizeZero)) {
-        return NO;
-    }
-
-    const CGFloat divisors[] = {1.0, 2.0, 4.0};
-    for (NSUInteger i = 0; i < sizeof(divisors) / sizeof(divisors[0]); i++) {
-        CGSize presetSize = [self videoSizeForSafeLayoutWithDivisor:divisors[i] landscape:NO];
-        if ((uint32_t)screenSize.width == (uint32_t)presetSize.width && (uint32_t)screenSize.height == (uint32_t)presetSize.height) {
-            return YES;
-        }
-    }
-    return NO;
 }
 
 - (void)updateImage:(CGImageRef)newImage {

@@ -166,3 +166,4 @@
 "privateResources.error.zipStoredSize" = "Stored ZIP entries need a size in the local header.";
 "privateResources.error.zipInit" = "Could not initialize ZIP decompressor.";
 "privateResources.error.zipDecompress" = "Could not decompress ZIP data.";
+"emulator.start.rotateLandscape.message" = "Rotate your device to landscape. The selected landscape preset needs the final safe area before the emulator starts.";

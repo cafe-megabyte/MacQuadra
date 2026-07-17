@@ -166,3 +166,4 @@
 "privateResources.error.zipStoredSize" = "Gespeicherte ZIP-Einträge benötigen eine Größenangabe im lokalen Header.";
 "privateResources.error.zipInit" = "ZIP-Entpacker konnte nicht initialisiert werden.";
 "privateResources.error.zipDecompress" = "ZIP-Daten konnten nicht entpackt werden.";
+"emulator.start.rotateLandscape.message" = "Drehen Sie das Gerät ins Querformat. Das gewählte Quer-Preset benötigt die endgültige Safe Area vor dem Emulatorstart.";
