@@ -240,7 +240,13 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 
 - (BOOL)selectedVideoPresetRequiresLandscape {
     NSString *preset = [[NSUserDefaults standardUserDefaults] stringForKey:B2VideoSizePresetDefaultsKey];
-    return [preset isEqualToString:B2VideoSizePresetStandardLandscape] || [preset isEqualToString:B2VideoSizePresetLargeLandscape];
+    if ([preset isEqualToString:B2VideoSizePresetStandardLandscape]) {
+        return YES;
+    }
+    if ([preset isEqualToString:B2VideoSizePresetLargeLandscape]) {
+        return [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone;
+    }
+    return NO;
 }
 
 - (BOOL)currentLayoutIsLandscape {

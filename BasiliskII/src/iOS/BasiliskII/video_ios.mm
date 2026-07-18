@@ -85,17 +85,47 @@ add_mode(const uint16 width, const uint16 height,
 	VideoModes.push_back(mode);
 }
 
-// Add standard list of windowed modes for given color depth
-static void add_standard_modes(const video_depth depth, CGSize only_size)
+static bool video_mode_size_exists(const vector<CGSize> &sizes, CGSize size)
 {
-	int mode = 0x80;
-    for (NSValue *modeValue in sharedScreenView.videoModes) {
-        CGSize modeSize = modeValue.CGSizeValue;
-        uint16 width = modeSize.width;
-        uint16 height = modeSize.height;
-        if (CGSizeEqualToSize(only_size, CGSizeZero) || size_matches(modeSize, only_size)) {
-            add_mode(width,  height,  mode, TrivialBytesPerRow(width,  depth), 0, depth);
+    vector<CGSize>::const_iterator i, end = sizes.end();
+    for (i = sizes.begin(); i != end; ++i) {
+        if (size_matches(*i, size)) {
+            return true;
         }
+    }
+    return false;
+}
+
+static void add_video_mode_size(vector<CGSize> &sizes, CGSize size)
+{
+    if (size.width <= 0 || size.height <= 0 || video_mode_size_exists(sizes, size)) {
+        return;
+    }
+    sizes.push_back(size);
+}
+
+// Add the selected resolution plus fixed monitor resolutions. Other dynamic presets
+// are kept out of Mac OS because they are startup conveniences, not monitor modes.
+static vector<CGSize> mac_visible_video_mode_sizes(CGSize selected_size)
+{
+    vector<CGSize> sizes;
+    add_video_mode_size(sizes, CGSizeMake(640, 480));
+    add_video_mode_size(sizes, CGSizeMake(832, 624));
+    add_video_mode_size(sizes, CGSizeMake(1024, 768));
+    add_video_mode_size(sizes, CGSizeMake(1280, 1024));
+    add_video_mode_size(sizes, selected_size);
+    return sizes;
+}
+
+// Add modes for the Mac-visible resolution list at a given color depth.
+static void add_standard_modes(const video_depth depth, const vector<CGSize> &sizes)
+{
+    int mode = 0x80;
+    vector<CGSize>::const_iterator i, end = sizes.end();
+    for (i = sizes.begin(); i != end; ++i) {
+        uint16 width = i->width;
+        uint16 height = i->height;
+        add_mode(width,  height,  mode, TrivialBytesPerRow(width,  depth), 0, depth);
         mode++;
     }
 }
@@ -346,14 +376,14 @@ bool VideoInit(bool classic)
         videoSizePreset = [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad ? B2VideoSizePresetStandard : B2VideoSizePresetStandardLandscape;
     }
     CGSize init_size = videoSizePreset != nil ? [sharedScreenView videoSizeForPreset:videoSizePreset] : CGSizeFromString(videoSizeString);
-    CGSize only_size = videoSizePreset != nil ? init_size : CGSizeZero;
+    vector<CGSize> macVisibleSizes = mac_visible_video_mode_sizes(init_size);
 
-    add_standard_modes(VDEPTH_1BIT, only_size);
-    add_standard_modes(VDEPTH_2BIT, only_size);
-    add_standard_modes(VDEPTH_4BIT, only_size);
-    add_standard_modes(VDEPTH_8BIT, only_size);
-    add_standard_modes(VDEPTH_16BIT, only_size);
-    add_standard_modes(VDEPTH_32BIT, only_size);
+    add_standard_modes(VDEPTH_1BIT, macVisibleSizes);
+    add_standard_modes(VDEPTH_2BIT, macVisibleSizes);
+    add_standard_modes(VDEPTH_4BIT, macVisibleSizes);
+    add_standard_modes(VDEPTH_8BIT, macVisibleSizes);
+    add_standard_modes(VDEPTH_16BIT, macVisibleSizes);
+    add_standard_modes(VDEPTH_32BIT, macVisibleSizes);
 
     if (VideoModes.empty()) {
         ErrorAlert("No valid video modes");

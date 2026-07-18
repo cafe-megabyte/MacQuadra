@@ -286,10 +286,10 @@ bool monitor_desc::allocate_gamma_table(int size)
 	return true;
 }
 
-static bool should_force_initial_depth(bool &enabled, uint32 until_tick)
+static bool should_force_initial_mode(bool &enabled, uint32 until_tick)
 {
-	// During emulator startup, Mac OS may restore a stale display depth before the desktop is ready.
-	// Keep reporting the emulator's configured depth for a short boot window; later user changes still work.
+	// During emulator startup, Mac OS may restore a stale display mode before the desktop is ready.
+	// Keep reporting the emulator's configured mode for a short boot window; later user changes still work.
 	if (!enabled)
 		return false;
 	if (ReadMacInt32(0x16a) < until_tick)
@@ -460,10 +460,11 @@ int16 monitor_desc::driver_open(void)
 	interrupts_enabled = false;
 	current_apple_mode = preferred_apple_mode = depth_to_apple_mode(current_mode->depth);
 	current_id = preferred_id = current_mode->resolution_id;
-	// Enforce the user-selected depth on every emulator start, without hiding other supported depths.
+	// Enforce the user-selected display mode on every emulator start, without hiding other supported modes.
 	forced_apple_mode = current_apple_mode;
-	force_initial_depth_change = true;
-	force_initial_depth_until_tick = ReadMacInt32(0x16a) + 400;
+	forced_id = current_id;
+	force_initial_mode_change = true;
+	force_initial_mode_until_tick = ReadMacInt32(0x16a) + 400;
 	dm_present = false;
 
 	// Allocate Slot Manager parameter block in Mac RAM
@@ -509,7 +510,7 @@ int16 monitor_desc::driver_control(uint16 code, uint32 param, uint32 dce)
 		case cscSetMode: {		// Set color depth
 			uint16 mode = ReadMacInt16(param + csMode);
 			D(bug(" SetMode %04x\n", mode));
-			if (should_force_initial_depth(force_initial_depth_change, force_initial_depth_until_tick) && mode != forced_apple_mode) {
+			if (should_force_initial_mode(force_initial_mode_change, force_initial_mode_until_tick) && mode != forced_apple_mode) {
 				mode = forced_apple_mode;
 				WriteMacInt16(param + csMode, mode);
 			}
@@ -659,7 +660,7 @@ int16 monitor_desc::driver_control(uint16 code, uint32 param, uint32 dce)
 		case cscSetDefaultMode: { // Set default color depth
 			uint16 mode = ReadMacInt8(param + csMode);
 			D(bug(" SetDefaultMode %02x\n", mode));
-			if (should_force_initial_depth(force_initial_depth_change, force_initial_depth_until_tick)) {
+			if (should_force_initial_mode(force_initial_mode_change, force_initial_mode_until_tick)) {
 				mode = forced_apple_mode;
 				WriteMacInt8(param + csMode, mode);
 			}
@@ -673,9 +674,11 @@ int16 monitor_desc::driver_control(uint16 code, uint32 param, uint32 dce)
 			uint16 mode = ReadMacInt16(param + csMode);
 			uint32 id = ReadMacInt32(param + csData);
 			D(bug(" SwitchMode %04x, %08x\n", mode, id));
-			if (should_force_initial_depth(force_initial_depth_change, force_initial_depth_until_tick) && mode != forced_apple_mode) {
+			if (should_force_initial_mode(force_initial_mode_change, force_initial_mode_until_tick) && (mode != forced_apple_mode || id != forced_id)) {
 				mode = forced_apple_mode;
+				id = forced_id;
 				WriteMacInt16(param + csMode, mode);
+				WriteMacInt32(param + csData, id);
 			}
 
 			// Set old base address in case the switch fails
@@ -698,9 +701,11 @@ int16 monitor_desc::driver_control(uint16 code, uint32 param, uint32 dce)
 			uint16 mode = ReadMacInt16(param + csMode);
 			uint32 id = ReadMacInt32(param + csData);
 			D(bug(" SavePreferredConfiguration %04x, %08x\n", mode, id));
-			if (should_force_initial_depth(force_initial_depth_change, force_initial_depth_until_tick)) {
+			if (should_force_initial_mode(force_initial_mode_change, force_initial_mode_until_tick)) {
 				mode = forced_apple_mode;
+				id = forced_id;
 				WriteMacInt16(param + csMode, mode);
+				WriteMacInt32(param + csData, id);
 			}
 			if (find_mode(mode, id) == invalid_mode())
 				return paramErr;
@@ -813,7 +818,7 @@ int16 monitor_desc::driver_status(uint16 code, uint32 param)
 
 		case cscGetDefaultMode:		// Get default color depth
 			D(bug(" GetDefaultMode -> %02x\n", preferred_apple_mode));
-			WriteMacInt8(param + csMode, should_force_initial_depth(force_initial_depth_change, force_initial_depth_until_tick) ? forced_apple_mode : preferred_apple_mode);
+			WriteMacInt8(param + csMode, should_force_initial_mode(force_initial_mode_change, force_initial_mode_until_tick) ? forced_apple_mode : preferred_apple_mode);
 			return noErr;
 
 		case cscGetCurrentMode:		// Get current video mode (depth and resolution)
@@ -842,7 +847,8 @@ int16 monitor_desc::driver_status(uint16 code, uint32 param)
 			WriteMacInt32(param + csTimingFormat, FOURCC('d', 'e', 'c', 'l'));
 			WriteMacInt32(param + csTimingData, 0);	// unknown
 			uint32 flags = 0xb; // mode valid, safe and shown in Monitors panel
-			if (id == preferred_id)
+			uint32 default_id = should_force_initial_mode(force_initial_mode_change, force_initial_mode_until_tick) ? forced_id : preferred_id;
+			if (id == default_id)
 				flags |= 4; // default mode
 			WriteMacInt32(param + csTimingFlags, flags);
 			return noErr;
@@ -855,8 +861,13 @@ int16 monitor_desc::driver_status(uint16 code, uint32 param)
 
 		case cscGetPreferredConfiguration: // Get default video mode (depth and resolution)
 			D(bug(" GetPreferredConfiguration -> %04x/%08x\n", preferred_apple_mode, preferred_id));
-			WriteMacInt16(param + csMode, should_force_initial_depth(force_initial_depth_change, force_initial_depth_until_tick) ? forced_apple_mode : preferred_apple_mode);
-			WriteMacInt32(param + csData, preferred_id);
+			if (should_force_initial_mode(force_initial_mode_change, force_initial_mode_until_tick)) {
+				WriteMacInt16(param + csMode, forced_apple_mode);
+				WriteMacInt32(param + csData, forced_id);
+			} else {
+				WriteMacInt16(param + csMode, preferred_apple_mode);
+				WriteMacInt32(param + csData, preferred_id);
+			}
 			return noErr;
 
 		case cscGetNextResolution: {	// Called iteratively to obtain a list of all supported resolutions
