@@ -10,6 +10,7 @@
 #include "video.h"
 #include "debug.h"
 #import "B2ScreenView.h"
+#import "NSUserDefaults+B2Accessors.h"
 
 // Mac Screen Width and Height
 uint32 MacScreenWidth;
@@ -371,10 +372,7 @@ bool VideoInit(bool classic)
     NSInteger requestedDepth = [defaults integerForKey:@"videoDepth"];
     video_depth init_depth = video_depth_from_requested_depth(requestedDepth);
     NSString *videoSizeString = [defaults stringForKey:@"videoSize"];
-    NSString *videoSizePreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
-    if (videoSizePreset == nil && videoSizeString == nil) {
-        videoSizePreset = [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad ? B2VideoSizePresetStandard : B2VideoSizePresetStandardLandscape;
-    }
+    NSString *videoSizePreset = [defaults b2VideoSizePreset];
     CGSize init_size = videoSizePreset != nil ? [sharedScreenView videoSizeForPreset:videoSizePreset] : CGSizeFromString(videoSizeString);
     vector<CGSize> macVisibleSizes = mac_visible_video_mode_sizes(init_size);
 

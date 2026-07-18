@@ -9,6 +9,7 @@
 #import "B2ScreenView.h"
 #import "B2GraphicsAndSoundSettingsViewController.h"
 #import "B2ViewController.h"
+#import "NSUserDefaults+B2Accessors.h"
 
 typedef enum : NSInteger {
     B2GraphicsAndSoundSettingsSectionScreenSize,
@@ -49,10 +50,6 @@ typedef enum : NSInteger {
 
 - (NSString *)localizedStringForKey:(NSString *)key {
     return [[NSBundle mainBundle] localizedStringForKey:key value:@"" table:nil];
-}
-
-- (NSString *)defaultDynamicVideoSizePreset {
-    return [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPad ? B2VideoSizePresetStandard : B2VideoSizePresetStandardLandscape;
 }
 
 - (void)viewDidLoad {
@@ -118,10 +115,7 @@ typedef enum : NSInteger {
     if (indexPath.section == B2GraphicsAndSoundSettingsSectionScreenSize) {
         NSString *currentSizeString = [defaults stringForKey:@"videoSize"];
         CGSize currentSize = CGSizeFromString(currentSizeString);
-        NSString *currentPreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
-        if (currentPreset == nil && currentSizeString == nil) {
-            currentPreset = [self defaultDynamicVideoSizePreset];
-        }
+        NSString *currentPreset = [defaults b2VideoSizePreset];
         NSUInteger nonCustomVideoModes = sharedScreenView.videoModes.count;
         if (sharedScreenView.hasCustomVideoMode) {
             nonCustomVideoModes--;

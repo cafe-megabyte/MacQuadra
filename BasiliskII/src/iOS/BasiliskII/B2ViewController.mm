@@ -14,6 +14,7 @@
 #import "KBKeyboardLayout.h"
 #import "B2TouchScreen.h"
 #import "B2TrackPad.h"
+#import "NSUserDefaults+B2Accessors.h"
 #include "sysdeps.h"
 #include "adb.h"
 
@@ -239,7 +240,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 }
 
 - (BOOL)selectedVideoPresetRequiresLandscape {
-    NSString *preset = [[NSUserDefaults standardUserDefaults] stringForKey:B2VideoSizePresetDefaultsKey];
+    NSString *preset = [[NSUserDefaults standardUserDefaults] b2VideoSizePreset];
     if ([preset isEqualToString:B2VideoSizePresetStandardLandscape]) {
         return YES;
     }

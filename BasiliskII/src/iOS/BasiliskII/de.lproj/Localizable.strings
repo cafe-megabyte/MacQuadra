@@ -145,9 +145,6 @@
 
 "privateResources.romFile" = "ROM-Datei";
 "privateResources.diskImage" = "Festplattenabbild";
-"privateResources.download.action" = "Laden";
-"privateResources.download.prompt.title" = "%@ laden?";
-"privateResources.download.prompt.message" = "In „Dokumente“ wurde keine konfigurierte %@ gefunden.";
 "privateResources.download.error.title" = "%@ konnte nicht geladen werden";
 "privateResources.missingURL.title" = "Private Ressource fehlt";
 "privateResources.missingURL.message" = "Es wurde keine %@ gefunden und es ist keine private Download-URL konfiguriert.";

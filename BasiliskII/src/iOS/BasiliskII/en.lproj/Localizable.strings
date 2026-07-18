@@ -145,9 +145,6 @@
 
 "privateResources.romFile" = "ROM file";
 "privateResources.diskImage" = "disk image";
-"privateResources.download.action" = "Download";
-"privateResources.download.prompt.title" = "Download %@?";
-"privateResources.download.prompt.message" = "No configured %@ was found in Documents.";
 "privateResources.download.error.title" = "Could not download %@";
 "privateResources.missingURL.title" = "Missing private resource";
 "privateResources.missingURL.message" = "No %@ was found and no private download URL is configured.";

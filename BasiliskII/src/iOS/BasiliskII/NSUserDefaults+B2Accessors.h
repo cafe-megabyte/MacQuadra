@@ -13,6 +13,7 @@ NS_ASSUME_NONNULL_BEGIN
 @interface NSUserDefaults (B2Accessors)
 
 - (nullable NSMutableArray*)b2MutableArrayForKey:(NSString*)key;
+- (nullable NSString*)b2VideoSizePreset;
 
 @end
 

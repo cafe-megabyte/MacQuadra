@@ -338,7 +338,7 @@ static uint32_t B2ReadUInt32LE(const uint8_t *bytes)
         return;
     }
 
-    [self askToDownloadKind:kind urlString:urlString fromViewController:viewController completion:completion];
+    [self downloadKind:kind urlString:urlString fromViewController:viewController completion:completion];
 }
 
 - (BOOL)configureExistingResourceForKind:(B2PrivateResourceKind)kind
@@ -427,20 +427,6 @@ static uint32_t B2ReadUInt32LE(const uint8_t *bytes)
     } else {
         [defaults setObject:@[fileName] forKey:@"disk"];
     }
-}
-
-- (void)askToDownloadKind:(B2PrivateResourceKind)kind urlString:(NSString *)urlString fromViewController:(UIViewController *)viewController completion:(dispatch_block_t)completion
-{
-    NSString *title = LX(@"privateResources.download.prompt.title", [self displayNameForKind:kind]);
-    NSString *message = LX(@"privateResources.download.prompt.message", [self displayNameForKind:kind]);
-    UIAlertController *alert = [UIAlertController alertControllerWithTitle:title message:message preferredStyle:UIAlertControllerStyleAlert];
-    [alert addAction:[UIAlertAction actionWithTitle:L(@"misc.cancel") style:UIAlertActionStyleCancel handler:^(__unused UIAlertAction *action) {
-        if (completion) completion();
-    }]];
-    [alert addAction:[UIAlertAction actionWithTitle:L(@"privateResources.download.action") style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) {
-        [self downloadKind:kind urlString:urlString fromViewController:viewController completion:completion];
-    }]];
-    [viewController presentViewController:alert animated:YES completion:nil];
 }
 
 - (void)showMissingURLAlertForKind:(B2PrivateResourceKind)kind fromViewController:(UIViewController *)viewController completion:(dispatch_block_t)completion
