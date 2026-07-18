@@ -8,16 +8,21 @@ The repository still contains the original Basilisk II and SheepShaver source tr
 BasiliskII/src/iOS
 ```
 
+Changes are made fully by AI. My goal is to create a tailored version which is fully customized for my personal and private use.
+
 ## What this fork adds
 
+- **Play sound at startup decoded from ROM file**
 - Automatic emulator boot once a ROM and boot disk are available in the file system
-- Play sound at startup decoded from ROM file
 - Optional private ZIP download URLs for a ROM file and disk image with on-the-fly inflate
 - Make copy before first use of a disk image + restore option in Drive settings, strictly using APFS copy-on-write
 - Improved interactive custom screen sizing with different preset-options
-- Zoom and pinch to enlarge and move the view
-- New keyboard reveal gestures than don't interfere with the zoom gestures (from side edges with one finger or pencil)
-- Dynamic screen sizes that are re-calculated on emulator start
+- **Dynamic screen sizes that are re-calculated on emulator start**
+- Mac OS reboots trigger an emulator shutdown and cold start
+- **Enforced Display Settings (screen size / color depth)** While Mac OS still can change screen size and resolution, emulator settings are restored on every reboot.
+- **Zoom and pinch to enlarge and move the view**
+- Respects device safe screen area when needed
+- **New keyboard reveal gestures** than don't interfere with the zoom gestures (from side edges with one finger or pencil)
 - New defaults
 - Higher max. RAM size (512 MB)
 - On-screen keyboard for German
