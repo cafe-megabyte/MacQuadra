@@ -18,6 +18,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign) CGPoint viewportOffset;
 @property (nonatomic, readonly) NSArray<NSValue*> *videoModes;
 @property (nonatomic, readonly) BOOL hasCustomVideoMode;
+@property (nonatomic, assign) BOOL resizePreviewActive;
 @property (nonatomic, strong) IBOutletCollection(NSLayoutConstraint) NSArray<NSLayoutConstraint*> *fullScreenConstraints;
 @property (nonatomic, strong) IBOutletCollection(NSLayoutConstraint) NSArray<NSLayoutConstraint*> *marginConstraints;
 
@@ -30,6 +31,7 @@ NS_ASSUME_NONNULL_BEGIN
 - (CGSize)videoSizeForPreset:(NSString *)preset;
 - (CGRect)safeLayoutBoundsWithinBounds:(CGRect)bounds;
 - (void)updateImage:(nullable CGImageRef)newImage;
+- (void)updateResizePreviewImage:(nullable CGImageRef)newImage;
 - (void)updateCustomSize:(CGSize)customSize;
 
 @end

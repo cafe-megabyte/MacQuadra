@@ -21,6 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (IBAction)showSettings:(id)sender;
 - (IBAction)unwindToMainScreen:(UIStoryboardSegue*)segue;
 - (void)startChoosingCustomSizeUI;
+- (BOOL)canAutomaticallyStartEmulator;
+- (void)cancelPendingEmulatorStart;
 - (void)prepareForEmulatorStartWithCompletion:(void (^)(BOOL ready))completion;
 - (void)emulatorStartGeometryDidChange;
 

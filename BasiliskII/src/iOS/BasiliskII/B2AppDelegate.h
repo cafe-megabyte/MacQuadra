@@ -24,6 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)startEmulator;
 - (void)activateMainScreen;
+- (void)settingsPresentationDidBegin;
 - (void)showAlertWithTitle:(NSString *)title message:(NSString *)message;
 
 @end

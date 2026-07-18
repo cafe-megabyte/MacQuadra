@@ -43,6 +43,7 @@ typedef struct {
     BOOL hasActiveScreenLayout;
     BOOL activeLayoutWantsMargins;
     BOOL hasStableLayoutMetrics;
+    BOOL allowsResizePreviewImageUpdate;
     B2ScreenLayoutMetrics stableLayoutMetrics;
     NSDictionary<NSString *, NSValue *> *cachedPresetVideoSizes;
 }
@@ -706,6 +707,10 @@ typedef struct {
         return;
     }
 
+    if (self.resizePreviewActive && !allowsResizePreviewImageUpdate) {
+        return;
+    }
+
     CGImageRef oldImage = screenImage;
     CGImageRelease(oldImage);
     screenImage = newImage;
@@ -723,6 +728,12 @@ typedef struct {
     if (imageForLayer != nil) {
         CGImageRelease(imageForLayer);
     }
+}
+
+- (void)updateResizePreviewImage:(CGImageRef)newImage {
+    allowsResizePreviewImageUpdate = YES;
+    [self updateImage:newImage];
+    allowsResizePreviewImageUpdate = NO;
 }
 
 @end

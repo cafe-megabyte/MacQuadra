@@ -132,6 +132,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     NSData *lastPRAM;
     NSMutableArray *videoModes;
     BOOL settingsRequested;
+    BOOL settingsPresentationScheduled;
     BOOL activationInProgress;
     BOOL snapshotPreparationInProgress;
 }
@@ -275,8 +276,14 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 }
 
 - (void)requestSettingsPresentation {
+    [[B2ViewController sharedViewController] cancelPendingEmulatorStart];
     settingsRequested = YES;
+    settingsPresentationScheduled = YES;
     [self activateMainScreen];
+}
+
+- (void)settingsPresentationDidBegin {
+    settingsPresentationScheduled = NO;
 }
 
 - (void)activateMainScreen {
@@ -292,6 +299,10 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     if (settingsRequested) {
         settingsRequested = NO;
         [rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
+        return;
+    }
+
+    if (settingsPresentationScheduled) {
         return;
     }
 
@@ -314,13 +325,19 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 }
 
 - (void)bootOrShowSettingsIfNeeded {
-    if (self.emulatorRunning || self.window.rootViewController.presentedViewController != nil) {
+    if (self.emulatorRunning || settingsPresentationScheduled || self.window.rootViewController.presentedViewController != nil) {
+        return;
+    }
+
+    B2ViewController *viewController = [B2ViewController sharedViewController];
+    if (viewController != nil && ![viewController canAutomaticallyStartEmulator]) {
         return;
     }
 
     if ([[B2PrivateResources sharedInstance] allRequiredResourcesConfigured]) {
         [self startEmulator];
     } else {
+        settingsPresentationScheduled = YES;
         [self.window.rootViewController performSelector:@selector(showSettings:) withObject:self afterDelay:0.0];
     }
 }

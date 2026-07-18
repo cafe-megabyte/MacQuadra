@@ -57,8 +57,11 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     // interactive screen resizing
     NSArray<UIGestureRecognizer*> *resizeGestures;
     CGSize initialScreenSize;
+    CGSize resizeEditorOriginalScreenSize;
     B2ResizeAreaMode resizeAreaMode;
     B2ResizeScaleMode resizeScaleMode;
+    NSInteger resizeAreaControlSelection;
+    NSInteger resizeScaleControlSelection;
     UIVisualEffectView *resizeControlsView;
     UISegmentedControl *resizeAreaControl;
     UISegmentedControl *resizeScaleControl;
@@ -206,10 +209,23 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 #pragma mark - Settings
 
 - (void)showSettings:(id)sender {
+    [self cancelPendingEmulatorStart];
     [self performSegueWithIdentifier:@"settings" sender:sender];
+    [[B2AppDelegate sharedInstance] settingsPresentationDidBegin];
 }
 
 #pragma mark - Emulator Start Orientation
+
+- (BOOL)canAutomaticallyStartEmulator {
+    return self.isViewLoaded && self.view.window != nil && ![self hasActiveModalPresentation];
+}
+
+- (void)cancelPendingEmulatorStart {
+    pendingLandscapeStartCompletion = nil;
+    landscapeStartCheckScheduled = NO;
+    landscapeStartCompletionScheduled = NO;
+    [self hideLandscapeStartMessage];
+}
 
 - (void)prepareForEmulatorStartWithCompletion:(void (^)(BOOL ready))completion {
     if (![NSThread isMainThread]) {
@@ -251,11 +267,41 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 }
 
 - (BOOL)currentLayoutIsLandscape {
+    if (@available(iOS 13.0, *)) {
+        UIInterfaceOrientation interfaceOrientation = self.view.window.windowScene.interfaceOrientation;
+        if (UIInterfaceOrientationIsLandscape(interfaceOrientation)) {
+            return YES;
+        }
+        if (UIInterfaceOrientationIsPortrait(interfaceOrientation)) {
+            return NO;
+        }
+    }
     return self.view.bounds.size.width > self.view.bounds.size.height;
 }
 
 - (BOOL)mainViewIsReadyForEmulatorStart {
-    return self.isViewLoaded && self.view.window != nil && self.presentedViewController == nil;
+    return self.isViewLoaded && self.view.window != nil && ![self hasActiveModalPresentation];
+}
+
+- (BOOL)hasActiveModalPresentation {
+    UIViewController *rootViewController = self.view.window.rootViewController ?: self;
+    return [self viewControllerTreeHasActivePresentation:rootViewController];
+}
+
+- (BOOL)viewControllerTreeHasActivePresentation:(UIViewController *)viewController {
+    if (viewController.presentedViewController != nil ||
+        viewController.isBeingPresented ||
+        viewController.isBeingDismissed) {
+        return YES;
+    }
+
+    for (UIViewController *childViewController in viewController.childViewControllers) {
+        if ([self viewControllerTreeHasActivePresentation:childViewController]) {
+            return YES;
+        }
+    }
+
+    return NO;
 }
 
 - (void)checkPendingLandscapeEmulatorStart {
@@ -391,8 +437,12 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     [self setKeyboardGesturesEnabled:NO];
     [self setScreenViewportGesturesEnabled:NO];
     [sharedScreenView resetViewportAnimated:NO];
-    resizeAreaMode = B2ResizeAreaModeEdge;
-    resizeScaleMode = B2ResizeScaleMode2x;
+    resizeEditorOriginalScreenSize = sharedScreenView.screenSize;
+    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    NSString *preset = [defaults b2VideoSizePreset];
+    CGSize initialResizeSize = [self initialScreenSizeForResizeEditorWithPreset:preset];
+    [self configureResizeControlsForScreenSize:initialResizeSize preset:preset];
+    sharedScreenView.resizePreviewActive = YES;
     [self installResizeControls];
     pointingDeviceView.userInteractionEnabled = NO;
     // pinch to scale
@@ -402,7 +452,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     for (UIGestureRecognizer *recognizer in resizeGestures) {
         [sharedScreenView addGestureRecognizer:recognizer];
     }
-    [self applyResizeControls];
+    [self updateInteractiveScreenResize:initialResizeSize];
     _helpView.hidden = NO;
 }
 
@@ -427,6 +477,10 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     [defaults removeObjectForKey:B2VideoSizePresetDefaultsKey];
     [defaults setObject:NSStringFromCGSize(newScreenSize) forKey:@"videoSize"];
     [sharedScreenView updateCustomSize:newScreenSize];
+    if ([B2AppDelegate sharedInstance].emulatorRunning) {
+        [sharedScreenView setScreenSize:resizeEditorOriginalScreenSize];
+    }
+    sharedScreenView.resizePreviewActive = NO;
     [sharedScreenView updateImage:nil];
     [self showSettings:@"graphicsAndSound"];
 }
@@ -466,11 +520,11 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     resizeControlsView.clipsToBounds = YES;
     
     resizeAreaControl = [[UISegmentedControl alloc] initWithItems:@[L(@"settings.gfx.size.customize.edge"), L(@"settings.gfx.size.customize.safe")]];
-    resizeAreaControl.selectedSegmentIndex = resizeAreaMode;
+    resizeAreaControl.selectedSegmentIndex = resizeAreaControlSelection;
     [resizeAreaControl addTarget:self action:@selector(resizeAreaChanged:) forControlEvents:UIControlEventValueChanged];
     
     resizeScaleControl = [[UISegmentedControl alloc] initWithItems:@[@"1×", @"2×", @"4×"]];
-    resizeScaleControl.selectedSegmentIndex = resizeScaleMode;
+    resizeScaleControl.selectedSegmentIndex = resizeScaleControlSelection;
     [resizeScaleControl addTarget:self action:@selector(resizeScaleChanged:) forControlEvents:UIControlEventValueChanged];
     
     resizeModeControl = [[UISegmentedControl alloc] initWithItems:@[L(@"settings.gfx.size.customize.input"), L(@"settings.gfx.size.customize.manual")]];
@@ -530,8 +584,12 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 }
 
 - (CGSize)screenSizeForResizeControls {
-    CGSize baseSize = [self baseSizeForResizeAreaMode:resizeAreaMode];
-    CGFloat divisor = [self divisorForResizeScaleMode:resizeScaleMode];
+    return [self screenSizeForResizeAreaMode:resizeAreaMode scaleMode:resizeScaleMode];
+}
+
+- (CGSize)screenSizeForResizeAreaMode:(B2ResizeAreaMode)areaMode scaleMode:(B2ResizeScaleMode)scaleMode {
+    CGSize baseSize = [self baseSizeForResizeAreaMode:areaMode];
+    CGFloat divisor = [self divisorForResizeScaleMode:scaleMode];
     return CGSizeMake(baseSize.width / divisor, baseSize.height / divisor);
 }
 
@@ -558,6 +616,67 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
             return 4.0;
     }
     return 2.0;
+}
+
+- (CGSize)initialScreenSizeForResizeEditorWithPreset:(NSString *)preset {
+    if (preset != nil) {
+        CGSize presetSize = [sharedScreenView videoSizeForPreset:preset];
+        if (!CGSizeEqualToSize(presetSize, CGSizeZero)) {
+            return presetSize;
+        }
+    }
+
+    NSString *sizeString = [[NSUserDefaults standardUserDefaults] stringForKey:@"videoSize"];
+    if (sizeString != nil) {
+        CGSize size = CGSizeFromString(sizeString);
+        if (!CGSizeEqualToSize(size, CGSizeZero)) {
+            return size;
+        }
+    }
+
+    return sharedScreenView.screenSize;
+}
+
+- (void)configureResizeControlsForScreenSize:(CGSize)screenSize preset:(NSString *)preset {
+    resizeAreaMode = B2ResizeAreaModeEdge;
+    resizeScaleMode = B2ResizeScaleMode2x;
+    resizeAreaControlSelection = UISegmentedControlNoSegment;
+    resizeScaleControlSelection = UISegmentedControlNoSegment;
+
+    if ([preset isEqualToString:B2VideoSizePresetStandard] || [preset isEqualToString:B2VideoSizePresetStandardLandscape]) {
+        resizeAreaMode = B2ResizeAreaModeSafeArea;
+        resizeScaleMode = B2ResizeScaleMode2x;
+        resizeAreaControlSelection = resizeAreaMode;
+        resizeScaleControlSelection = resizeScaleMode;
+        return;
+    }
+    if ([preset isEqualToString:B2VideoSizePresetLarge] || [preset isEqualToString:B2VideoSizePresetLargeLandscape]) {
+        resizeAreaMode = [UIDevice currentDevice].userInterfaceIdiom == UIUserInterfaceIdiomPhone ? B2ResizeAreaModeSafeArea : B2ResizeAreaModeEdge;
+        resizeScaleMode = B2ResizeScaleMode4x;
+        resizeAreaControlSelection = resizeAreaMode;
+        resizeScaleControlSelection = resizeScaleMode;
+        return;
+    }
+
+    for (NSInteger area = B2ResizeAreaModeEdge; area <= B2ResizeAreaModeSafeArea; area++) {
+        for (NSInteger scale = B2ResizeScaleMode1x; scale <= B2ResizeScaleMode4x; scale++) {
+            if ([self screenSize:screenSize matchesScreenSize:[self screenSizeForResizeAreaMode:(B2ResizeAreaMode)area scaleMode:(B2ResizeScaleMode)scale]]) {
+                resizeAreaMode = (B2ResizeAreaMode)area;
+                resizeScaleMode = (B2ResizeScaleMode)scale;
+                resizeAreaControlSelection = resizeAreaMode;
+                resizeScaleControlSelection = resizeScaleMode;
+                return;
+            }
+        }
+    }
+}
+
+- (BOOL)screenSize:(CGSize)screenSize matchesScreenSize:(CGSize)otherScreenSize {
+    uint32_t width = (uint32_t)screenSize.width &~ 1;
+    uint32_t height = (uint32_t)screenSize.height &~ 1;
+    uint32_t otherWidth = (uint32_t)otherScreenSize.width &~ 1;
+    uint32_t otherHeight = (uint32_t)otherScreenSize.height &~ 1;
+    return width == otherWidth && height == otherHeight;
 }
 
 - (void)showResizeInputDialog {
@@ -590,6 +709,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     }]];
     [alertController addAction:[UIAlertAction actionWithTitle:L(@"misc.ok") style:UIAlertActionStyleDefault handler:^(UIAlertAction * _Nonnull action) {
         CGSize inputSize = CGSizeMake(widthField.text.integerValue, heightField.text.integerValue);
+        self->resizeModeControl.selectedSegmentIndex = UISegmentedControlNoSegment;
         if (![self updateInteractiveScreenResize:inputSize]) {
             self->resizeModeControl.selectedSegmentIndex = UISegmentedControlNoSegment;
         }
@@ -609,7 +729,7 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     [sharedScreenView setScreenSize:size];
     UIGraphicsBeginImageContext(size);
     [[UIImage imageNamed:@"desktop"] drawInRect:CGRectMake(0, 0, size.width, size.height)];
-    [sharedScreenView updateImage:UIGraphicsGetImageFromCurrentImageContext().CGImage];
+    [sharedScreenView updateResizePreviewImage:UIGraphicsGetImageFromCurrentImageContext().CGImage];
     UIGraphicsPopContext();
     _helpLabel.text = [NSString stringWithFormat:L(@"settings.gfx.size.customize.help"), (int)size.width, (int)size.height];
     return YES;
