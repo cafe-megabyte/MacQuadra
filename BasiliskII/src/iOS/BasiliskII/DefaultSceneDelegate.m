@@ -9,6 +9,7 @@
 #import "DefaultSceneDelegate.h"
 #import "B2AppDelegate.h"
 #import "B2ScreenView.h"
+#import "B2ViewController.h"
 
 API_AVAILABLE(ios(13.0))
 @interface DefaultSceneDelegate ()
@@ -82,6 +83,12 @@ API_AVAILABLE(ios(13.0))
 
 - (void)windowScene:(UIWindowScene *)windowScene performActionForShortcutItem:(UIApplicationShortcutItem *)shortcutItem completionHandler:(void (^)(BOOL succeeded))completionHandler {
     [B2AppDelegate.sharedInstance application:UIApplication.sharedApplication performActionForShortcutItem:shortcutItem completionHandler:completionHandler];
+}
+
+- (void)windowScene:(UIWindowScene *)windowScene didUpdateEffectiveGeometry:(UIWindowSceneGeometry *)previousEffectiveGeometry API_AVAILABLE(ios(16.0)) {
+    (void)windowScene;
+    (void)previousEffectiveGeometry;
+    [[B2ViewController sharedViewController] emulatorStartGeometryDidChange];
 }
 
 - (void)scene:(UIScene *)scene openURLContexts:(NSSet<UIOpenURLContext *> *)URLContexts {

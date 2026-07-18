@@ -37,7 +37,9 @@ static NSString * const B2DiskImageSnapshotsErrorDomain = @"B2DiskImageSnapshots
     [self performFileOperation:^{
         NSError *error = nil;
         BOOL success = [self ensureSnapshotsForConfiguredVolumesInDocumentsPath:documentsPath error:&error];
-        [self finishWithSuccess:success error:error completion:completion];
+        if (completion != nil) {
+            completion(success, error);
+        }
     }];
 }
 

@@ -72,20 +72,20 @@ Label</string>
                                         </button>
                                     </subviews>
                                     <constraints>
-                                        <constraint firstItem="nAv-tp-ofn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="Naf-6u-35z" secondAttribute="bottom" constant="14" id="GZe-Az-hxE"/>
-                                        <constraint firstItem="M9P-cA-7Up" firstAttribute="centerX" secondItem="cWK-E4-2Rz" secondAttribute="centerX" id="IVQ-IR-1A3"/>
-                                        <constraint firstItem="Naf-6u-35z" firstAttribute="centerX" secondItem="cWK-E4-2Rz" secondAttribute="centerX" id="TiQ-tf-9Lr"/>
-                                        <constraint firstItem="Naf-6u-35z" firstAttribute="centerY" secondItem="cWK-E4-2Rz" secondAttribute="centerY" id="g2v-Jw-cfb"/>
-                                        <constraint firstItem="Naf-6u-35z" firstAttribute="top" relation="greaterThanOrEqual" secondItem="M9P-cA-7Up" secondAttribute="bottom" constant="14" id="l7s-Hc-Xai"/>
-                                        <constraint firstItem="M9P-cA-7Up" firstAttribute="top" secondItem="cWK-E4-2Rz" secondAttribute="top" constant="7.5" id="nhf-de-OKX"/>
-                                    </constraints>
-                                </view>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="140" id="AgX-Ik-tc9"/>
+                                    <constraint firstItem="nAv-tp-ofn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="Naf-6u-35z" secondAttribute="bottom" constant="14" id="GZe-Az-hxE"/>
+                                    <constraint firstItem="nAv-tp-ofn" firstAttribute="centerX" secondItem="cWK-E4-2Rz" secondAttribute="centerX" id="SzQ-R7-2aE"/>
+                                    <constraint firstItem="M9P-cA-7Up" firstAttribute="centerX" secondItem="cWK-E4-2Rz" secondAttribute="centerX" id="IVQ-IR-1A3"/>
+                                    <constraint firstItem="Naf-6u-35z" firstAttribute="centerX" secondItem="cWK-E4-2Rz" secondAttribute="centerX" id="TiQ-tf-9Lr"/>
+                                    <constraint firstItem="Naf-6u-35z" firstAttribute="centerY" secondItem="cWK-E4-2Rz" secondAttribute="centerY" id="g2v-Jw-cfb"/>
+                                    <constraint firstItem="Naf-6u-35z" firstAttribute="top" relation="greaterThanOrEqual" secondItem="M9P-cA-7Up" secondAttribute="bottom" constant="14" id="l7s-Hc-Xai"/>
+                                    <constraint firstItem="M9P-cA-7Up" firstAttribute="top" secondItem="cWK-E4-2Rz" secondAttribute="top" constant="7.5" id="nhf-de-OKX"/>
                                     <constraint firstAttribute="bottom" secondItem="nAv-tp-ofn" secondAttribute="bottom" constant="8" id="SB6-Bm-WWl"/>
-                                    <constraint firstItem="nAv-tp-ofn" firstAttribute="centerX" secondItem="3p3-Lp-luQ" secondAttribute="centerX" id="SzQ-R7-2aE"/>
-                                    <constraint firstAttribute="width" constant="240.00000000000011" id="faE-wd-Igr"/>
                                 </constraints>
+                            </view>
+                            <constraints>
+                                <constraint firstAttribute="height" constant="140" id="AgX-Ik-tc9"/>
+                                    <constraint firstAttribute="width" constant="240.00000000000011" id="faE-wd-Igr"/>
+                            </constraints>
                                 <blurEffect style="regular"/>
                                 <userDefinedRuntimeAttributes>
                                     <userDefinedRuntimeAttribute type="number" keyPath="layer.cornerRadius">

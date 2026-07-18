@@ -44,6 +44,7 @@ typedef struct {
     BOOL activeLayoutWantsMargins;
     BOOL hasStableLayoutMetrics;
     B2ScreenLayoutMetrics stableLayoutMetrics;
+    NSDictionary<NSString *, NSValue *> *cachedPresetVideoSizes;
 }
 
 - (void)awakeFromNib {
@@ -84,12 +85,23 @@ typedef struct {
 - (void)initVideoModes {
     NSMutableArray<NSValue*> *videoModes = [[NSMutableArray alloc] initWithCapacity:9];
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+    CGSize standardSize = [self videoSizeForPreset:B2VideoSizePresetStandard];
+    CGSize standardLandscapeSize = [self videoSizeForPreset:B2VideoSizePresetStandardLandscape];
+    CGSize largeSize = [self videoSizeForPreset:B2VideoSizePresetLarge];
+    CGSize largeLandscapeSize = [self videoSizeForPreset:B2VideoSizePresetLargeLandscape];
+
+    cachedPresetVideoSizes = @{
+        B2VideoSizePresetStandard: [NSValue valueWithCGSize:standardSize],
+        B2VideoSizePresetStandardLandscape: [NSValue valueWithCGSize:standardLandscapeSize],
+        B2VideoSizePresetLarge: [NSValue valueWithCGSize:largeSize],
+        B2VideoSizePresetLargeLandscape: [NSValue valueWithCGSize:largeLandscapeSize],
+    };
 
     // dynamic resolutions
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandard] to:videoModes allowDuplicate:YES];
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetStandardLandscape] to:videoModes allowDuplicate:YES];
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLarge] to:videoModes allowDuplicate:YES];
-    [self addVideoMode:[self videoSizeForPreset:B2VideoSizePresetLargeLandscape] to:videoModes allowDuplicate:YES];
+    [self addVideoMode:standardSize to:videoModes allowDuplicate:YES];
+    [self addVideoMode:standardLandscapeSize to:videoModes allowDuplicate:YES];
+    [self addVideoMode:largeSize to:videoModes allowDuplicate:YES];
+    [self addVideoMode:largeLandscapeSize to:videoModes allowDuplicate:YES];
     
     // default resolutions
     [self addVideoMode:CGSizeMake(640, 480) to:videoModes allowDuplicate:YES];
@@ -187,7 +199,7 @@ typedef struct {
 
 - (void)setScreenSize:(CGSize)screenSize {
     if (![NSThread isMainThread]) {
-        dispatch_sync(dispatch_get_main_queue(), ^{
+        dispatch_async(dispatch_get_main_queue(), ^{
             [self setScreenSize:screenSize];
         });
         return;
@@ -196,6 +208,7 @@ typedef struct {
     _screenSize = screenSize;
     [self updateConstraints];
     [self setNeedsLayout];
+    [self layoutIfNeeded];
 }
 
 - (void)setViewportScale:(CGFloat)viewportScale {
@@ -587,6 +600,10 @@ typedef struct {
 
 - (CGSize)videoSizeForPreset:(NSString *)preset {
     if (![NSThread isMainThread]) {
+        NSValue *cachedSize = cachedPresetVideoSizes[preset];
+        if (cachedSize != nil) {
+            return cachedSize.CGSizeValue;
+        }
         __block CGSize presetSize;
         dispatch_sync(dispatch_get_main_queue(), ^{
             presetSize = [self videoSizeForPreset:preset];
@@ -675,13 +692,37 @@ typedef struct {
 }
 
 - (void)updateImage:(CGImageRef)newImage {
+    if (![NSThread isMainThread]) {
+        CGImageRef imageForMainThread = newImage;
+        if (imageForMainThread != nil) {
+            CGImageRetain(imageForMainThread);
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self updateImage:imageForMainThread];
+            if (imageForMainThread != nil) {
+                CGImageRelease(imageForMainThread);
+            }
+        });
+        return;
+    }
+
     CGImageRef oldImage = screenImage;
     CGImageRelease(oldImage);
     screenImage = newImage;
     if (screenImage != nil) {
         CGImageRetain(screenImage);
     }
-    [videoLayer performSelectorOnMainThread:@selector(setContents:) withObject:(__bridge id)screenImage waitUntilDone:NO];
+    CGImageRef imageForLayer = screenImage;
+    if (imageForLayer != nil) {
+        CGImageRetain(imageForLayer);
+    }
+
+    [self setNeedsLayout];
+    [self layoutIfNeeded];
+    videoLayer.contents = (__bridge id)imageForLayer;
+    if (imageForLayer != nil) {
+        CGImageRelease(imageForLayer);
+    }
 }
 
 @end

@@ -1,5 +1,6 @@
 #include "sysdeps.h"
 
+#include <atomic>
 #include <pthread.h>
 #include "adb.h"
 #include "cpu_emulation.h"
@@ -24,6 +25,7 @@ static uint8 bits_from_depth(const video_depth depth)
 // Supported video modes
 static vector<video_mode> VideoModes;
 static const NSInteger B2VideoDepthMillionsFixed = 33;
+static std::atomic_bool videoImageDeliveryPending(false);
 
 static void release_frame_buffer(void *info, const void *data, size_t size)
 {
@@ -174,6 +176,11 @@ bool IOS_monitor::video_open(const video_mode &mode)
 
 bool IOS_monitor::update_image()
 {
+    bool expectedDeliveryPending = false;
+    if (!videoImageDeliveryPending.compare_exchange_strong(expectedDeliveryPending, true)) {
+        return true;
+    }
+
     video_mode current_mode = get_current_mode();
     CGBitmapInfo options = 0;
     switch ( current_mode.depth )
@@ -194,15 +201,16 @@ bool IOS_monitor::update_image()
 							 kCGRenderingIntentDefault);
 	if (imageRef == NULL)
 	{
+        videoImageDeliveryPending = false;
 		ErrorAlert("Could not create CGImage from CGDataProvider");
 		return false;
 	}
     
-    dispatch_sync(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
         [sharedScreenView updateImage:imageRef];
         CGImageRelease(imageRef);
+        videoImageDeliveryPending = false;
     });
-    
     
     return true;
 }
@@ -303,6 +311,7 @@ static int32 frame_skip;
 
 bool VideoInit(bool classic)
 {
+    (void)classic;
     frame_skip = PrefsFindInt32("frameskip");
     [sharedScreenView reloadVideoModes];
 

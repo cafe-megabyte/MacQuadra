@@ -204,13 +204,15 @@ static bool decode_easc_compressed_sound(const uint8 *header, uint32 dataSize, s
 
 void audio_play_rom_startup_sound(void)
 {
-	if (!audio_open || AudioStatus.sample_size == 0 || AudioStatus.channels == 0)
+	if (!audio_open || AudioStatus.sample_size == 0 || AudioStatus.channels == 0) {
 		return;
+	}
 
 	uint32 eascDataSize = 0;
 	const uint8 *eascHeader = find_easc_startup_sound_header(&eascDataSize);
 	std::vector<uint8> pcm;
-	if (decode_easc_compressed_sound(eascHeader, eascDataSize, pcm))
+	bool decoded = decode_easc_compressed_sound(eascHeader, eascDataSize, pcm);
+	if (decoded)
 		audio_play_startup_sound(pcm.data(), (int)(pcm.size() / ((AudioStatus.sample_size / 8) * AudioStatus.channels)));
 }
 
@@ -222,8 +224,9 @@ void audio_play_rom_startup_sound(void)
 void AudioInit(void)
 {
 	// Sound disabled in prefs? Then do nothing
-	if (PrefsFindBool("nosound"))
+	if (PrefsFindBool("nosound")) {
 		return;
+	}
     
 	//audio_sample_sizes.push_back(8);
 	audio_sample_sizes.push_back(16);

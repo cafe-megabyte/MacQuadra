@@ -122,13 +122,14 @@ bool open_audio(int sampleRate, int sampleSize, int channels)
     outputFormat.mBytesPerFrame = (outputFormat.mBitsPerChannel / 8) * outputFormat.mChannelsPerFrame;
     outputFormat.mBytesPerPacket = outputFormat.mBytesPerFrame * outputFormat.mFramesPerPacket;
     outputFormat.mReserved = 0;
-    OSStatus err = AudioQueueNewOutput(&outputFormat, audio_callback, NULL, CFRunLoopGetMain(), kCFRunLoopCommonModes, 0, &audioQueue);
+    OSStatus err = AudioQueueNewOutput(&outputFormat, audio_callback, NULL, NULL, NULL, 0, &audioQueue);
     if (err != noErr) return false;
     
     // create buffers
     sndBufferSize = outputFormat.mBytesPerFrame * audio_frames_per_block;
     for (int i=0; i<NUM_BUFFERS; i++) {
-        AudioQueueAllocateBuffer(audioQueue, sndBufferSize, &aqBuffer[i]);
+        err = AudioQueueAllocateBuffer(audioQueue, sndBufferSize, &aqBuffer[i]);
+        if (err != noErr) return false;
         audio_callback(NULL, audioQueue, aqBuffer[i]);
         sndBuffer[i] = (char*)malloc(sndBufferSize);
     }

@@ -64,6 +64,8 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     UISegmentedControl *resizeModeControl;
     UIVisualEffectView *landscapeStartView;
     void (^pendingLandscapeStartCompletion)(BOOL ready);
+    BOOL landscapeStartCheckScheduled;
+    BOOL landscapeStartCompletionScheduled;
 }
 
 
@@ -125,13 +127,31 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
         }];
     }
     [sharedScreenView resetViewportAnimated:NO];
+    if (pendingLandscapeStartCompletion != nil) {
+        [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext>  _Nonnull context) {
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self emulatorStartGeometryDidChange];
+            });
+        }];
+        NSTimeInterval retryDelay = coordinator.transitionDuration + 0.1;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(retryDelay * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+            [self emulatorStartGeometryDidChange];
+        });
+    }
 }
 
 - (void)viewDidLayoutSubviews {
     [super viewDidLayoutSubviews];
     pointingDeviceView.frame = self.view.bounds;
+    if (pendingLandscapeStartCompletion != nil) {
+        if (landscapeStartCompletionScheduled) {
+            return;
+        }
+        [self checkPendingLandscapeEmulatorStart];
+        return;
+    }
+
     [sharedScreenView setNeedsUpdateConstraints];
-    [self completePendingLandscapeStartIfReady];
 }
 
 - (void)viewDidAppear:(BOOL)animated {
@@ -203,20 +223,19 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
         return;
     }
 
-    if ([self currentLayoutIsLandscape]) {
-        [self hideLandscapeStartMessage];
-        completion(YES);
-        return;
-    }
-
-    if (pendingLandscapeStartCompletion != nil) {
-        pendingLandscapeStartCompletion = [completion copy];
-        return;
-    }
-
     pendingLandscapeStartCompletion = [completion copy];
-    [self showLandscapeStartMessage];
-    [self requestLandscapeGeometryForEmulatorStart];
+    [self checkPendingLandscapeEmulatorStart];
+}
+
+- (void)emulatorStartGeometryDidChange {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self emulatorStartGeometryDidChange];
+        });
+        return;
+    }
+
+    [self checkPendingLandscapeEmulatorStart];
 }
 
 - (BOOL)selectedVideoPresetRequiresLandscape {
@@ -228,31 +247,71 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
     return self.view.bounds.size.width > self.view.bounds.size.height;
 }
 
-- (void)requestLandscapeGeometryForEmulatorStart {
-    // Dynamic landscape resolutions are fixed when the emulator boots. Rotate first
-    // so UIKit reports the real landscape safe area before VideoInit calculates modes.
-    if (@available(iOS 16.0, *)) {
-        UIWindowScene *windowScene = self.view.window.windowScene;
-        if (windowScene != nil) {
-            UIWindowSceneGeometryPreferencesIOS *preferences = [[UIWindowSceneGeometryPreferencesIOS alloc] initWithInterfaceOrientations:UIInterfaceOrientationMaskLandscape];
-            [windowScene requestGeometryUpdateWithPreferences:preferences errorHandler:^(NSError * _Nonnull error) {
-                dispatch_async(dispatch_get_main_queue(), ^{
-                    [self showLandscapeStartMessage];
-                });
-            }];
-        }
-    }
+- (BOOL)mainViewIsReadyForEmulatorStart {
+    return self.isViewLoaded && self.view.window != nil && self.presentedViewController == nil;
 }
 
-- (void)completePendingLandscapeStartIfReady {
-    if (pendingLandscapeStartCompletion == nil || ![self currentLayoutIsLandscape]) {
+- (void)checkPendingLandscapeEmulatorStart {
+    if (pendingLandscapeStartCompletion == nil) {
+        return;
+    }
+
+    if (![self mainViewIsReadyForEmulatorStart]) {
+        [self schedulePendingLandscapeStartCheck];
+        return;
+    }
+
+    if ([self currentLayoutIsLandscape]) {
+        if (landscapeStartCompletionScheduled) {
+            return;
+        }
+        landscapeStartCompletionScheduled = YES;
+        [self completePendingLandscapeEmulatorStart];
+        return;
+    }
+
+    [self showLandscapeStartMessage];
+}
+
+- (void)completePendingLandscapeEmulatorStart {
+    if (pendingLandscapeStartCompletion == nil) {
+        landscapeStartCompletionScheduled = NO;
+        return;
+    }
+
+    if (![self currentLayoutIsLandscape]) {
+        landscapeStartCompletionScheduled = NO;
+        [self checkPendingLandscapeEmulatorStart];
         return;
     }
 
     void (^completion)(BOOL ready) = pendingLandscapeStartCompletion;
     pendingLandscapeStartCompletion = nil;
+    landscapeStartCompletionScheduled = NO;
+    [sharedScreenView reloadVideoModes];
     [self hideLandscapeStartMessage];
     completion(YES);
+}
+
+- (void)schedulePendingLandscapeStartCheck {
+    if (landscapeStartCheckScheduled) {
+        return;
+    }
+
+    landscapeStartCheckScheduled = YES;
+    id<UIViewControllerTransitionCoordinator> coordinator = self.transitionCoordinator;
+    void (^retry)(void) = ^{
+        self->landscapeStartCheckScheduled = NO;
+        [self checkPendingLandscapeEmulatorStart];
+    };
+
+    if (coordinator != nil) {
+        [coordinator animateAlongsideTransition:nil completion:^(id<UIViewControllerTransitionCoordinatorContext> _Nonnull context) {
+            dispatch_async(dispatch_get_main_queue(), retry);
+        }];
+    } else {
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.05 * NSEC_PER_SEC)), dispatch_get_main_queue(), retry);
+    }
 }
 
 - (void)showLandscapeStartMessage {
@@ -261,7 +320,8 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 }
 
 - (void)hideLandscapeStartMessage {
-    landscapeStartView.hidden = YES;
+    [landscapeStartView removeFromSuperview];
+    landscapeStartView = nil;
 }
 
 - (void)installLandscapeStartViewIfNeeded {

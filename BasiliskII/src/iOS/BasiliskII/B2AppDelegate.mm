@@ -459,13 +459,24 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     }
 
     snapshotPreparationInProgress = YES;
-    [B2DiskImageSnapshots ensureSnapshotsForConfiguredVolumesInDocumentsPath:self.documentsPath completion:^(BOOL success, NSError * _Nullable error) {
+    __block BOOL snapshotCompletionHandled = NO;
+    void (^finishSnapshotPreparation)(BOOL, NSError *) = ^(BOOL success, NSError * _Nullable error) {
+        if (snapshotCompletionHandled) {
+            return;
+        }
+        snapshotCompletionHandled = YES;
         self->snapshotPreparationInProgress = NO;
         if (success) {
             [self startEmulatorAfterSnapshotPreparation];
         } else {
-            [self showAlertWithTitle:L(@"settings.volumes.snapshot.prepare.error.title") message:error.localizedDescription];
+            dispatch_async(dispatch_get_main_queue(), ^{
+                [self showAlertWithTitle:L(@"settings.volumes.snapshot.prepare.error.title") message:error.localizedDescription];
+            });
         }
+    };
+
+    [B2DiskImageSnapshots ensureSnapshotsForConfiguredVolumesInDocumentsPath:self.documentsPath completion:^(BOOL success, NSError * _Nullable error) {
+        finishSnapshotPreparation(success, error);
     }];
 }
 
@@ -504,7 +515,9 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
         emulThread = [[NSThread alloc] initWithTarget:self selector:@selector(emulThread) object:nil];
         tickThread = [[NSThread alloc] initWithTarget:self selector:@selector(tickThread) object:nil];
         pramTimer = [NSTimer scheduledTimerWithTimeInterval:60.0 target:self selector:@selector(pramBackup:) userInfo:nil repeats:YES];
-        [emulThread performSelector:@selector(start) withObject:nil afterDelay:1.0];
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+            [self->emulThread start];
+        });
     }
 }
 
