@@ -24,7 +24,6 @@ static uint8 bits_from_depth(const video_depth depth)
 
 // Supported video modes
 static vector<video_mode> VideoModes;
-static const NSInteger B2VideoDepthMillionsFixed = 33;
 static std::atomic_bool videoImageDeliveryPending(false);
 
 static void release_frame_buffer(void *info, const void *data, size_t size)
@@ -35,6 +34,21 @@ static void release_frame_buffer(void *info, const void *data, size_t size)
 static bool size_matches(CGSize lhs, CGSize rhs)
 {
     return (uint16)lhs.width == (uint16)rhs.width && (uint16)lhs.height == (uint16)rhs.height;
+}
+
+static video_depth video_depth_from_requested_depth(NSInteger requestedDepth)
+{
+    switch (requestedDepth) {
+        case 1:
+        case 2:
+        case 4:
+        case 8:
+        case 16:
+        case 32:
+            return DepthModeForPixelDepth((int)requestedDepth);
+        default:
+            return VDEPTH_32BIT;
+    }
 }
 
 // Add mode to list of supported modes
@@ -109,6 +123,7 @@ private:
     short				x, y, bpc, bpp, bpr;
     uint8_t				*the_buffer;
     size_t              the_buffer_size;
+    bool                imageCreationErrorReported;
 };
 
 IOS_monitor::IOS_monitor (const	vector<video_mode>	&available_modes,
@@ -120,6 +135,7 @@ IOS_monitor::IOS_monitor (const	vector<video_mode>	&available_modes,
 	colorTable = (uint8 *) malloc(256 * 3);
 	provider = nil;
 	the_buffer = NULL;
+    imageCreationErrorReported = false;
 };
 
 bool IOS_monitor::video_open(const video_mode &mode)
@@ -140,6 +156,7 @@ bool IOS_monitor::video_open(const video_mode &mode)
     MacScreenWidth = x;
     MacScreenHeight = y;
     bpr = current_mode.bytes_per_row;
+    imageCreationErrorReported = false;
     
 	colorSpace = CGColorSpaceCreateDeviceRGB();
     
@@ -202,9 +219,14 @@ bool IOS_monitor::update_image()
 	if (imageRef == NULL)
 	{
         videoImageDeliveryPending = false;
-		ErrorAlert("Could not create CGImage from CGDataProvider");
+        if (!imageCreationErrorReported) {
+            imageCreationErrorReported = true;
+            NSLog(@"Could not create CGImage from CGDataProvider: depth=%d bpc=%d bpp=%d bpr=%d width=%d height=%d",
+                  current_mode.depth, bpc, bpp, bpr, x, y);
+        }
 		return false;
 	}
+    imageCreationErrorReported = false;
     
     dispatch_async(dispatch_get_main_queue(), ^{
         [sharedScreenView updateImage:imageRef];
@@ -317,8 +339,7 @@ bool VideoInit(bool classic)
 
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     NSInteger requestedDepth = [defaults integerForKey:@"videoDepth"];
-    BOOL fixedMillions = requestedDepth == B2VideoDepthMillionsFixed;
-    video_depth init_depth = DepthModeForPixelDepth(fixedMillions ? 32 : (int)requestedDepth);
+    video_depth init_depth = video_depth_from_requested_depth(requestedDepth);
     NSString *videoSizeString = [defaults stringForKey:@"videoSize"];
     NSString *videoSizePreset = [defaults stringForKey:B2VideoSizePresetDefaultsKey];
     if (videoSizePreset == nil && videoSizeString == nil) {
@@ -327,13 +348,11 @@ bool VideoInit(bool classic)
     CGSize init_size = videoSizePreset != nil ? [sharedScreenView videoSizeForPreset:videoSizePreset] : CGSizeFromString(videoSizeString);
     CGSize only_size = videoSizePreset != nil ? init_size : CGSizeZero;
 
-    if (!fixedMillions) {
-        add_standard_modes(VDEPTH_1BIT, only_size);
-        add_standard_modes(VDEPTH_2BIT, only_size);
-        add_standard_modes(VDEPTH_4BIT, only_size);
-        add_standard_modes(VDEPTH_8BIT, only_size);
-        add_standard_modes(VDEPTH_16BIT, only_size);
-    }
+    add_standard_modes(VDEPTH_1BIT, only_size);
+    add_standard_modes(VDEPTH_2BIT, only_size);
+    add_standard_modes(VDEPTH_4BIT, only_size);
+    add_standard_modes(VDEPTH_8BIT, only_size);
+    add_standard_modes(VDEPTH_16BIT, only_size);
     add_standard_modes(VDEPTH_32BIT, only_size);
 
     if (VideoModes.empty()) {

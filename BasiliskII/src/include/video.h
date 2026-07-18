@@ -230,6 +230,9 @@ private:
 	uint32 current_id;
 	uint16 preferred_apple_mode; // Preferred depth/resolution
 	uint32 preferred_id;
+	uint16 forced_apple_mode;    // Color depth selected by emulator settings at startup
+	bool force_initial_depth_change;
+	uint32 force_initial_depth_until_tick;
 
 	uint32 slot_param;           // Mac address of Slot Manager parameter block
 

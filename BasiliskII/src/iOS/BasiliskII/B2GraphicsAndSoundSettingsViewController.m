@@ -18,8 +18,6 @@ typedef enum : NSInteger {
     B2GraphicsAndSoundSettingsSectionSound,
 } B2GraphicsAndSoundSettingsSection;
 
-static const NSInteger B2VideoDepthMillionsFixed = 33;
-
 @interface B2GraphicsAndSoundSettingsViewController () <UITextFieldDelegate>
 
 @end
@@ -73,7 +71,7 @@ static const NSInteger B2VideoDepthMillionsFixed = 33;
         case B2GraphicsAndSoundSettingsSectionScreenSize:
             return sharedScreenView.videoModes.count + (sharedScreenView.hasCustomVideoMode ? 0 : 1);
         case B2GraphicsAndSoundSettingsSectionScreenDepth:
-            return 7;
+            return 6;
         case B2GraphicsAndSoundSettingsSectionScalingFilter:
             return 3;
         case B2GraphicsAndSoundSettingsSectionFrameSkip:
@@ -200,7 +198,7 @@ static const NSInteger B2VideoDepthMillionsFixed = 33;
 }
 
 - (NSInteger)depthValueAtIndex:(NSInteger)index {
-    NSInteger values[] = {1,2,4,8,16,32,B2VideoDepthMillionsFixed};
+    NSInteger values[] = {1,2,4,8,16,32};
     return values[index];
 }
 

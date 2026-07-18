@@ -71,8 +71,7 @@
 "settings.gfx.depth.8" = "256 Farben";
 "settings.gfx.depth.16" = "Tausende Farben";
 "settings.gfx.depth.32" = "Millionen Farben";
-"settings.gfx.depth.33" = "Millionen Farben (fix)";
-"settings.gfx.depth.footer" = "Bei Auswahl einer dynamischen Auflösung steht Mac OS nur diese eine Auflösung zur Verfügung. Bei Auswahl einer festen Auflösung stehen Mac OS alle Auflösungen zur Verfügung und können daher vom Emulator geändert werden.";
+"settings.gfx.depth.footer" = "Diese Auswahl gilt bei jedem Neustart des Emulators. Mac OS kann die Farbtiefe während einer Sitzung weiterhin ändern.";
 "settings.gfx.frameskip" = "Bildwiederholrate";
 "settings.gfx.frameskip.1" = "60 Hz";
 "settings.gfx.frameskip.2" = "30 Hz";
@@ -166,4 +165,4 @@
 "privateResources.error.zipStoredSize" = "Gespeicherte ZIP-Einträge benötigen eine Größenangabe im lokalen Header.";
 "privateResources.error.zipInit" = "ZIP-Entpacker konnte nicht initialisiert werden.";
 "privateResources.error.zipDecompress" = "ZIP-Daten konnten nicht entpackt werden.";
-"emulator.start.rotateLandscape.message" = "Drehen Sie das Gerät ins Querformat. Das gewählte Quer-Preset benötigt die endgültige Safe Area vor dem Emulatorstart.";
+"emulator.start.rotateLandscape.message" = "Drehen Sie das Gerät ins Querformat. Diese Auflösung ist eine Quer-Einstellung.";

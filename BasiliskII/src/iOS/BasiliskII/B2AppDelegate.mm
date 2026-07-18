@@ -36,6 +36,34 @@ static NSMutableSet *hiddenExtFSFiles = nil;
 static NSString * const B2KeyboardLayoutsReadmeFileName = @"README.txt";
 static BOOL coldRestartRequestedForMacReset = NO;
 
+static uint8_t B2AppleModeForConfiguredVideoDepth(void)
+{
+    switch ([[NSUserDefaults standardUserDefaults] integerForKey:@"videoDepth"]) {
+        case 1:
+            return 0x80;
+        case 2:
+            return 0x81;
+        case 4:
+            return 0x82;
+        case 8:
+            return 0x83;
+        case 16:
+            return 0x84;
+        case 32:
+        default:
+            return 0x85;
+    }
+}
+
+static void B2SyncDisplayXPRAMToConfiguredVideoDepth(void)
+{
+    // Keep display PRAM aligned with the emulator setting across Mac OS restarts.
+    XPRAM[0x56] = 0x42; // 'B'
+    XPRAM[0x57] = 0x32; // '2'
+    XPRAM[0x58] = B2AppleModeForConfiguredVideoDepth();
+    XPRAM[0x59] = 0;
+}
+
 bool ShouldHideExtFSFile(const char *path) {
     return [hiddenExtFSFiles containsObject:@(path)] ? true : false;
 }
@@ -618,6 +646,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 }
 
 - (void)pramBackup:(NSTimer*)timer {
+    B2SyncDisplayXPRAMToConfiguredVideoDepth();
     if (lastPRAM == nil || (lastPRAM.length == XPRAM_SIZE && memcmp(XPRAM, lastPRAM.bytes, XPRAM_SIZE) != 0)) {
         lastPRAM = [NSData dataWithBytes:XPRAM length:XPRAM_SIZE];
         SaveXPRAM();

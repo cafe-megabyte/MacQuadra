@@ -71,8 +71,7 @@
 "settings.gfx.depth.8" = "256 Colors";
 "settings.gfx.depth.16" = "Thousands of Colors";
 "settings.gfx.depth.32" = "Millions of Colors";
-"settings.gfx.depth.33" = "Millions of Colors (fixed)";
-"settings.gfx.depth.footer" = "When a dynamic resolution is selected, only that one resolution is available to Mac OS. When a fixed resolution is selected, all resolutions are available to Mac OS and can therefore be changed by the emulator.";
+"settings.gfx.depth.footer" = "This selection applies each time the emulator starts. Mac OS can still change the color depth during a session.";
 "settings.gfx.frameskip" = "Refresh Rate";
 "settings.gfx.frameskip.1" = "60 Hz";
 "settings.gfx.frameskip.2" = "30 Hz";
@@ -166,4 +165,4 @@
 "privateResources.error.zipStoredSize" = "Stored ZIP entries need a size in the local header.";
 "privateResources.error.zipInit" = "Could not initialize ZIP decompressor.";
 "privateResources.error.zipDecompress" = "Could not decompress ZIP data.";
-"emulator.start.rotateLandscape.message" = "Rotate your device to landscape. The selected landscape preset needs the final safe area before the emulator starts.";
+"emulator.start.rotateLandscape.message" = "Rotate your device to landscape. This resolution is a landscape setting.";
