@@ -271,11 +271,6 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 }
 
 - (void)askResetDiskImage:(NSString *)imageName {
-    if ([B2AppDelegate sharedInstance].emulatorRunning) {
-        [[B2AppDelegate sharedInstance] showAlertWithTitle:L(@"settings.volumes.reset.running.title") message:L(@"settings.volumes.reset.running.message")];
-        return;
-    }
-
     NSString *imageFileName = [imageName hasPrefix:@"*"] ? [imageName substringFromIndex:1] : imageName;
     UIAlertController *alertController = [UIAlertController alertControllerWithTitle:L(@"settings.volumes.reset.confirmation.title") message:LX(@"settings.volumes.reset.confirmation.message", imageFileName) preferredStyle:UIAlertControllerStyleAlert];
     [alertController addAction:[UIAlertAction actionWithTitle:L(@"settings.volumes.reset.confirmation.reset") style:UIAlertActionStyleDestructive handler:^(__unused UIAlertAction *action) {
@@ -286,6 +281,7 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 }
 
 - (void)resetDiskImage:(NSString *)imageName {
+    [[B2AppDelegate sharedInstance] terminateEmulator];
     [B2DiskImageSnapshots restoreSnapshotForVolumePath:imageName documentsPath:[B2AppDelegate sharedInstance].documentsPath completion:^(BOOL success, NSError * _Nullable error) {
         if (success) {
             [self.tableView reloadData];

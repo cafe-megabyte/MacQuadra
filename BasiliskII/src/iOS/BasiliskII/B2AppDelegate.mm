@@ -8,6 +8,7 @@
 
 #import "B2AppDelegate.h"
 #import "B2ViewController.h"
+#import "B2SettingsViewController.h"
 #import "B2ScreenView.h"
 #import "B2DocumentsSettingsController.h"
 #import "B2PrivateResources.h"
@@ -121,6 +122,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 
 - (void)requestSettingsPresentation;
 - (void)showBasiliskSettings:(id)sender;
+- (void)updateSettingsModalInPresentation;
 
 @end
 
@@ -128,6 +130,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 {
     NSTimer *redrawTimer, *pramTimer;
     NSThread *emulThread, *tickThread;
+    thread_t emulMachThread;
     NSTimeInterval redrawDelay;
     NSData *lastPRAM;
     NSMutableArray *videoModes;
@@ -284,6 +287,27 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 
 - (void)settingsPresentationDidBegin {
     settingsPresentationScheduled = NO;
+    [self updateSettingsModalInPresentation];
+}
+
+- (void)updateSettingsModalInPresentation {
+    if (![NSThread isMainThread]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self updateSettingsModalInPresentation];
+        });
+        return;
+    }
+
+    if (@available(iOS 13.0, *)) {
+        UIViewController *controller = self.window.rootViewController.presentedViewController;
+        while (controller != nil) {
+            if ([controller isKindOfClass:[B2SettingsViewController class]]) {
+                controller.modalInPresentation = !self.emulatorRunning;
+                return;
+            }
+            controller = controller.presentedViewController;
+        }
+    }
 }
 
 - (void)activateMainScreen {
@@ -498,6 +522,37 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     }];
 }
 
+- (void)terminateEmulator {
+    if (!_emulatorRunning || emulMachThread == THREAD_NULL) {
+        return;
+    }
+
+    kern_return_t error = thread_suspend(emulMachThread);
+    if (error != KERN_SUCCESS) {
+        NSLog(@"%s - thread_suspend() failed, returned %d", __PRETTY_FUNCTION__, error);
+    }
+
+    _emulatorRunning = NO;
+    [self updateSettingsModalInPresentation];
+
+    error = thread_terminate(emulMachThread);
+    if (error != KERN_SUCCESS) {
+        NSLog(@"%s - thread_terminate() failed, returned %d", __PRETTY_FUNCTION__, error);
+    }
+
+    [self pramBackup:nil];
+    QuitEmuNoExit();
+    [self initEmulator];
+    dispatch_async(dispatch_get_main_queue(), ^{
+        [sharedScreenView updateImage:nil];
+    });
+
+    emulThread = nil;
+    emulMachThread = THREAD_NULL;
+    [pramTimer invalidate];
+    pramTimer = nil;
+}
+
 - (void)prepareSnapshotsAndStartEmulator {
     if (emulThread != nil || snapshotPreparationInProgress) {
         return;
@@ -558,10 +613,15 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     if (emulThread == nil) {
         [self initExtFS:self.documentsPath];
         emulThread = [[NSThread alloc] initWithTarget:self selector:@selector(emulThread) object:nil];
-        tickThread = [[NSThread alloc] initWithTarget:self selector:@selector(tickThread) object:nil];
+        if (tickThread == nil || [tickThread isFinished]) {
+            tickThread = [[NSThread alloc] initWithTarget:self selector:@selector(tickThread) object:nil];
+        }
         pramTimer = [NSTimer scheduledTimerWithTimeInterval:60.0 target:self selector:@selector(pramBackup:) userInfo:nil repeats:YES];
+        NSThread *threadToStart = emulThread;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-            [self->emulThread start];
+            if (self->emulThread == threadToStart && ![threadToStart isCancelled]) {
+                [threadToStart start];
+            }
         });
     }
 }
@@ -573,6 +633,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 
 - (void)emulThread {
     @autoreleasepool {
+        emulMachThread = mach_thread_self();
         BOOL tickThreadStarted = NO;
 
         for (;;) {
@@ -592,14 +653,18 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 
             [self pramBackup:nil];
             _emulatorRunning = YES;
+            [self updateSettingsModalInPresentation];
             if (!tickThreadStarted) {
                 tickThreadStarted = YES;
-                [tickThread start];
+                if (![tickThread isExecuting]) {
+                    [tickThread start];
+                }
             }
 
             quit_program = false;
             Start680x0();
             _emulatorRunning = NO;
+            [self updateSettingsModalInPresentation];
 
             if (B2ConsumeColdRestartOnMacReset()) {
                 [self pramBackup:nil];

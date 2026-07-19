@@ -36,8 +36,6 @@
 "settings.volumes.reset.error.title" = "Festplattenabbild konnte nicht zurückgesetzt werden";
 "settings.volumes.reset.error.noSnapshot" = "Für dieses Festplattenabbild ist kein Snapshot vorhanden.";
 "settings.volumes.reset.error.snapshotSource" = "Festplattenabbilder im Snapshot-Ordner können nicht zurückgesetzt werden.";
-"settings.volumes.reset.running.title" = "Emulator läuft";
-"settings.volumes.reset.running.message" = "Beenden Sie den Emulator, bevor Sie ein Festplattenabbild zurücksetzen.";
 "settings.volumes.snapshot.prepare.error.title" = "Snapshots für Festplattenabbilder konnten nicht vorbereitet werden";
 "settings.volumes.snapshot.prepare.error.directory" = "An der Stelle des Snapshots existiert bereits ein Ordner.";
 

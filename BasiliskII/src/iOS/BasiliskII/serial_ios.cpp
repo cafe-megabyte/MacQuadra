@@ -75,6 +75,8 @@ void SerialExit(void)
 {
 	delete (DSERDPort *)the_serd_port[0];
 	delete (DSERDPort *)the_serd_port[1];
+	the_serd_port[0] = NULL;
+	the_serd_port[1] = NULL;
 }
 
 
