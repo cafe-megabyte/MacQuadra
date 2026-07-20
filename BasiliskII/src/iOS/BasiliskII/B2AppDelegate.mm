@@ -30,6 +30,7 @@
 #include <mach/mach.h>
 #include <mach/mach_time.h>
 #include <pthread.h>
+#include <sys/xattr.h>
 
 extern bool quit_program;
 
@@ -38,7 +39,46 @@ static NSString * const B2KeyboardLayoutsReadmeFileName = @"README.txt";
 static NSString * const B2FileSharingDirectoryName = @"File Sharing";
 static NSString * const B2FileSharingDirectoryBookmarkDefaultsKey = @"fileSharingDirectoryBookmark";
 static NSString * const B2FileSharingDirectoryDisplayNameDefaultsKey = @"fileSharingDirectoryDisplayName";
+static NSString * const B2CustomIconFileName = @"Icon\r";
 static BOOL coldRestartRequestedForMacReset = NO;
+
+static NSData *B2DefaultFileSharingIconResourceFork(void)
+{
+    NSURL *url = [[NSBundle mainBundle] URLForResource:@"FileSharingIcon" withExtension:@"rfork"];
+    return url ? [NSData dataWithContentsOfURL:url] : nil;
+}
+
+static void B2SetFinderFlagsAtPath(NSString *path, uint16_t flags)
+{
+    uint8_t finderInfo[32] = {0};
+    getxattr(path.fileSystemRepresentation, XATTR_FINDERINFO_NAME, finderInfo, sizeof(finderInfo), 0, 0);
+    finderInfo[8] |= (flags >> 8) & 0xff;
+    finderInfo[9] |= flags & 0xff;
+    setxattr(path.fileSystemRepresentation, XATTR_FINDERINFO_NAME, finderInfo, sizeof(finderInfo), 0, 0);
+    setxattr(path.fileSystemRepresentation, "org.BasiliskII.FinderInfo", finderInfo, 16, 0, 0);
+}
+
+static void B2HideIconFileAtPath(NSString *iconPath)
+{
+    B2SetFinderFlagsAtPath(iconPath, 0x4000);
+    [[NSURL fileURLWithPath:iconPath] setResourceValue:@YES forKey:NSURLIsHiddenKey error:nil];
+}
+
+static void B2InstallDefaultFileSharingIconAtPath(NSString *fileSharingPath)
+{
+    NSString *iconPath = [fileSharingPath stringByAppendingPathComponent:B2CustomIconFileName];
+    NSFileManager *fileManager = [NSFileManager defaultManager];
+    [fileManager removeItemAtPath:iconPath error:nil];
+    [fileManager createFileAtPath:iconPath contents:nil attributes:nil];
+
+    NSData *resourceFork = B2DefaultFileSharingIconResourceFork();
+    if (resourceFork.length > 0) {
+        setxattr(iconPath.fileSystemRepresentation, XATTR_RESOURCEFORK_NAME, resourceFork.bytes, resourceFork.length, 0, 0);
+    }
+
+    B2HideIconFileAtPath(iconPath);
+    B2SetFinderFlagsAtPath(fileSharingPath, 0x0500);
+}
 
 static uint8_t B2AppleModeForConfiguredVideoDepth(void)
 {
@@ -216,6 +256,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     [fileManager createDirectoryAtPath:keyboardLayoutsPath withIntermediateDirectories:YES attributes:nil error:nil];
     if (![self hasConfiguredFileSharingDirectory]) {
         [fileManager createDirectoryAtPath:self.defaultFileSharingPath withIntermediateDirectories:YES attributes:nil error:nil];
+        B2InstallDefaultFileSharingIconAtPath(self.defaultFileSharingPath);
     }
 
     NSString *readmePath = [keyboardLayoutsPath stringByAppendingPathComponent:B2KeyboardLayoutsReadmeFileName];
@@ -538,6 +579,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     }
 
     [[NSFileManager defaultManager] createDirectoryAtPath:self.defaultFileSharingPath withIntermediateDirectories:YES attributes:nil error:nil];
+    B2InstallDefaultFileSharingIconAtPath(self.defaultFileSharingPath);
     activeFileSharingDirectoryURL = [NSURL fileURLWithPath:self.defaultFileSharingPath isDirectory:YES];
     activeFileSharingDirectoryIsSecurityScoped = NO;
     return self.defaultFileSharingPath;
@@ -589,6 +631,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:B2FileSharingDirectoryBookmarkDefaultsKey];
     [[NSUserDefaults standardUserDefaults] removeObjectForKey:B2FileSharingDirectoryDisplayNameDefaultsKey];
     [[NSFileManager defaultManager] createDirectoryAtPath:self.defaultFileSharingPath withIntermediateDirectories:YES attributes:nil error:nil];
+    B2InstallDefaultFileSharingIconAtPath(self.defaultFileSharingPath);
     [self initEmulator];
 }
 

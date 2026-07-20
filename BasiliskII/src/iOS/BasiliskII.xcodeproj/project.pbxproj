@@ -25,6 +25,7 @@
 /* Begin PBXBuildFile section */
 		281509101CC57F81004ECA0A /* B2TouchScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */; };
 		281509131CC5836A004ECA0A /* B2TrackPad.mm in Sources */ = {isa = PBXBuildFile; fileRef = 281509121CC5836A004ECA0A /* B2TrackPad.mm */; };
+		2815F18E300E304D0088B7DF /* FileSharingIcon.rfork in Resources */ = {isa = PBXBuildFile; fileRef = 2815F18D300E304D0088B7DF /* FileSharingIcon.rfork */; };
 		281A4C9D1CA965B000A380A7 /* B2DocumentsSettingsController.m in Sources */ = {isa = PBXBuildFile; fileRef = 281A4C9C1CA965B000A380A7 /* B2DocumentsSettingsController.m */; };
 		281A4CA31CAB2E0F00A380A7 /* B2FileChooserTableViewCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 281A4CA21CAB2E0F00A380A7 /* B2FileChooserTableViewCell.m */; };
 		2822DA6918E6325500EE554D /* timer_unix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2822DA6818E6325500EE554D /* timer_unix.cpp */; };
@@ -186,6 +187,7 @@
 		2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2TouchScreen.mm; sourceTree = "<group>"; };
 		281509111CC5836A004ECA0A /* B2TrackPad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2TrackPad.h; sourceTree = "<group>"; };
 		281509121CC5836A004ECA0A /* B2TrackPad.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2TrackPad.mm; sourceTree = "<group>"; };
+		2815F18D300E304D0088B7DF /* FileSharingIcon.rfork */ = {isa = PBXFileReference; lastKnownFileType = file; path = FileSharingIcon.rfork; sourceTree = "<group>"; };
 		281A4C9B1CA965B000A380A7 /* B2DocumentsSettingsController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2DocumentsSettingsController.h; sourceTree = "<group>"; };
 		281A4C9C1CA965B000A380A7 /* B2DocumentsSettingsController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = B2DocumentsSettingsController.m; sourceTree = "<group>"; };
 		281A4CA11CAB2E0F00A380A7 /* B2FileChooserTableViewCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2FileChooserTableViewCell.h; sourceTree = "<group>"; };
@@ -627,6 +629,7 @@
 		2898F45818CB719600FE7806 /* Supporting Files */ = {
 			isa = PBXGroup;
 			children = (
+				2815F18D300E304D0088B7DF /* FileSharingIcon.rfork */,
 				2898F45918CB719600FE7806 /* BasiliskII-Info.plist */,
 				2898F45A18CB719600FE7806 /* InfoPlist.strings */,
 				2898F45D18CB719600FE7806 /* main.m */,
@@ -962,14 +965,15 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				2866A76730069070006D1FF3 /* Settings.bundle in Resources */,
 				28AD37D219A6511700ADF203 /* ext2type.plist in Resources */,
 				288455DE1CBB0112004EF2E6 /* Keyboard Layouts in Resources */,
 				288C501A1B9CADF900EA91F3 /* Localizable.strings in Resources */,
 				285033201B488EF90061C869 /* Main.storyboard in Resources */,
 				2898F46D18CB719600FE7806 /* Images.xcassets in Resources */,
+				2815F18E300E304D0088B7DF /* FileSharingIcon.rfork in Resources */,
 				2898F45C18CB719600FE7806 /* InfoPlist.strings in Resources */,
 				28CC0DEE1A500A380040A788 /* Launch Screen.xib in Resources */,
+				2866A76730069070006D1FF3 /* Settings.bundle in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
