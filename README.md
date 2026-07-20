@@ -3,38 +3,38 @@
 MacQuadra is an iOS-focused fork of Basilisk II, tuned for running classic 68k Macintosh software on iPhone and iPad.
 
 The repository still contains the original Basilisk II and SheepShaver source trees, but the active work in this fork is the iOS Basilisk II app in:
-
 ```text
 BasiliskII/src/iOS
 ```
+My goal is to create a tailored version which is totally customized for my personal and private use. Nevertheless, I think most – if not all – of the changes **benefit everyone**.
 
-Changes are made fully by AI. My goal is to create a tailored version which is fully customized for my personal and private use.
+Code changes are made fully by AI.
 
 ## What this fork adds
 
 - **Play sound at startup decoded from ROM file**
 - Automatic emulator boot once a ROM and boot disk are available in the file system
 - Optional private ZIP download URLs for a ROM file and disk image with on-the-fly inflate
-- Make copy before first use of a disk image + restore option in Drive settings, strictly using APFS copy-on-write
+- **Snaptshot:** Make copy before first use of a disk image + restore option in Drive settings, strictly using APFS copy-on-write to minimize/nullify storage footprint
 - **Choose any folder** for File Sharing with iOS
-- Calculate volume info for File Sharing (used / free space)
+- Calculate correct volume info for File Sharing (shown as used / free space in the emulated Finder)
 - Improved interactive custom screen sizing with different preset-options
 - **Dynamic screen sizes that are re-calculated on emulator start**
 - Mac OS reboots trigger an emulator shutdown and cold start
 - **Enforced Display Settings (screen size / color depth)** While Mac OS still can change screen size and resolution, emulator settings are restored on every reboot.
 - **Zoom and pinch to enlarge and move the view**
 - Respects device safe screen area when needed
-- **New keyboard reveal gestures** than don't interfere with the zoom gestures (from side edges with one finger or pencil)
-- New defaults
+- **New keyboard reveal/hide gestures** than don't interfere with the zoom gestures (from side edges with one finger or pencil)
 - Higher max. RAM size (512 MB)
 - On-screen keyboard for German
 - German localization
 - Version and build information exposed in the iOS Settings app
 - App Icon for Light and Dark
+- New default settings
 
 ## Legal note
 
-This repository does not include a Macintosh ROM, Mac OS, or any Apple system software.
+This repository does not include or link to a Macintosh ROM, Mac OS, or any Apple system software.
 
 To use the emulator you need your own legally obtained Macintosh ROM image and a compatible classic Mac OS installation or disk image. Do not publish ROMs, system disks, or private download URLs in this repository.
 
@@ -60,6 +60,7 @@ You will probably need to change the signing team and bundle identifier before i
 
 ## Configure private download for supplying ROM and disk image
 For personal builds or private TestFlight distribution, you can configure private ZIP download URLs.
+This provides a **Zero-Click Setup process:** Install the app – and it will boot up from scratch.
 
 Copy the example file:
 
