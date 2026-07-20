@@ -16,6 +16,8 @@ Changes are made fully by AI. My goal is to create a tailored version which is f
 - Automatic emulator boot once a ROM and boot disk are available in the file system
 - Optional private ZIP download URLs for a ROM file and disk image with on-the-fly inflate
 - Make copy before first use of a disk image + restore option in Drive settings, strictly using APFS copy-on-write
+- **Choose any folder** for File Sharing with iOS
+- Calculate volume info for File Sharing (used / free space)
 - Improved interactive custom screen sizing with different preset-options
 - **Dynamic screen sizes that are re-calculated on emulator start**
 - Mac OS reboots trigger an emulator shutdown and cold start
