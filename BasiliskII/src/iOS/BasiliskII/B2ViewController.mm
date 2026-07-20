@@ -814,11 +814,11 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 }
 
 - (void)installKeyboardGestures {
-    showKeyboardLeftEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard:)];
+    showKeyboardLeftEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(toggleKeyboardFromEdge:)];
     showKeyboardLeftEdgeGesture.edges = UIRectEdgeLeft;
     [self.view addGestureRecognizer:showKeyboardLeftEdgeGesture];
 
-    showKeyboardRightEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(showKeyboard:)];
+    showKeyboardRightEdgeGesture = [[UIScreenEdgePanGestureRecognizer alloc] initWithTarget:self action:@selector(toggleKeyboardFromEdge:)];
     showKeyboardRightEdgeGesture.edges = UIRectEdgeRight;
     [self.view addGestureRecognizer:showKeyboardRightEdgeGesture];
 }
@@ -837,6 +837,14 @@ typedef NS_ENUM(NSInteger, B2ResizeScaleMode) {
 
 - (void)hideKeyboard:(id)sender {
     [self setKeyboardVisible:NO animated:YES];
+}
+
+- (void)toggleKeyboardFromEdge:(UIScreenEdgePanGestureRecognizer *)recognizer {
+    if (recognizer.state != UIGestureRecognizerStateBegan) {
+        return;
+    }
+
+    [self setKeyboardVisible:!self.keyboardVisible animated:YES];
 }
 
 - (void)setKeyboardVisible:(BOOL)visible animated:(BOOL)animated {
