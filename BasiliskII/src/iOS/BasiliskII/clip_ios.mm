@@ -37,6 +37,13 @@
 #include "debug.h"
 
 static bool in_getscrap = false;
+// Only import host text when the host pasteboard changed; ZeroScrap would otherwise discard non-text Mac scrap flavors.
+static NSInteger last_host_pasteboard_change_count = -1;
+
+static void MarkHostPasteboardSeen(UIPasteboard *pasteboard)
+{
+    last_host_pasteboard_change_count = pasteboard.changeCount;
+}
 
 /*
  *  Initialization
@@ -64,7 +71,7 @@ void GetScrap(void **handle, uint32 type, int32 offset)
 {
     UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
     
-    if (type == 'TEXT' && pasteboard.string != nil) {
+    if (type == 'TEXT' && pasteboard.string != nil && pasteboard.changeCount != last_host_pasteboard_change_count) {
         NSData *data = [[pasteboard.string stringByReplacingOccurrencesOfString:@"\n" withString:@"\r"] dataUsingEncoding:NSMacOSRomanStringEncoding allowLossyConversion:YES];
         // Allocate space for new scrap in MacOS side
         M68kRegisters r;
@@ -106,6 +113,8 @@ void GetScrap(void **handle, uint32 type, int32 offset)
             Execute68kTrap(0xa01f, &r);			// DisposePtr
             in_getscrap = false;
         }
+        
+        MarkHostPasteboardSeen(pasteboard);
     }
 }
 
@@ -115,7 +124,7 @@ void GetScrap(void **handle, uint32 type, int32 offset)
 
 void ZeroScrap()
 {
-    
+    MarkHostPasteboardSeen([UIPasteboard generalPasteboard]);
 }
 
 /*
@@ -125,7 +134,12 @@ void ZeroScrap()
 void PutScrap(uint32 type, void *scrap, int32 length)
 {
     if (in_getscrap) return;
+    
+    UIPasteboard *pasteboard = [UIPasteboard generalPasteboard];
+    
     if (type == 'TEXT') {
-        [UIPasteboard generalPasteboard].string = [[[NSString alloc] initWithBytes:scrap length:length encoding:NSMacOSRomanStringEncoding] stringByReplacingOccurrencesOfString:@"\r" withString:@"\n"];
+        pasteboard.string = [[[NSString alloc] initWithBytes:scrap length:length encoding:NSMacOSRomanStringEncoding] stringByReplacingOccurrencesOfString:@"\r" withString:@"\n"];
     }
+    
+    MarkHostPasteboardSeen(pasteboard);
 }
