@@ -38,6 +38,13 @@
 "settings.volumes.reset.error.snapshotSource" = "Disk images in the snapshot folder cannot be reset.";
 "settings.volumes.snapshot.prepare.error.title" = "Could not prepare disk image snapshots";
 "settings.volumes.snapshot.prepare.error.directory" = "A folder already exists where the disk image snapshot should be created.";
+"settings.volumes.emulatorTerminationWarning" = "Changing volume settings terminates the running emulator.";
+"settings.volumes.fileSharing.header" = "File Sharing";
+"settings.volumes.fileSharing.title" = "File Sharing Folder";
+"settings.volumes.fileSharing.folder" = "Folder";
+"settings.volumes.fileSharing.choose" = "Choose Folder…";
+"settings.volumes.fileSharing.reset" = "Use Default Folder";
+"settings.volumes.fileSharing.error.title" = "Could not choose folder";
 
 "settings.gfx.size" = "Screen Resolution";
 "settings.gfx.size.item" = "%@ × %@";

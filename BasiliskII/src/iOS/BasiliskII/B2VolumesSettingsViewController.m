@@ -11,6 +11,10 @@
 #import "NSUserDefaults+B2Accessors.h"
 #import "B2AppDelegate.h"
 #import "B2DiskImageSnapshots.h"
+#import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+
+static NSInteger const B2FileSharingSection = 3;
+static NSInteger const B2UnusedVolumesSection = 4;
 
 NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     switch (volumeType) {
@@ -24,6 +28,10 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
             return @"unused";
     }
 }
+
+@interface B2VolumesSettingsViewController () <UIDocumentPickerDelegate>
+
+@end
 
 @interface B2SizeTextFieldDelegate : NSObject <UITextFieldDelegate>
 
@@ -45,11 +53,12 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 
 - (void)viewWillAppear:(BOOL)animated {
     [super viewWillAppear:animated];
+    [self updateEmulatorTerminationWarningHeader];
     [self reloadSections:nil animated:NO];
 }
 
 - (void)reloadSections:(NSIndexSet*)sections animated:(BOOL)animated {
-    BOOL hasAllSections = (sections == nil || sections.count == 4);
+    BOOL hasAllSections = (sections == nil);
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     if (hasAllSections || [sections containsIndex:B2VolumeTypeHardDisk]) {
         diskVolumes = [defaults b2MutableArrayForKey:@"disk"];
@@ -60,7 +69,7 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     if (hasAllSections || [sections containsIndex:B2VolumeTypeCDROM]) {
         cdromVolumes = [defaults b2MutableArrayForKey:@"cdrom"];
     }
-    if (hasAllSections || [sections containsIndex:B2VolumeTypeUnused]) {
+    if (hasAllSections || [sections containsIndex:B2UnusedVolumesSection]) {
         availableVolumes = [self availableDiskImages];
     }
     
@@ -80,10 +89,10 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     if (editing) {
         availableVolumes = [self availableDiskImages];
         [self.tableView insertRowsAtIndexPaths:@[createDiskIndexPath] withRowAnimation:animation];
-        [self.tableView insertSections:[NSIndexSet indexSetWithIndex:3] withRowAnimation:animation];
+        [self.tableView insertSections:[NSIndexSet indexSetWithIndex:B2UnusedVolumesSection] withRowAnimation:animation];
     } else {
         [self.tableView deleteRowsAtIndexPaths:@[createDiskIndexPath] withRowAnimation:animation];
-        [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:3] withRowAnimation:animation];
+        [self.tableView deleteSections:[NSIndexSet indexSetWithIndex:B2UnusedVolumesSection] withRowAnimation:animation];
     }
     [self.tableView endUpdates];
 }
@@ -125,6 +134,61 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
         case B2VolumeTypeUnused:
             return availableVolumes;
     }
+}
+
+- (B2VolumeType)volumeTypeForSection:(NSInteger)section {
+    return (section == B2UnusedVolumesSection) ? B2VolumeTypeUnused : (B2VolumeType)section;
+}
+
+- (void)updateEmulatorTerminationWarningHeader {
+    if (![B2AppDelegate sharedInstance].emulatorRunning) {
+        self.tableView.tableHeaderView = nil;
+        return;
+    }
+
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectZero];
+    label.text = L(@"settings.volumes.emulatorTerminationWarning");
+    label.textColor = UIColor.systemRedColor;
+    label.font = [UIFont preferredFontForTextStyle:UIFontTextStyleFootnote];
+    label.numberOfLines = 0;
+
+    CGFloat horizontalInset = 16.0;
+    CGFloat verticalInset = 10.0;
+    CGFloat width = self.tableView.bounds.size.width;
+    CGSize textSize = [label sizeThatFits:CGSizeMake(width - horizontalInset * 2.0, CGFLOAT_MAX)];
+
+    UIView *header = [[UIView alloc] initWithFrame:CGRectMake(0.0, 0.0, width, textSize.height + verticalInset * 2.0)];
+    label.frame = CGRectMake(horizontalInset, verticalInset, width - horizontalInset * 2.0, textSize.height);
+    label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    [header addSubview:label];
+    self.tableView.tableHeaderView = header;
+}
+
+- (void)chooseFileSharingDirectoryFromView:(UIView *)sourceView {
+    UIAlertController *actions = [UIAlertController alertControllerWithTitle:L(@"settings.volumes.fileSharing.title") message:nil preferredStyle:UIAlertControllerStyleActionSheet];
+    [actions addAction:[UIAlertAction actionWithTitle:L(@"settings.volumes.fileSharing.choose") style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) {
+        [self presentFileSharingDirectoryPicker];
+    }]];
+    if (![B2AppDelegate sharedInstance].usingDefaultFileSharingPath) {
+        [actions addAction:[UIAlertAction actionWithTitle:L(@"settings.volumes.fileSharing.reset") style:UIAlertActionStyleDefault handler:^(__unused UIAlertAction *action) {
+            [[B2AppDelegate sharedInstance] terminateEmulator];
+            [[B2AppDelegate sharedInstance] resetFileSharingDirectory];
+            [self updateEmulatorTerminationWarningHeader];
+            [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:B2FileSharingSection] withRowAnimation:UITableViewRowAnimationAutomatic];
+        }]];
+    }
+    [actions addAction:[UIAlertAction actionWithTitle:L(@"misc.cancel") style:UIAlertActionStyleCancel handler:nil]];
+    actions.popoverPresentationController.sourceView = sourceView ?: self.view;
+    actions.popoverPresentationController.sourceRect = sourceView ? sourceView.bounds : self.view.bounds;
+    [self presentViewController:actions animated:YES completion:nil];
+}
+
+- (void)presentFileSharingDirectoryPicker {
+    UIDocumentPickerViewController *picker = [[UIDocumentPickerViewController alloc] initForOpeningContentTypes:@[UTTypeFolder] asCopy:NO];
+    picker.delegate = self;
+    picker.allowsMultipleSelection = NO;
+    picker.directoryURL = [NSURL fileURLWithPath:[B2AppDelegate sharedInstance].fileSharingPath isDirectory:YES];
+    [self presentViewController:picker animated:YES completion:nil];
 }
 
 - (void)createDiskImage {
@@ -282,6 +346,7 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 
 - (void)resetDiskImage:(NSString *)imageName {
     [[B2AppDelegate sharedInstance] terminateEmulator];
+    [self updateEmulatorTerminationWarningHeader];
     [B2DiskImageSnapshots restoreSnapshotForVolumePath:imageName documentsPath:[B2AppDelegate sharedInstance].documentsPath completion:^(BOOL success, NSError * _Nullable error) {
         if (success) {
             [self.tableView reloadData];
@@ -298,7 +363,7 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
         return;
     }
 
-    NSMutableArray *source = [self volumesOfType:indexPath.section];
+    NSMutableArray *source = [self volumesOfType:[self volumeTypeForSection:indexPath.section]];
     if (indexPath.row < source.count) {
         [self askResetDiskImage:source[indexPath.row]];
     }
@@ -341,11 +406,14 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 #pragma mark - Table view data source
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView {
-    return tableView.editing ? 4 : 3;
+    return tableView.editing ? 5 : 4;
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    B2VolumeType volumeType = (B2VolumeType)section;
+    if (section == B2FileSharingSection) {
+        return 1;
+    }
+    B2VolumeType volumeType = [self volumeTypeForSection:section];
     NSInteger baseCount = [self volumesOfType:volumeType].count;
     if (tableView.editing && section == B2VolumeTypeHardDisk) {
         baseCount += 1;
@@ -354,7 +422,16 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    B2VolumeType volumeType = (B2VolumeType)indexPath.section;
+    if (indexPath.section == B2FileSharingSection) {
+        UITableViewCell *cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:nil];
+        B2AppDelegate *appDelegate = [B2AppDelegate sharedInstance];
+        cell.textLabel.text = L(@"settings.volumes.fileSharing.folder");
+        cell.detailTextLabel.text = appDelegate.fileSharingDisplayName;
+        cell.accessoryType = UITableViewCellAccessoryDisclosureIndicator;
+        return cell;
+    }
+
+    B2VolumeType volumeType = [self volumeTypeForSection:indexPath.section];
     NSMutableArray *source = [self volumesOfType:volumeType];
     UITableViewCell *cell = nil;
     
@@ -386,7 +463,9 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 }
 
 - (NSString *)tableView:(UITableView *)tableView titleForHeaderInSection:(NSInteger)section {
-    if (section == B2VolumeTypeUnused) {
+    if (section == B2FileSharingSection) {
+        return L(@"settings.volumes.fileSharing.header");
+    } else if (section == B2UnusedVolumesSection) {
         return L(@"settings.volumes.available");
     } else {
         return L(@"settings.volumes.type.%@", NSStringFromB2VolumeType(section));
@@ -396,7 +475,9 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 - (UITableViewCellEditingStyle)tableView:(UITableView *)tableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath {
     if (tableView.editing == NO) {
         return UITableViewCellEditingStyleNone;
-    } else if (indexPath.row < [self volumesOfType:indexPath.section].count) {
+    } else if (indexPath.section == B2FileSharingSection) {
+        return UITableViewCellEditingStyleNone;
+    } else if (indexPath.row < [self volumesOfType:[self volumeTypeForSection:indexPath.section]].count) {
         return UITableViewCellEditingStyleDelete;
     } else if (indexPath.section == B2VolumeTypeHardDisk && indexPath.row == diskVolumes.count) {
         return UITableViewCellEditingStyleInsert;
@@ -406,7 +487,7 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
-    B2VolumeType volumeType = (B2VolumeType)indexPath.section;
+    B2VolumeType volumeType = [self volumeTypeForSection:indexPath.section];
     NSMutableArray *source = [self volumesOfType:volumeType];
     if (editingStyle == UITableViewCellEditingStyleDelete) {
         NSString *imageFileName = source[indexPath.row];
@@ -417,10 +498,16 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 }
 
 - (BOOL)tableView:(UITableView *)tableView canMoveRowAtIndexPath:(NSIndexPath *)indexPath {
-    return indexPath.row < [self volumesOfType:indexPath.section].count;
+    if (indexPath.section == B2FileSharingSection) {
+        return NO;
+    }
+    return indexPath.row < [self volumesOfType:[self volumeTypeForSection:indexPath.section]].count;
 }
 
 - (NSIndexPath *)tableView:(UITableView *)tableView targetIndexPathForMoveFromRowAtIndexPath:(NSIndexPath *)sourceIndexPath toProposedIndexPath:(NSIndexPath *)proposedDestinationIndexPath {
+    if (proposedDestinationIndexPath.section == B2FileSharingSection) {
+        return sourceIndexPath;
+    }
     if (proposedDestinationIndexPath.section == B2VolumeTypeHardDisk && proposedDestinationIndexPath.row >= diskVolumes.count) {
         NSUInteger destinationRow = sourceIndexPath.section == B2VolumeTypeHardDisk ? diskVolumes.count - 1 : diskVolumes.count;
         return [NSIndexPath indexPathForRow:destinationRow inSection:B2VolumeTypeHardDisk];
@@ -430,8 +517,8 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
 }
 
 - (void)tableView:(UITableView *)tableView moveRowAtIndexPath:(NSIndexPath *)fromIndexPath toIndexPath:(NSIndexPath *)toIndexPath {
-    NSMutableArray *source = [self volumesOfType:fromIndexPath.section];
-    NSMutableArray *destination = [self volumesOfType:toIndexPath.section];
+    NSMutableArray *source = [self volumesOfType:[self volumeTypeForSection:fromIndexPath.section]];
+    NSMutableArray *destination = [self volumesOfType:[self volumeTypeForSection:toIndexPath.section]];
     NSString *item = source[fromIndexPath.row];
     [source removeObjectAtIndex:fromIndexPath.row];
     [destination insertObject:item atIndex:toIndexPath.row];
@@ -441,13 +528,42 @@ NSString* NSStringFromB2VolumeType(B2VolumeType volumeType) {
     [self updateDefaults];
 }
 
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
+    if (indexPath.section == B2FileSharingSection) {
+        [tableView deselectRowAtIndexPath:indexPath animated:YES];
+        [self chooseFileSharingDirectoryFromView:[tableView cellForRowAtIndexPath:indexPath]];
+    }
+}
+
 - (void)prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender {
     if ([segue.destinationViewController isKindOfClass:[B2VolumeInfoViewController class]] && [sender isKindOfClass:[UITableViewCell class]]) {
         NSIndexPath *indexPath = [self.tableView indexPathForCell:sender];
+        if (indexPath.section == B2FileSharingSection) {
+            return;
+        }
+        B2VolumeType volumeType = [self volumeTypeForSection:indexPath.section];
         B2VolumeInfoViewController *destination = segue.destinationViewController;
-        destination.volumePath = [[self volumesOfType:indexPath.section] objectAtIndex:indexPath.row];
-        destination.volumeType = indexPath.section;
+        destination.volumePath = [[self volumesOfType:volumeType] objectAtIndex:indexPath.row];
+        destination.volumeType = volumeType;
         destination.volumeIndex = indexPath.row;
+    }
+}
+
+#pragma mark - Document picker delegate
+
+- (void)documentPicker:(UIDocumentPickerViewController *)controller didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    NSURL *url = urls.firstObject;
+    if (url == nil) {
+        return;
+    }
+
+    [[B2AppDelegate sharedInstance] terminateEmulator];
+    [self updateEmulatorTerminationWarningHeader];
+    NSError *error = nil;
+    if ([[B2AppDelegate sharedInstance] setFileSharingDirectoryURL:url error:&error]) {
+        [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:B2FileSharingSection] withRowAnimation:UITableViewRowAnimationAutomatic];
+    } else {
+        [[B2AppDelegate sharedInstance] showAlertWithTitle:L(@"settings.volumes.fileSharing.error.title") message:error.localizedDescription];
     }
 }
 

@@ -16,6 +16,10 @@ NS_ASSUME_NONNULL_BEGIN
 @property (class, readonly, strong) B2AppDelegate *sharedInstance NS_SWIFT_NAME(shared);
 @property (strong, nonatomic) UIWindow *window;
 @property (readonly, nonatomic) NSString *documentsPath;
+@property (readonly, nonatomic) NSString *defaultFileSharingPath;
+@property (readonly, nonatomic) NSString *fileSharingPath;
+@property (readonly, nonatomic) NSString *fileSharingDisplayName;
+@property (readonly, nonatomic) BOOL usingDefaultFileSharingPath;
 @property (readonly, nonatomic) NSString *userKeyboardLayoutsPath;
 @property (readonly, nonatomic, getter = isSandboxed) BOOL sandboxed;
 @property (readonly, nonatomic) BOOL emulatorRunning;
@@ -26,6 +30,8 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)terminateEmulator;
 - (void)activateMainScreen;
 - (void)settingsPresentationDidBegin;
+- (BOOL)setFileSharingDirectoryURL:(NSURL *)url error:(NSError **)error;
+- (void)resetFileSharingDirectory;
 - (void)showAlertWithTitle:(NSString *)title message:(NSString *)message;
 
 @end

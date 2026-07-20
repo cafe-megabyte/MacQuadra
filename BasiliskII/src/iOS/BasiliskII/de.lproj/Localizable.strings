@@ -38,6 +38,13 @@
 "settings.volumes.reset.error.snapshotSource" = "Festplattenabbilder im Snapshot-Ordner können nicht zurückgesetzt werden.";
 "settings.volumes.snapshot.prepare.error.title" = "Snapshots für Festplattenabbilder konnten nicht vorbereitet werden";
 "settings.volumes.snapshot.prepare.error.directory" = "An der Stelle des Snapshots existiert bereits ein Ordner.";
+"settings.volumes.emulatorTerminationWarning" = "Änderungen an den Laufwerkseinstellungen terminieren den laufenden Emulator.";
+"settings.volumes.fileSharing.header" = "File Sharing";
+"settings.volumes.fileSharing.title" = "File-Sharing-Ordner";
+"settings.volumes.fileSharing.folder" = "Ordner";
+"settings.volumes.fileSharing.choose" = "Ordner wählen…";
+"settings.volumes.fileSharing.reset" = "Standardordner verwenden";
+"settings.volumes.fileSharing.error.title" = "Ordner konnte nicht gewählt werden";
 
 "settings.gfx.size" = "Bildschirmauflösung";
 "settings.gfx.size.item" = "%@ × %@";

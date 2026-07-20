@@ -35,6 +35,9 @@ extern bool quit_program;
 
 static NSMutableSet *hiddenExtFSFiles = nil;
 static NSString * const B2KeyboardLayoutsReadmeFileName = @"README.txt";
+static NSString * const B2FileSharingDirectoryName = @"File Sharing";
+static NSString * const B2FileSharingDirectoryBookmarkDefaultsKey = @"fileSharingDirectoryBookmark";
+static NSString * const B2FileSharingDirectoryDisplayNameDefaultsKey = @"fileSharingDirectoryDisplayName";
 static BOOL coldRestartRequestedForMacReset = NO;
 
 static uint8_t B2AppleModeForConfiguredVideoDepth(void)
@@ -66,6 +69,10 @@ static void B2SyncDisplayXPRAMToConfiguredVideoDepth(void)
 }
 
 bool ShouldHideExtFSFile(const char *path) {
+    NSString *fileName = @(path).lastPathComponent;
+    if ([fileName hasPrefix:@"."]) {
+        return true;
+    }
     return [hiddenExtFSFiles containsObject:@(path)] ? true : false;
 }
 
@@ -123,6 +130,13 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 - (void)requestSettingsPresentation;
 - (void)showBasiliskSettings:(id)sender;
 - (void)updateSettingsModalInPresentation;
+- (BOOL)hasConfiguredFileSharingDirectory;
+- (NSString *)prepareFileSharingDirectoryForEmulator;
+- (NSURL *)resolvedConfiguredFileSharingDirectoryURLAndReturnError:(NSError **)error;
+- (BOOL)configuredFileSharingDirectoryIsAvailable;
+- (BOOL)directoryExistsAtURL:(NSURL *)url;
+- (NSString *)displayNameForFileSharingDirectoryURL:(NSURL *)url;
+- (void)stopAccessingFileSharingDirectory;
 
 @end
 
@@ -138,6 +152,8 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     BOOL settingsPresentationScheduled;
     BOOL activationInProgress;
     BOOL snapshotPreparationInProgress;
+    NSURL *activeFileSharingDirectoryURL;
+    BOOL activeFileSharingDirectoryIsSecurityScoped;
 }
 
 + (instancetype)sharedInstance {
@@ -150,10 +166,10 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     sharedDelegate = self;
     [self updateSettingsBundleVersionInfo];
-    [self initEmulator];
     
     // populate documents directory so it shows up in Files
     [self populateDocumentsDirectory];
+    [self initEmulator];
 
     return YES;
 }
@@ -198,6 +214,9 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     NSFileManager *fileManager = [NSFileManager defaultManager];
     NSString *keyboardLayoutsPath = self.userKeyboardLayoutsPath;
     [fileManager createDirectoryAtPath:keyboardLayoutsPath withIntermediateDirectories:YES attributes:nil error:nil];
+    if (![self hasConfiguredFileSharingDirectory]) {
+        [fileManager createDirectoryAtPath:self.defaultFileSharingPath withIntermediateDirectories:YES attributes:nil error:nil];
+    }
 
     NSString *readmePath = [keyboardLayoutsPath stringByAppendingPathComponent:B2KeyboardLayoutsReadmeFileName];
     if ([fileManager fileExistsAtPath:readmePath]) {
@@ -417,15 +436,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 }
 
 - (void)initExtFS:(NSString*)baseDir {
-    // hide some files from extfs
-    NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     hiddenExtFSFiles = [NSMutableSet setWithCapacity:8];
-    [self addHiddenFiles:[defaults objectForKey:@"rom"] relativeToPath:baseDir];
-    [self addHiddenFiles:[defaults objectForKey:@"disk"] relativeToPath:baseDir];
-    [self addHiddenFiles:[defaults objectForKey:@"floppy"] relativeToPath:baseDir];
-    [self addHiddenFiles:[defaults objectForKey:@"cdrom"] relativeToPath:baseDir];
-    [self addHiddenFiles:[self.documentsPath stringByAppendingPathComponent:@"Inbox"] relativeToPath:baseDir];
-    [self addHiddenFiles:[B2DiskImageSnapshots snapshotsPathInDocumentsPath:self.documentsPath] relativeToPath:baseDir];
 }
 
 - (void)addHiddenFiles:(id)paths relativeToPath:(NSString*)baseDir {
@@ -472,6 +483,159 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     return documentsPath;
 }
 
+- (NSString *)defaultFileSharingPath {
+    static dispatch_once_t onceToken;
+    static NSString *defaultFileSharingPath;
+    dispatch_once(&onceToken, ^{
+        defaultFileSharingPath = [self.documentsPath stringByAppendingPathComponent:B2FileSharingDirectoryName];
+    });
+    return defaultFileSharingPath;
+}
+
+- (BOOL)hasConfiguredFileSharingDirectory {
+    return [[[NSUserDefaults standardUserDefaults] objectForKey:B2FileSharingDirectoryBookmarkDefaultsKey] isKindOfClass:[NSData class]];
+}
+
+- (NSString *)fileSharingPath {
+    NSURL *url = [self resolvedConfiguredFileSharingDirectoryURLAndReturnError:nil];
+    if (url != nil && [self configuredFileSharingDirectoryIsAvailable]) {
+        return url.path;
+    }
+    return self.defaultFileSharingPath;
+}
+
+- (BOOL)usingDefaultFileSharingPath {
+    return ![self hasConfiguredFileSharingDirectory] || ![self configuredFileSharingDirectoryIsAvailable];
+}
+
+- (NSString *)fileSharingDisplayName {
+    if (self.usingDefaultFileSharingPath) {
+        return self.defaultFileSharingPath.lastPathComponent;
+    }
+
+    NSString *displayName = [[NSUserDefaults standardUserDefaults] stringForKey:B2FileSharingDirectoryDisplayNameDefaultsKey];
+    if (displayName.length > 0) {
+        return displayName;
+    }
+    return self.fileSharingPath.lastPathComponent;
+}
+
+- (NSString *)prepareFileSharingDirectoryForEmulator {
+    [self stopAccessingFileSharingDirectory];
+
+    NSError *error = nil;
+    NSURL *configuredURL = [self resolvedConfiguredFileSharingDirectoryURLAndReturnError:&error];
+    if (configuredURL != nil) {
+        BOOL accessing = [configuredURL startAccessingSecurityScopedResource];
+        if ([self directoryExistsAtURL:configuredURL]) {
+            activeFileSharingDirectoryURL = configuredURL;
+            activeFileSharingDirectoryIsSecurityScoped = accessing;
+            return activeFileSharingDirectoryURL.path;
+        }
+        if (accessing) {
+            [configuredURL stopAccessingSecurityScopedResource];
+        }
+    }
+
+    [[NSFileManager defaultManager] createDirectoryAtPath:self.defaultFileSharingPath withIntermediateDirectories:YES attributes:nil error:nil];
+    activeFileSharingDirectoryURL = [NSURL fileURLWithPath:self.defaultFileSharingPath isDirectory:YES];
+    activeFileSharingDirectoryIsSecurityScoped = NO;
+    return self.defaultFileSharingPath;
+}
+
+- (BOOL)configuredFileSharingDirectoryIsAvailable {
+    NSURL *url = [self resolvedConfiguredFileSharingDirectoryURLAndReturnError:nil];
+    if (url == nil) {
+        return NO;
+    }
+
+    BOOL accessing = [url startAccessingSecurityScopedResource];
+    BOOL available = [self directoryExistsAtURL:url];
+    if (accessing) {
+        [url stopAccessingSecurityScopedResource];
+    }
+    return available;
+}
+
+- (BOOL)setFileSharingDirectoryURL:(NSURL *)url error:(NSError **)error {
+    BOOL accessing = [url startAccessingSecurityScopedResource];
+    BOOL validDirectory = url.fileURL && [self directoryExistsAtURL:url];
+    if (!validDirectory) {
+        if (accessing) {
+            [url stopAccessingSecurityScopedResource];
+        }
+        if (error) {
+            *error = [NSError errorWithDomain:NSCocoaErrorDomain code:NSFileNoSuchFileError userInfo:nil];
+        }
+        return NO;
+    }
+
+    NSString *displayName = [self displayNameForFileSharingDirectoryURL:url];
+    NSData *bookmark = [url bookmarkDataWithOptions:NSURLBookmarkCreationMinimalBookmark includingResourceValuesForKeys:nil relativeToURL:nil error:error];
+    if (accessing) {
+        [url stopAccessingSecurityScopedResource];
+    }
+    if (bookmark == nil) {
+        return NO;
+    }
+
+    [[NSUserDefaults standardUserDefaults] setObject:bookmark forKey:B2FileSharingDirectoryBookmarkDefaultsKey];
+    [[NSUserDefaults standardUserDefaults] setObject:displayName forKey:B2FileSharingDirectoryDisplayNameDefaultsKey];
+    [self initEmulator];
+    return YES;
+}
+
+- (void)resetFileSharingDirectory {
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:B2FileSharingDirectoryBookmarkDefaultsKey];
+    [[NSUserDefaults standardUserDefaults] removeObjectForKey:B2FileSharingDirectoryDisplayNameDefaultsKey];
+    [[NSFileManager defaultManager] createDirectoryAtPath:self.defaultFileSharingPath withIntermediateDirectories:YES attributes:nil error:nil];
+    [self initEmulator];
+}
+
+- (NSURL *)resolvedConfiguredFileSharingDirectoryURLAndReturnError:(NSError **)error {
+    NSData *bookmark = [[NSUserDefaults standardUserDefaults] objectForKey:B2FileSharingDirectoryBookmarkDefaultsKey];
+    if (![bookmark isKindOfClass:[NSData class]]) {
+        return nil;
+    }
+
+    BOOL stale = NO;
+    NSURL *url = [NSURL URLByResolvingBookmarkData:bookmark options:0 relativeToURL:nil bookmarkDataIsStale:&stale error:error];
+    if (url == nil || stale) {
+        return nil;
+    }
+    return url;
+}
+
+- (BOOL)directoryExistsAtURL:(NSURL *)url {
+    NSNumber *isDirectory = nil;
+    if ([url getResourceValue:&isDirectory forKey:NSURLIsDirectoryKey error:nil]) {
+        return isDirectory.boolValue;
+    }
+
+    BOOL directory = NO;
+    return [[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&directory] && directory;
+}
+
+- (NSString *)displayNameForFileSharingDirectoryURL:(NSURL *)url {
+    NSString *displayName = nil;
+    [url getResourceValue:&displayName forKey:NSURLLocalizedNameKey error:nil];
+    if (displayName.length == 0) {
+        [url getResourceValue:&displayName forKey:NSURLNameKey error:nil];
+    }
+    if (displayName.length == 0) {
+        displayName = url.lastPathComponent;
+    }
+    return displayName ?: B2FileSharingDirectoryName;
+}
+
+- (void)stopAccessingFileSharingDirectory {
+    if (activeFileSharingDirectoryIsSecurityScoped) {
+        [activeFileSharingDirectoryURL stopAccessingSecurityScopedResource];
+    }
+    activeFileSharingDirectoryURL = nil;
+    activeFileSharingDirectoryIsSecurityScoped = NO;
+}
+
 - (NSString *)userKeyboardLayoutsPath {
     static dispatch_once_t onceToken;
     static NSString *userKeyboardLayoutsPath;
@@ -503,12 +667,13 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 
 - (void)initEmulator {
     NSString *documentsPath = [self documentsPath];
+    NSString *fileSharingPath = [self prepareFileSharingDirectoryForEmulator];
     chdir(documentsPath.fileSystemRepresentation);
     
     // init things
     int argc = 0;
     char **argv = NULL;
-    PrefsInit(documentsPath.fileSystemRepresentation, argc, argv);
+    PrefsInit(fileSharingPath.fileSystemRepresentation, argc, argv);
     SysInit();
 }
 
@@ -611,7 +776,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 - (void)startEmulatorAfterSnapshotPreparation {
     // create threads and timer
     if (emulThread == nil) {
-        [self initExtFS:self.documentsPath];
+        [self initExtFS:self.fileSharingPath];
         emulThread = [[NSThread alloc] initWithTarget:self selector:@selector(emulThread) object:nil];
         if (tickThread == nil || [tickThread isFinished]) {
             tickThread = [[NSThread alloc] initWithTarget:self selector:@selector(tickThread) object:nil];
@@ -627,6 +792,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 }
 
 - (void)deinitEmulator {
+    [self stopAccessingFileSharingDirectory];
     SysExit();
     PrefsExit();
 }
