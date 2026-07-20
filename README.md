@@ -15,7 +15,7 @@ Code changes are made fully by AI.
 - **Play sound at startup decoded from ROM file**
 - Automatic emulator boot once a ROM and boot disk are available in the file system
 - Optional private ZIP download URLs for a ROM file and disk image with on-the-fly inflate
-- **Snaptshot:** Make copy before first use of a disk image + restore option in Drive settings, strictly using APFS copy-on-write to minimize/nullify storage footprint
+- **Snaptshot:** Before a disk image is used for the first time, a copy is made automatically to preserve its initial state. Drive settings include a restore option. Copies are made strictly using APFS copy-on-write to minimize/nullify storage footprint.
 - **Choose any folder** for File Sharing with iOS
 - Calculate correct volume info for File Sharing (shown as used / free space in the emulated Finder)
 - Improved interactive custom screen sizing with different preset-options
@@ -25,6 +25,7 @@ Code changes are made fully by AI.
 - **Zoom and pinch to enlarge and move the view**
 - Respects device safe screen area when needed
 - **New keyboard reveal/hide gestures** than don't interfere with the zoom gestures (from side edges with one finger or pencil)
+- Better pencil handling to easily double click while keeping precision
 - Higher max. RAM size (512 MB)
 - On-screen keyboard for German
 - German localization
