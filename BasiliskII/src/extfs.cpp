@@ -50,6 +50,7 @@
 
 #if defined __APPLE__ && defined __MACH__
 #include <sys/attr.h>
+#include <sys/mount.h>
 #endif
 
 #include "cpu_emulation.h"
@@ -126,6 +127,39 @@ const int STACK_SIZE = 0x10000;
 // not the real values and have no meaning on the host OS)
 const int AL_BLK_SIZE = 0x4000;
 const int CLUMP_SIZE = 0x4000;
+
+struct VolumeAllocationInfo {
+	uint32 allocationBlockSize;
+	uint16 totalBlocks;
+	uint16 freeBlocks;
+};
+
+static VolumeAllocationInfo get_volume_allocation_info(void)
+{
+	VolumeAllocationInfo info = { AL_BLK_SIZE, 0xffff, 0xffff };
+#if defined __APPLE__ && defined __MACH__
+	struct statfs fs;
+	if (RootPath && statfs(RootPath, &fs) == 0 && fs.f_bsize > 0) {
+		uint64 totalBytes = (uint64)fs.f_blocks * (uint64)fs.f_bsize;
+		uint64 freeBytes = (uint64)fs.f_bavail * (uint64)fs.f_bsize;
+		uint64 blockSize = AL_BLK_SIZE;
+		while (totalBytes / blockSize > 0xffff && blockSize < 0x80000000ULL)
+			blockSize <<= 1;
+		uint64 totalBlocks = totalBytes / blockSize;
+		uint64 freeBlocks = freeBytes / blockSize;
+		if (totalBlocks == 0)
+			totalBlocks = 1;
+		if (totalBlocks > 0xffff)
+			totalBlocks = 0xffff;
+		if (freeBlocks > totalBlocks)
+			freeBlocks = totalBlocks;
+		info.allocationBlockSize = (uint32)blockSize;
+		info.totalBlocks = (uint16)totalBlocks;
+		info.freeBlocks = (uint16)freeBlocks;
+	}
+#endif
+	return info;
+}
 
 // Drive number of our pseudo-drive
 static int drive_number;
@@ -1061,11 +1095,12 @@ static int16 fs_volume_mount(uint32 pb)
 	WriteMacInt32(vcb + vcbVolBkUp, 0);
 	WriteMacInt16(vcb + vcbNmFls, 1);			//!!
 	WriteMacInt16(vcb + vcbNmRtDirs, 1);		//!!
-	WriteMacInt16(vcb + vcbNmAlBlks, 0xffff);	//!!
-	WriteMacInt32(vcb + vcbAlBlkSiz, AL_BLK_SIZE);
-	WriteMacInt32(vcb + vcbClpSiz, CLUMP_SIZE);
+	VolumeAllocationInfo allocationInfo = get_volume_allocation_info();
+	WriteMacInt16(vcb + vcbNmAlBlks, allocationInfo.totalBlocks);
+	WriteMacInt32(vcb + vcbAlBlkSiz, allocationInfo.allocationBlockSize);
+	WriteMacInt32(vcb + vcbClpSiz, allocationInfo.allocationBlockSize);
 	WriteMacInt32(vcb + vcbNxtCNID, next_cnid);
-	WriteMacInt16(vcb + vcbFreeBks, 0xffff);	//!!
+	WriteMacInt16(vcb + vcbFreeBks, allocationInfo.freeBlocks);
 	Host2Mac_memcpy(vcb + vcbVN, VOLUME_NAME, 28);
 	WriteMacInt16(vcb + vcbFSID, MY_FSID);
 	WriteMacInt32(vcb + vcbFilCnt, 1);			//!!
@@ -1127,12 +1162,13 @@ static int16 fs_get_vol_info(uint32 pb, bool hfs)
 	WriteMacInt16(pb + ioVNmFls, 1);			//!!
 	WriteMacInt16(pb + ioVBitMap, 0);
 	WriteMacInt16(pb + ioAllocPtr, 0);
-	WriteMacInt16(pb + ioVNmAlBlks, 0xffff);	//!!
-	WriteMacInt32(pb + ioVAlBlkSiz, AL_BLK_SIZE);
-	WriteMacInt32(pb + ioVClpSiz, CLUMP_SIZE);
+	VolumeAllocationInfo allocationInfo = get_volume_allocation_info();
+	WriteMacInt16(pb + ioVNmAlBlks, allocationInfo.totalBlocks);
+	WriteMacInt32(pb + ioVAlBlkSiz, allocationInfo.allocationBlockSize);
+	WriteMacInt32(pb + ioVClpSiz, allocationInfo.allocationBlockSize);
 	WriteMacInt16(pb + ioAlBlSt, 0);
 	WriteMacInt32(pb + ioVNxtCNID, next_cnid);
-	WriteMacInt16(pb + ioVFrBlk, 0xffff);		//!!
+	WriteMacInt16(pb + ioVFrBlk, allocationInfo.freeBlocks);
 	if (hfs) {
 		WriteMacInt16(pb + ioVDrvInfo, drive_number);
 		WriteMacInt16(pb + ioVDRefNum, ReadMacInt16(fs_data + fsDrvStatus + dsQRefNum));
