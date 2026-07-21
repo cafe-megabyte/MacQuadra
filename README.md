@@ -20,11 +20,12 @@ Code changes are made fully by AI.
 - Calculate correct volume info for File Sharing (shown as used / free space in the emulated Finder)
 - Improved interactive custom screen sizing with different preset-options
 - **Dynamic screen sizes that are re-calculated on emulator start**
+- Improved interactive screen size editor with calculated presets and manual input
 - Mac OS reboots trigger an emulator shutdown and cold start
 - **Enforced Display Settings (screen size / color depth)** While Mac OS still can change screen size and resolution, emulator settings are restored on every reboot.
 - **Zoom and pinch to enlarge and move the view**
 - Respects device safe screen area when needed
-- **New keyboard reveal/hide gestures** than don't interfere with the zoom gestures (from side edges with one finger or pencil)
+- **New keyboard reveal/hide gestures** that don't interfere with the zoom gestures (from side edges with one finger or pencil)
 - Better pencil handling to easily double click while keeping precision
 - Higher max. RAM size (512 MB)
 - On-screen keyboard for German
