@@ -79,7 +79,7 @@ Then edit `B2PrivateResourceURLs.h`:
 
 `B2PrivateResourceURLs.h` is ignored by git and must stay private.
 
-Each ZIP archive must contain exactly one file: one ROM file or one disk image. ZIP archives with multiple files, folders, or encrypted entries are not supported. The ZIP file is deflated on-the-fly while being downloaded. When the download finishes, the file is ready to use!
+Each ZIP archive must contain exactly one file: one ROM file or one disk image. ZIP archives with multiple files, folders, or encrypted entries are not supported. The ZIP file is inflated on-the-fly while being downloaded. **When the download finishes, the file is ready to use!**
 
 ## Repository background
 
