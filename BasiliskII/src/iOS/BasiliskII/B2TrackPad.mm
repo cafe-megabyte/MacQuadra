@@ -25,6 +25,7 @@
     BOOL shouldClick;
     BOOL isDragging;
     BOOL supportsForceTouch, didForceClick;
+    BOOL ignoresMultiTouchSequence;
     NSMutableSet *currentTouches;
 }
 
@@ -49,10 +50,13 @@
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     [currentTouches unionSet:touches];
+    if (currentTouches.count > 1) {
+        [self cancelActiveTouchSequence];
+        return;
+    }
+    if (ignoresMultiTouchSequence) return;
     if (currentTouches.count == 1) {
         [self firstTouchBegan:touches.anyObject withEvent:event];
-    } else {
-        [self startDragging];
     }
 }
 
@@ -70,6 +74,7 @@
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
     if (![B2AppDelegate sharedInstance].emulatorRunning) return;
+    if (ignoresMultiTouchSequence) return;
     
     UITouch *touch = touches.anyObject;
     CGPoint touchLoc = [touch locationInView:self];
@@ -97,6 +102,13 @@
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     [currentTouches minusSet:touches];
+    if (ignoresMultiTouchSequence) {
+        if (currentTouches.count == 0) {
+            ignoresMultiTouchSequence = NO;
+        }
+        shouldClick = NO;
+        return;
+    }
     if (currentTouches.count > 0) {
         return;
     } else if (didForceClick) {
@@ -126,6 +138,9 @@
     isDragging = NO;
     shouldClick = NO;
     didForceClick = NO;
+    if (currentTouches.count == 0) {
+        ignoresMultiTouchSequence = NO;
+    }
     [self mouseUp];
 }
 
@@ -133,6 +148,16 @@
     isDragging = YES;
     shouldClick = NO;
     ADBMouseDown(0);
+}
+
+- (void)cancelActiveTouchSequence {
+    [self cancelScheduledClick];
+    if (isDragging) {
+        [self stopDragging];
+    }
+    shouldClick = NO;
+    didForceClick = NO;
+    ignoresMultiTouchSequence = YES;
 }
 
 - (void)stopDragging {

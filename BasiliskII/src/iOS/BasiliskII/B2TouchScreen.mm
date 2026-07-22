@@ -23,6 +23,7 @@
     CGFloat touchDistanceThreshold;
     BOOL shouldClick;
     BOOL isDragging;
+    BOOL ignoresMultiTouchSequence;
     NSMutableSet *currentTouches;
 }
 
@@ -75,6 +76,16 @@
     [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(beginDraggingFromInitialTouch) object:nil];
 }
 
+- (void)cancelActiveTouchSequence {
+    [self cancelScheduledHoldDrag];
+    [self cancelScheduledClickEvents];
+    if (isDragging) {
+        [self stopDragging];
+    }
+    shouldClick = NO;
+    ignoresMultiTouchSequence = YES;
+}
+
 - (CGPoint)touchPointForTouches:(NSSet *)touches fallbackEvent:(UIEvent *)event {
     UITouch *touch = touches.anyObject ?: [event touchesForView:self].anyObject;
     return [touch locationInView:self];
@@ -113,10 +124,11 @@
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     [currentTouches unionSet:touches];
     if (![B2AppDelegate sharedInstance].emulatorRunning) return;
-    if (currentTouches.count > 1 && shouldClick && !isDragging) {
-        [self startDraggingAtTouchPoint:previousTouchLoc];
+    if (currentTouches.count > 1) {
+        [self cancelActiveTouchSequence];
         return;
     }
+    if (ignoresMultiTouchSequence) return;
     CGPoint touchLoc = [self touchPointForTouches:touches fallbackEvent:event];
     [self cancelScheduledHoldDrag];
     shouldClick = YES;
@@ -130,6 +142,7 @@
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
     if (![B2AppDelegate sharedInstance].emulatorRunning) return;
+    if (ignoresMultiTouchSequence) return;
     CGPoint touchLoc = [self touchPointForTouches:touches fallbackEvent:event];
     if (isDragging) {
         [self moveMouseToTouchPoint:touchLoc];
@@ -143,6 +156,13 @@
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     [currentTouches minusSet:touches];
     if (![B2AppDelegate sharedInstance].emulatorRunning) return;
+    if (ignoresMultiTouchSequence) {
+        if (currentTouches.count == 0) {
+            ignoresMultiTouchSequence = NO;
+        }
+        shouldClick = NO;
+        return;
+    }
     if (currentTouches.count > 0) return;
     [self cancelScheduledHoldDrag];
     CGPoint touchLoc = [self touchPointForTouches:touches fallbackEvent:event];
@@ -166,6 +186,9 @@
         [self stopDragging];
     }
     shouldClick = NO;
+    if (currentTouches.count == 0) {
+        ignoresMultiTouchSequence = NO;
+    }
 }
 
 @end
