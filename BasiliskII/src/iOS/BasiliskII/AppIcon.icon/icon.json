@@ -1,0 +1,57 @@
+{
+  "fill": {
+    "solid": "srgb:0.00000,0.00000,0.00000,0.00000"
+  },
+  "groups": [
+    {
+      "layers": [
+        {
+          "glass": false,
+          "image-name-specializations": [
+            {
+              "value": "Mac-Light.png"
+            },
+            {
+              "appearance": "dark",
+              "value": "Mac-Dark.png"
+            }
+          ],
+          "name": "Mac – Light / Dark",
+          "position": {
+            "scale": 1,
+            "translation-in-points": [
+              0,
+              -32
+            ]
+          }
+        },
+        {
+          "glass": false,
+          "image-name-specializations": [
+            {
+              "value": "Mac-Light.png"
+            },
+            {
+              "appearance": "dark",
+              "value": "Mac-Dark.png"
+            }
+          ],
+          "name": "Gehäuse – Randfüllung"
+        }
+      ],
+      "name": "Macintosh 68k",
+      "shadow": {
+        "kind": "none",
+        "opacity": 0
+      },
+      "specular": false,
+      "translucency": {
+        "enabled": false,
+        "value": 0
+      }
+    }
+  ],
+  "supported-platforms": {
+    "squares": "shared"
+  }
+}

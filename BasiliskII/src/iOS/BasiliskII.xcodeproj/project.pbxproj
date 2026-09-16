@@ -23,6 +23,7 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		A91600012F00000000000001 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A91600022F00000000000001 /* AppIcon.icon */; };
 		281509101CC57F81004ECA0A /* B2TouchScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */; };
 		281509131CC5836A004ECA0A /* B2TrackPad.mm in Sources */ = {isa = PBXBuildFile; fileRef = 281509121CC5836A004ECA0A /* B2TrackPad.mm */; };
 		2815F18E300E304D0088B7DF /* FileSharingIcon.rfork in Resources */ = {isa = PBXBuildFile; fileRef = 2815F18D300E304D0088B7DF /* FileSharingIcon.rfork */; };
@@ -182,6 +183,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A91600022F00000000000001 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		2814CEF92DE876D2005024E7 /* BasiliskII-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BasiliskII-Bridging-Header.h"; sourceTree = "<group>"; };
 		2815090E1CC57F81004ECA0A /* B2TouchScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2TouchScreen.h; sourceTree = "<group>"; };
 		2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2TouchScreen.mm; sourceTree = "<group>"; };
@@ -499,6 +501,7 @@
 				2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */,
 				281509111CC5836A004ECA0A /* B2TrackPad.h */,
 				281509121CC5836A004ECA0A /* B2TrackPad.mm */,
+				A91600022F00000000000001 /* AppIcon.icon */,
 				2898F46C18CB719600FE7806 /* Images.xcassets */,
 				288455BB1CB7079F004EF2E6 /* Keyboard */,
 				285033561B496AF00061C869 /* Settings */,
@@ -969,6 +972,7 @@
 				288455DE1CBB0112004EF2E6 /* Keyboard Layouts in Resources */,
 				288C501A1B9CADF900EA91F3 /* Localizable.strings in Resources */,
 				285033201B488EF90061C869 /* Main.storyboard in Resources */,
+				A91600012F00000000000001 /* AppIcon.icon in Resources */,
 				2898F46D18CB719600FE7806 /* Images.xcassets in Resources */,
 				2815F18E300E304D0088B7DF /* FileSharingIcon.rfork in Resources */,
 				2898F45C18CB719600FE7806 /* InfoPlist.strings in Resources */,
