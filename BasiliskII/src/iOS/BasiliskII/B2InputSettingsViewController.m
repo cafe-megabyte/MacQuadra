@@ -38,7 +38,7 @@ typedef enum : NSInteger {
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
     switch (section) {
         case B2InputSectionMouse:
-            return 1;
+            return [[NSUserDefaults standardUserDefaults] boolForKey:@"trackpad"] ? 1 : 2;
         case B2InputSectionKeyboardLayout:
             return keyboardLayouts.count;
     }
@@ -57,6 +57,8 @@ typedef enum : NSInteger {
 
 - (NSString *)tableView:(UITableView *)tableView titleForFooterInSection:(NSInteger)section {
     switch (section) {
+        case B2InputSectionMouse:
+            return [[NSUserDefaults standardUserDefaults] boolForKey:@"trackpad"] ? nil : L(@"settings.input.mouse.touchscreen.mode.footer");
         case B2InputSectionKeyboardLayout:
             return L(@"settings.input.keyboard.layout.footer");
     }
@@ -75,15 +77,25 @@ typedef enum : NSInteger {
     NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
     
     if (indexPath.section == B2InputSectionMouse) {
-        cell.textLabel.text = L(@"settings.input.mouse.type");
-        UISegmentedControl *segmentedControl = [[UISegmentedControl alloc] initWithItems:@[L(@"settings.input.mouse.type.touchscreen"), L(@"settings.input.mouse.type.trackpad")]];
-        [segmentedControl addTarget:self action:@selector(changeMouseType:) forControlEvents:UIControlEventValueChanged];
-        segmentedControl.selectedSegmentIndex = [defaults boolForKey:@"trackpad"] ? 1 : 0;
+        UISegmentedControl *segmentedControl;
+        if (indexPath.row == 0) {
+            cell.textLabel.text = L(@"settings.input.mouse.type");
+            segmentedControl = [[UISegmentedControl alloc] initWithItems:@[L(@"settings.input.mouse.type.touchscreen"), L(@"settings.input.mouse.type.trackpad")]];
+            [segmentedControl addTarget:self action:@selector(changeMouseType:) forControlEvents:UIControlEventValueChanged];
+            segmentedControl.selectedSegmentIndex = [defaults boolForKey:@"trackpad"] ? 1 : 0;
+        } else {
+            cell.textLabel.text = L(@"settings.input.mouse.touchscreen.mode");
+            segmentedControl = [[UISegmentedControl alloc] initWithItems:@[L(@"settings.input.mouse.touchscreen.mode.mouse"), L(@"settings.input.mouse.touchscreen.mode.pen")]];
+            [segmentedControl addTarget:self action:@selector(changeTouchscreenMode:) forControlEvents:UIControlEventValueChanged];
+            segmentedControl.selectedSegmentIndex = [[defaults stringForKey:@"touchscreenInputMode"] isEqualToString:@"mouse"] ? 0 : 1;
+        }
         cell.accessoryView = segmentedControl;
+        cell.accessoryType = UITableViewCellAccessoryNone;
     } else if (indexPath.section == B2InputSectionKeyboardLayout) {
         NSString *layout = keyboardLayouts[indexPath.row];
         cell.textLabel.text = [self localizedNameForKeyboardLayout:layout];
         BOOL selected = [[defaults stringForKey:@"keyboardLayout"] isEqualToString:layout.lastPathComponent];
+        cell.accessoryView = nil;
         cell.accessoryType = selected ? UITableViewCellAccessoryCheckmark : UITableViewCellAccessoryNone;
     }
     
@@ -102,6 +114,11 @@ typedef enum : NSInteger {
 
 - (void)changeMouseType:(UISegmentedControl*)sender {
     [[NSUserDefaults standardUserDefaults] setBool:(sender.selectedSegmentIndex == 1) forKey:@"trackpad"];
+    [self.tableView reloadSections:[NSIndexSet indexSetWithIndex:B2InputSectionMouse] withRowAnimation:UITableViewRowAnimationAutomatic];
+}
+
+- (void)changeTouchscreenMode:(UISegmentedControl*)sender {
+    [[NSUserDefaults standardUserDefaults] setObject:(sender.selectedSegmentIndex == 0 ? @"mouse" : @"pen") forKey:@"touchscreenInputMode"];
 }
 
 @end

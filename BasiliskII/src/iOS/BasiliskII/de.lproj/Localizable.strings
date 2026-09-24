@@ -96,6 +96,10 @@
 "settings.input.mouse.type" = "Typ";
 "settings.input.mouse.type.trackpad" = "Trackpad";
 "settings.input.mouse.type.touchscreen" = "Touchscreen";
+"settings.input.mouse.touchscreen.mode" = "Bedienung";
+"settings.input.mouse.touchscreen.mode.mouse" = "Maus";
+"settings.input.mouse.touchscreen.mode.pen" = "Stift";
+"settings.input.mouse.touchscreen.mode.footer" = "Maus: Der Mausklick beginnt kurz nach dem Aufsetzen. Ziehen funktioniert wie mit einer Maus. Stift: Der Klick erfolgt beim Abheben; kleine Bewegungen werden ignoriert, damit Doppelklicks mit dem Stift leichter gelingen. Zum Ziehen kurz halten oder weiter bewegen.";
 "settings.input.keyboard.layout.header" = "Tastaturbelegung";
 "settings.input.keyboard.layout.footer" = "Dies legt das Aussehen der Tastatur-Oberfläche fest. Verwenden Sie im emulierten Mac das Kontrollfeld \"Tastatur\", um eine passende Belegung auszuwählen.\n\nDie Tastatur erscheint, wenn Sie mit zwei Fingern nach oben wischen oder mit einem Finger bzw. Stift von einem seitlichen Bildschirmrand nach innen wischen.";
 "settings.input.keyboard.layout.British" = "Britisch";

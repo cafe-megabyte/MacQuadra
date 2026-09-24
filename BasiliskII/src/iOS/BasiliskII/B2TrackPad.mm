@@ -19,6 +19,7 @@
 @implementation B2TrackPad
 {
     NSTimeInterval touchTimeThreshold;
+    NSTimeInterval mouseClickDelay;
     NSTimeInterval previousClickTime, previousTouchTime;
     CGFloat touchDistanceThreshold;
     CGPoint previousTouchLoc;
@@ -32,6 +33,7 @@
 - (instancetype)initWithFrame:(CGRect)frame {
     if ((self = [super initWithFrame:frame])) {
         touchTimeThreshold = 0.25;
+        mouseClickDelay = 0.15;
         touchDistanceThreshold = 16;
         currentTouches = [NSMutableSet setWithCapacity:4];
         self.multipleTouchEnabled = YES;
@@ -122,7 +124,7 @@
     CGPoint touchLoc = [touches.anyObject locationInView:self];
     if (shouldClick && (event.timestamp - previousTouchTime < touchTimeThreshold)) {
         [self cancelScheduledClick];
-        [self performSelector:@selector(mouseClick) withObject:nil afterDelay:touchTimeThreshold];
+        [self performSelector:@selector(mouseClick) withObject:nil afterDelay:mouseClickDelay];
     }
     shouldClick = NO;
     if (isDragging) {

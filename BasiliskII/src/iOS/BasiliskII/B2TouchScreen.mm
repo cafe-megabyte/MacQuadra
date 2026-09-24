@@ -23,6 +23,8 @@
     CGFloat touchDistanceThreshold;
     BOOL shouldClick;
     BOOL isDragging;
+    BOOL usesMouseInputMode;
+    BOOL mouseButtonIsDown;
     BOOL ignoresMultiTouchSequence;
     NSMutableSet *currentTouches;
 }
@@ -38,6 +40,15 @@
 }
 
 - (void)willMoveToSuperview:(UIView *)newSuperview {
+    [super willMoveToSuperview:newSuperview];
+    if (newSuperview == nil) {
+        [self cancelScheduledHoldDrag];
+        [self cancelScheduledClickEvents];
+        if (mouseButtonIsDown) {
+            [self mouseUp];
+        }
+        return;
+    }
     ADBSetRelMouseMode(false);
 }
 
@@ -52,17 +63,19 @@
 
 - (void)mouseDown {
     ADBMouseDown(0);
+    mouseButtonIsDown = YES;
 }
 
 - (void)mouseUp {
     ADBMouseUp(0);
+    mouseButtonIsDown = NO;
 }
 
 - (void)mouseClick {
     if (isDragging) {
         return;
     }
-    ADBMouseDown(0);
+    [self mouseDown];
     [self performSelector:@selector(mouseUp) withObject:nil afterDelay:2.0/60.0];
 }
 
@@ -81,6 +94,8 @@
     [self cancelScheduledClickEvents];
     if (isDragging) {
         [self stopDragging];
+    } else if (mouseButtonIsDown) {
+        [self mouseUp];
     }
     shouldClick = NO;
     ignoresMultiTouchSequence = YES;
@@ -89,6 +104,18 @@
 - (CGPoint)touchPointForTouches:(NSSet *)touches fallbackEvent:(UIEvent *)event {
     UITouch *touch = touches.anyObject ?: [event touchesForView:self].anyObject;
     return [touch locationInView:self];
+}
+
+- (CGPoint)stableMouseTouchPointForTouches:(NSSet *)touches event:(UIEvent *)event {
+    CGPoint touchLoc = [self touchPointForTouches:touches fallbackEvent:event];
+    if (event.timestamp - previousTouchTime < touchTimeThreshold &&
+        fabs(previousTouchLoc.x - touchLoc.x) < touchDistanceThreshold &&
+        fabs(previousTouchLoc.y - touchLoc.y) < touchDistanceThreshold) {
+        return previousTouchLoc;
+    }
+    previousTouchLoc = touchLoc;
+    previousTouchTime = event.timestamp;
+    return touchLoc;
 }
 
 - (BOOL)touchPointExceedsDragThreshold:(CGPoint)touchLoc {
@@ -105,7 +132,7 @@
     [self cancelScheduledHoldDrag];
     isDragging = YES;
     shouldClick = NO;
-    ADBMouseDown(0);
+    [self mouseDown];
     [self moveMouseToTouchPoint:touchLoc];
 }
 
@@ -118,17 +145,28 @@
 - (void)stopDragging {
     isDragging = NO;
     shouldClick = NO;
-    ADBMouseUp(0);
+    [self mouseUp];
 }
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
     [currentTouches unionSet:touches];
     if (![B2AppDelegate sharedInstance].emulatorRunning) return;
+    if (currentTouches.count == 1) {
+        usesMouseInputMode = [[[NSUserDefaults standardUserDefaults] stringForKey:@"touchscreenInputMode"] isEqualToString:@"mouse"];
+    }
     if (currentTouches.count > 1) {
         [self cancelActiveTouchSequence];
         return;
     }
     if (ignoresMultiTouchSequence) return;
+    if (usesMouseInputMode) {
+        CGPoint touchLoc = [self stableMouseTouchPointForTouches:touches event:event];
+        [self moveMouseToTouchPoint:touchLoc];
+        [self performSelector:@selector(mouseDown) withObject:nil afterDelay:mouseButtonDelay];
+        previousTouchLoc = touchLoc;
+        previousTouchTime = event.timestamp;
+        return;
+    }
     CGPoint touchLoc = [self touchPointForTouches:touches fallbackEvent:event];
     [self cancelScheduledHoldDrag];
     shouldClick = YES;
@@ -143,6 +181,11 @@
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event {
     if (![B2AppDelegate sharedInstance].emulatorRunning) return;
     if (ignoresMultiTouchSequence) return;
+    if (usesMouseInputMode) {
+        CGPoint touchLoc = [self stableMouseTouchPointForTouches:touches event:event];
+        [self moveMouseToTouchPoint:touchLoc];
+        return;
+    }
     CGPoint touchLoc = [self touchPointForTouches:touches fallbackEvent:event];
     if (isDragging) {
         [self moveMouseToTouchPoint:touchLoc];
@@ -164,6 +207,14 @@
         return;
     }
     if (currentTouches.count > 0) return;
+    if (usesMouseInputMode) {
+        CGPoint touchLoc = [self stableMouseTouchPointForTouches:touches event:event];
+        [self moveMouseToTouchPoint:touchLoc];
+        [self performSelector:@selector(mouseUp) withObject:nil afterDelay:mouseButtonDelay];
+        previousTouchLoc = touchLoc;
+        previousTouchTime = event.timestamp;
+        return;
+    }
     [self cancelScheduledHoldDrag];
     CGPoint touchLoc = [self touchPointForTouches:touches fallbackEvent:event];
     if (isDragging) {
@@ -184,6 +235,8 @@
     [self cancelScheduledClickEvents];
     if (isDragging) {
         [self stopDragging];
+    } else if (mouseButtonIsDown) {
+        [self mouseUp];
     }
     shouldClick = NO;
     if (currentTouches.count == 0) {
