@@ -23,7 +23,6 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		A91600012F00000000000001 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A91600022F00000000000001 /* AppIcon.icon */; };
 		281509101CC57F81004ECA0A /* B2TouchScreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = 2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */; };
 		281509131CC5836A004ECA0A /* B2TrackPad.mm in Sources */ = {isa = PBXBuildFile; fileRef = 281509121CC5836A004ECA0A /* B2TrackPad.mm */; };
 		2815F18E300E304D0088B7DF /* FileSharingIcon.rfork in Resources */ = {isa = PBXBuildFile; fileRef = 2815F18D300E304D0088B7DF /* FileSharingIcon.rfork */; };
@@ -137,6 +136,7 @@
 		28E000032F00000000000001 /* B2PrivateResources.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28E000022F00000000000001 /* B2PrivateResources.mm */; };
 		28E000052F00000000000001 /* libz.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = 28E000042F00000000000001 /* libz.tbd */; };
 		28FA0B771CC829A900481FE8 /* B2Application.mm in Sources */ = {isa = PBXBuildFile; fileRef = 28FA0B761CC829A900481FE8 /* B2Application.mm */; };
+		A91600012F00000000000001 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = A91600022F00000000000001 /* AppIcon.icon */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -183,7 +183,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A91600022F00000000000001 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 		2814CEF92DE876D2005024E7 /* BasiliskII-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "BasiliskII-Bridging-Header.h"; sourceTree = "<group>"; };
 		2815090E1CC57F81004ECA0A /* B2TouchScreen.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2TouchScreen.h; sourceTree = "<group>"; };
 		2815090F1CC57F81004ECA0A /* B2TouchScreen.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2TouchScreen.mm; sourceTree = "<group>"; };
@@ -417,6 +416,7 @@
 		28E000042F00000000000001 /* libz.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libz.tbd; path = usr/lib/libz.tbd; sourceTree = SDKROOT; };
 		28FA0B751CC829A900481FE8 /* B2Application.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = B2Application.h; sourceTree = "<group>"; };
 		28FA0B761CC829A900481FE8 /* B2Application.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = B2Application.mm; sourceTree = "<group>"; };
+		A91600022F00000000000001 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.iconcomposer.icon; path = AppIcon.icon; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -915,7 +915,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				CLASSPREFIX = B2;
-				LastUpgradeCheck = 2660;
+				LastUpgradeCheck = 2700;
 				ORGANIZATIONNAME = namedfork;
 				TargetAttributes = {
 					284E59082744341800E014B9 = {
@@ -1200,7 +1200,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../slirp";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1231,7 +1231,7 @@
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				HEADER_SEARCH_PATHS = "$(SRCROOT)/../slirp";
-				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -1248,6 +1248,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -1257,6 +1258,7 @@
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 7V6H28ZHKW;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -1402,7 +1404,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = MacQuadra;
 				INFOPLIST_PREFIX_HEADER = "$(PROJECT_DIR)/BuildSupport/BuildNumber.h";
 				INFOPLIST_PREPROCESS = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0.1;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
@@ -1442,7 +1444,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = MacQuadra;
 				INFOPLIST_PREFIX_HEADER = "$(PROJECT_DIR)/BuildSupport/BuildNumber.h";
 				INFOPLIST_PREPROCESS = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				MARKETING_VERSION = 1.0.1;
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_CFLAGS = "";
@@ -1472,6 +1474,7 @@
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = "BasiliskIITests/BasiliskIITests-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.BasiliskIITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
@@ -1491,6 +1494,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "BasiliskII/BasiliskII-Prefix.pch";
 				INFOPLIST_FILE = "BasiliskIITests/BasiliskIITests-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				PRODUCT_BUNDLE_IDENTIFIER = "de.cafe-megabyte.BasiliskIITests";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TEST_HOST = "$(BUNDLE_LOADER)";
@@ -1511,6 +1515,7 @@
 					"$(inherited)",
 				);
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -1525,6 +1530,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				IPHONEOS_DEPLOYMENT_TARGET = "$(RECOMMENDED_IPHONEOS_DEPLOYMENT_TARGET)";
 				OTHER_CFLAGS = "";
 				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
