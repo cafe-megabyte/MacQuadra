@@ -15,7 +15,4 @@
 @property (nonatomic, copy) NSString *filePath;
 @property (nonatomic, weak) B2FileChooser *fileChooser;
 
-- (void)share:(id)sender;
-- (void)rename:(id)sender;
-
 @end

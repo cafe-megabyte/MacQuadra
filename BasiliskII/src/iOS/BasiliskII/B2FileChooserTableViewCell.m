@@ -11,9 +11,6 @@
 
 @interface B2FileChooser (Private)
 - (NSArray*)filteredContentsOfDirectory:(NSString*)path;
-- (void)askDeleteFile:(NSString*)filePath;
-- (void)askRenameFile:(NSString*)filePath;
-- (void)shareFile:(NSString*)filePath;
 @end
 
 @implementation B2FileChooserTableViewCell
@@ -60,19 +57,6 @@
     if ([self.fileChooser.delegate respondsToSelector:@selector(fileChooser:iconForFile:isDirectory:)]) {
         self.imageView.image = [self.fileChooser.delegate fileChooser:self.fileChooser iconForFile:filePath isDirectory:isDirectory];
     }
-}
-
-- (void)share:(id)sender {
-    [self.fileChooser shareFile:self.filePath];
-}
-
-- (void)rename:(id)sender {
-    [self.fileChooser askRenameFile:self.filePath];
-
-}
-
-- (void)delete:(id)sender {
-    [self.fileChooser askDeleteFile:self.filePath];
 }
 
 @end

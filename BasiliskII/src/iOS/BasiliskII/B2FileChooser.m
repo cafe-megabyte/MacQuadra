@@ -19,12 +19,6 @@
     NSArray *directoryContents;
 }
 
-+ (void)initialize {
-    UIMenuController *menuController = [UIMenuController sharedMenuController];
-    menuController.menuItems = @[[[UIMenuItem alloc] initWithTitle:L(@"file.action.rename") action:@selector(rename:)],
-                                 [[UIMenuItem alloc] initWithTitle:L(@"file.action.share") action:@selector(share:)]];
-}
-
 - (instancetype)initWithStyle:(UITableViewStyle)style {
     if ((self = [super initWithStyle:style])) {
         self.sortOptions = NSCaseInsensitiveSearch | NSNumericSearch | NSForcedOrderingSearch | NSDiacriticInsensitiveSearch | NSWidthInsensitiveSearch;
@@ -160,6 +154,19 @@
     }
 }
 
+- (UIContextMenuConfiguration *)tableView:(UITableView *)tableView contextMenuConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath point:(CGPoint)point {
+    NSString *filePath = [self filePathAtIndex:indexPath.row];
+    return [UIContextMenuConfiguration configurationWithIdentifier:nil previewProvider:nil actionProvider:^UIMenu * _Nullable(NSArray<UIMenuElement *> * _Nonnull suggestedActions) {
+        UIAction *renameAction = [UIAction actionWithTitle:L(@"file.action.rename") image:nil identifier:nil handler:^(__kindof UIAction * _Nonnull action) {
+            [self askRenameFile:filePath];
+        }];
+        UIAction *shareAction = [UIAction actionWithTitle:L(@"file.action.share") image:nil identifier:nil handler:^(__kindof UIAction * _Nonnull action) {
+            [self shareFile:filePath fromRowAtIndexPath:indexPath];
+        }];
+        return [UIMenu menuWithChildren:@[renameAction, shareAction]];
+    }];
+}
+
 - (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
     NSMutableArray<UIContextualAction *> *actions = [NSMutableArray arrayWithCapacity:2];
     NSString *filePath = [self filePathAtIndex:indexPath.row];
@@ -229,8 +236,11 @@
     [self presentViewController:alertController animated:YES completion:nil];
 }
 
-- (void)shareFile:(NSString*)filePath {
+- (void)shareFile:(NSString*)filePath fromRowAtIndexPath:(NSIndexPath *)indexPath {
     UIActivityViewController *avc = [[UIActivityViewController alloc] initWithActivityItems:@[[NSURL fileURLWithPath:filePath]] applicationActivities:nil];
+    UITableViewCell *cell = [self.tableView cellForRowAtIndexPath:indexPath];
+    avc.popoverPresentationController.sourceView = cell ?: self.view;
+    avc.popoverPresentationController.sourceRect = cell ? cell.bounds : self.view.bounds;
     [self presentViewController:avc animated:YES completion:nil];
 }
 
