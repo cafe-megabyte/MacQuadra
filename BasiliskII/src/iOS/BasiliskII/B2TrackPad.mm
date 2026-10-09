@@ -20,11 +20,15 @@
 {
     NSTimeInterval touchTimeThreshold;
     NSTimeInterval mouseClickDelay;
-    NSTimeInterval previousClickTime, previousTouchTime;
+    NSTimeInterval previousClickTime, previousTouchTime, currentTouchStartTime;
     CGFloat touchDistanceThreshold;
-    CGPoint previousTouchLoc;
+    CGPoint previousTouchLoc, previousClickLoc, currentTouchStartLoc;
+    NSUInteger queuedClickCount;
     BOOL shouldClick;
     BOOL isDragging;
+    BOOL isSecondTap;
+    BOOL clickInProgress;
+    BOOL pendingDragStart;
     BOOL supportsForceTouch, didForceClick;
     BOOL ignoresMultiTouchSequence;
     NSMutableSet *currentTouches;
@@ -43,6 +47,19 @@
 
 - (void)willMoveToSuperview:(UIView *)newSuperview {
     [super willMoveToSuperview:newSuperview];
+    if (newSuperview == nil) {
+        [self cancelSecondTapDragHold];
+        [self cancelQueuedClicks];
+        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(beginPendingDrag) object:nil];
+        [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(finishQueuedClick) object:nil];
+        if (isDragging || clickInProgress) {
+            [self mouseUp];
+        }
+        isDragging = NO;
+        clickInProgress = NO;
+        pendingDragStart = NO;
+        return;
+    }
     @try {
         supportsForceTouch = (newSuperview.traitCollection.forceTouchCapability == UIForceTouchCapabilityAvailable);
     } @catch (NSException *exception) {
@@ -65,10 +82,14 @@
 - (void)firstTouchBegan:(UITouch *)touch withEvent:(UIEvent *)event {
     CGPoint touchLoc = [touch locationInView:self];
     shouldClick = YES;
-    if ((event.timestamp - previousTouchTime < touchTimeThreshold) &&
-        fabs(previousTouchLoc.x - touchLoc.x) < touchDistanceThreshold &&
-        fabs(previousTouchLoc.y - touchLoc.y) < touchDistanceThreshold) {
-        [self startDragging];
+    currentTouchStartTime = event.timestamp;
+    currentTouchStartLoc = touchLoc;
+    isSecondTap = (event.timestamp - previousClickTime < touchTimeThreshold) &&
+                  fabs(previousClickLoc.x - touchLoc.x) < touchDistanceThreshold &&
+                  fabs(previousClickLoc.y - touchLoc.y) < touchDistanceThreshold;
+    if (isSecondTap) {
+        // A quick second tap is a click; only a hold or a larger move begins dragging.
+        [self performSelector:@selector(beginDraggingFromSecondTap) withObject:nil afterDelay:touchTimeThreshold];
     }
     previousTouchTime = event.timestamp;
     previousTouchLoc = touchLoc;
@@ -81,6 +102,17 @@
     UITouch *touch = touches.anyObject;
     CGPoint touchLoc = [touch locationInView:self];
     previousTouchLoc = [touch previousLocationInView:self];
+    if (isSecondTap && !isDragging && !pendingDragStart) {
+        if (fabs(currentTouchStartLoc.x - touchLoc.x) < touchDistanceThreshold &&
+            fabs(currentTouchStartLoc.y - touchLoc.y) < touchDistanceThreshold) {
+            previousTouchTime = event.timestamp;
+            previousTouchLoc = touchLoc;
+            return;
+        }
+        [self cancelSecondTapDragHold];
+        isSecondTap = NO;
+        [self startDragging];
+    }
     // acceleration
     CGPoint locDiff = CGPointMake(touchLoc.x - previousTouchLoc.x, touchLoc.y - previousTouchLoc.y);
     NSTimeInterval timeDiff = 100 * (event.timestamp - previousTouchTime);
@@ -104,6 +136,7 @@
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event {
     [currentTouches minusSet:touches];
+    [self cancelSecondTapDragHold];
     if (ignoresMultiTouchSequence) {
         if (currentTouches.count == 0) {
             ignoresMultiTouchSequence = NO;
@@ -116,20 +149,29 @@
     } else if (didForceClick) {
         AudioServicesPlaySystemSound(1519);
         didForceClick = NO;
-        [self cancelScheduledClick];
-        [self mouseUp];
+        [self cancelQueuedClicks];
+        pendingDragStart = NO;
+        if (isDragging) {
+            [self stopDragging];
+        }
+        previousClickTime = 0;
         return;
     }
     
     CGPoint touchLoc = [touches.anyObject locationInView:self];
-    if (shouldClick && (event.timestamp - previousTouchTime < touchTimeThreshold)) {
-        [self cancelScheduledClick];
-        [self performSelector:@selector(mouseClick) withObject:nil afterDelay:mouseClickDelay];
+    if (shouldClick && (event.timestamp - currentTouchStartTime < touchTimeThreshold)) {
+        [self queueClickWithDelay:(isSecondTap ? 0 : mouseClickDelay)];
+        previousClickTime = event.timestamp;
+        previousClickLoc = touchLoc;
+    } else {
+        previousClickTime = 0;
     }
     shouldClick = NO;
     if (isDragging) {
         [self stopDragging];
     }
+    pendingDragStart = NO;
+    isSecondTap = NO;
     
     previousTouchLoc = touchLoc;
     previousTouchTime = event.timestamp;
@@ -137,27 +179,63 @@
 
 - (void)touchesCancelled:(NSSet<UITouch *> *)touches withEvent:(UIEvent *)event {
     [currentTouches minusSet:touches];
-    isDragging = NO;
-    shouldClick = NO;
-    didForceClick = NO;
-    if (currentTouches.count == 0) {
-        ignoresMultiTouchSequence = NO;
-    }
-    [self mouseUp];
-}
-
-- (void)startDragging {
-    isDragging = YES;
-    shouldClick = NO;
-    ADBMouseDown(0);
-}
-
-- (void)cancelActiveTouchSequence {
-    [self cancelScheduledClick];
+    [self cancelSecondTapDragHold];
+    [self cancelQueuedClicks];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(beginPendingDrag) object:nil];
     if (isDragging) {
         [self stopDragging];
     }
     shouldClick = NO;
+    isSecondTap = NO;
+    pendingDragStart = NO;
+    previousClickTime = 0;
+    didForceClick = NO;
+    if (currentTouches.count == 0) {
+        ignoresMultiTouchSequence = NO;
+    }
+}
+
+- (void)startDragging {
+    [self cancelQueuedClicks];
+    shouldClick = NO;
+    previousClickTime = 0;
+    if (clickInProgress) {
+        pendingDragStart = YES;
+        return;
+    }
+    pendingDragStart = NO;
+    isDragging = YES;
+    ADBMouseDown(0);
+}
+
+- (void)beginDraggingFromSecondTap {
+    if (isSecondTap && shouldClick && currentTouches.count > 0 && !ignoresMultiTouchSequence) {
+        [self startDragging];
+    }
+}
+
+- (void)cancelSecondTapDragHold {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(beginDraggingFromSecondTap) object:nil];
+}
+
+- (void)beginPendingDrag {
+    if (pendingDragStart && currentTouches.count > 0 && !ignoresMultiTouchSequence) {
+        [self startDragging];
+    }
+    pendingDragStart = NO;
+}
+
+- (void)cancelActiveTouchSequence {
+    [self cancelSecondTapDragHold];
+    [self cancelQueuedClicks];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(beginPendingDrag) object:nil];
+    if (isDragging) {
+        [self stopDragging];
+    }
+    shouldClick = NO;
+    isSecondTap = NO;
+    pendingDragStart = NO;
+    previousClickTime = 0;
     didForceClick = NO;
     ignoresMultiTouchSequence = YES;
 }
@@ -176,17 +254,36 @@
     }
 }
 
-- (void)mouseClick {
-    if (isDragging) {
-        return;
+- (void)queueClickWithDelay:(NSTimeInterval)delay {
+    // Keep both taps even when the second one arrives before the first click is sent.
+    BOOL queueWasIdle = (queuedClickCount == 0 && !clickInProgress);
+    queuedClickCount++;
+    if (queueWasIdle) {
+        [self performSelector:@selector(sendNextQueuedClick) withObject:nil afterDelay:delay];
     }
-    ADBMouseDown(0);
-    [self performSelector:@selector(mouseUp) withObject:nil afterDelay:2.0/60.0];
 }
 
-- (void)cancelScheduledClick {
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(mouseClick) object:nil];
-    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(mouseUp) object:nil];
+- (void)sendNextQueuedClick {
+    if (queuedClickCount == 0 || isDragging || pendingDragStart) return;
+    queuedClickCount--;
+    clickInProgress = YES;
+    ADBMouseDown(0);
+    [self performSelector:@selector(finishQueuedClick) withObject:nil afterDelay:2.0/60.0];
+}
+
+- (void)finishQueuedClick {
+    ADBMouseUp(0);
+    clickInProgress = NO;
+    if (pendingDragStart) {
+        [self performSelector:@selector(beginPendingDrag) withObject:nil afterDelay:2.0/60.0];
+    } else if (queuedClickCount > 0) {
+        [self performSelector:@selector(sendNextQueuedClick) withObject:nil afterDelay:2.0/60.0];
+    }
+}
+
+- (void)cancelQueuedClicks {
+    queuedClickCount = 0;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(sendNextQueuedClick) object:nil];
 }
 
 - (void)mouseUp {
