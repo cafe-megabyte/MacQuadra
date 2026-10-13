@@ -41,6 +41,8 @@ static NSString * const B2FileSharingDirectoryBookmarkDefaultsKey = @"fileSharin
 static NSString * const B2FileSharingDirectoryDisplayNameDefaultsKey = @"fileSharingDirectoryDisplayName";
 static NSString * const B2CustomIconFileName = @"Icon\r";
 static BOOL coldRestartRequestedForMacReset = NO;
+// Set to true to open the screen-size editor at launch without booting the emulator.
+static const bool B2StartInScreenSizeEditor = false;
 
 static NSData *B2DefaultFileSharingIconResourceFork(void)
 {
@@ -192,6 +194,7 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     BOOL settingsPresentationScheduled;
     BOOL activationInProgress;
     BOOL snapshotPreparationInProgress;
+    BOOL screenSizeEditorPresented;
     NSURL *activeFileSharingDirectoryURL;
     BOOL activeFileSharingDirectoryIsSecurityScoped;
 }
@@ -376,6 +379,14 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
     }
 
     UIViewController *rootViewController = self.window.rootViewController;
+    if (B2StartInScreenSizeEditor) {
+        if (!screenSizeEditorPresented) {
+            screenSizeEditorPresented = YES;
+            [rootViewController.view layoutIfNeeded];
+            [(B2ViewController *)rootViewController startChoosingCustomSizeUI];
+        }
+        return;
+    }
     if (rootViewController.presentedViewController != nil) {
         return;
     }
@@ -721,6 +732,9 @@ extern "C" bool B2ConsumeColdRestartOnMacReset(void)
 }
 
 - (void)startEmulator {
+    if (B2StartInScreenSizeEditor) {
+        return;
+    }
     if (emulThread != nil || snapshotPreparationInProgress) {
         return;
     }

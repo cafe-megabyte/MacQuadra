@@ -44,6 +44,8 @@ typedef struct {
     BOOL activeLayoutWantsMargins;
     BOOL hasStableLayoutMetrics;
     BOOL allowsResizePreviewImageUpdate;
+    BOOL hasDisplayHinge;
+    BOOL usesOuterDisplay;
     B2ScreenLayoutMetrics stableLayoutMetrics;
     NSDictionary<NSString *, NSValue *> *cachedPresetVideoSizes;
 }
@@ -61,6 +63,30 @@ typedef struct {
     videoLayer.minificationFilter = screenFilter;
     [viewportClippingLayer addSublayer:videoLayer];
     self.clipsToBounds = YES;
+    if (@available(iOS 27.1, *)) {
+        __weak B2ScreenView *weakSelf = self;
+        [self addInteraction:[[UIHingeInteraction alloc] initWithUpdateHandler:^(UIHingeInteraction *interaction, UIHingeInteractionUpdate *update) {
+            B2ScreenView *screenView = weakSelf;
+            if (screenView == nil || update.hinge == nil) {
+                return;
+            }
+            BOOL firstHingeUpdate = !screenView->hasDisplayHinge;
+            BOOL outerDisplay = update.hinge.status == UIHingeStatusClosed;
+            if (!firstHingeUpdate && screenView->usesOuterDisplay == outerDisplay) {
+                return;
+            }
+            // Track the active display without changing the running emulator's video modes.
+            screenView->hasDisplayHinge = YES;
+            screenView->usesOuterDisplay = outerDisplay;
+            screenView->hasStableLayoutMetrics = NO;
+            // UIKit can provide the initial hinge state after the first layout pass.
+            if (firstHingeUpdate && screenView->cachedPresetVideoSizes != nil && ![B2AppDelegate sharedInstance].emulatorRunning) {
+                [screenView initVideoModes];
+            }
+            [screenView setNeedsLayout];
+            [screenView.superview setNeedsLayout];
+        }]];
+    }
     [[NSUserDefaults standardUserDefaults] addObserver:self forKeyPath:@"screenFilter" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionOld context:NULL];
 }
 
@@ -305,7 +331,8 @@ typedef struct {
         return;
     }
 
-    if (hasStableLayoutMetrics && CGSizeEqualToSize(stableLayoutMetrics.containerBounds.size, containerBounds.size)) {
+    // A 180-degree turn can move outer-display exclusions without changing the view size.
+    if (!usesOuterDisplay && hasStableLayoutMetrics && CGSizeEqualToSize(stableLayoutMetrics.containerBounds.size, containerBounds.size)) {
         return;
     }
 
@@ -572,6 +599,11 @@ typedef struct {
 }
 
 - (UIEdgeInsets)safeAreaInsetsForLayout {
+    if (@available(iOS 27.1, *)) {
+        if (hasDisplayHinge) {
+            return [self cornerSafeAreaInsetsForView:self];
+        }
+    }
     if (@available(iOS 11, *)) {
         return self.safeAreaInsets;
     }
@@ -579,10 +611,55 @@ typedef struct {
 }
 
 - (UIEdgeInsets)safeAreaInsetsForPresetLayout {
+    if (@available(iOS 27.1, *)) {
+        if (hasDisplayHinge) {
+            return [self cornerSafeAreaInsetsForView:self.superview ?: self];
+        }
+    }
     if (@available(iOS 11, *)) {
         return self.superview ? self.superview.safeAreaInsets : self.safeAreaInsets;
     }
     return UIEdgeInsetsZero;
+}
+
+- (UIEdgeInsets)cornerSafeAreaInsetsForView:(UIView *)view API_AVAILABLE(ios(27.1)) {
+    // Foldable displays need corner protection in both orientations; keep legacy layouts unchanged.
+    UIEdgeInsets horizontal = [view edgeInsetsForLayoutRegion:[UIViewLayoutRegion safeAreaLayoutRegionWithCornerAdaptation:UIViewLayoutRegionAdaptivityAxisHorizontal]];
+    UIEdgeInsets vertical = [view edgeInsetsForLayoutRegion:[UIViewLayoutRegion safeAreaLayoutRegionWithCornerAdaptation:UIViewLayoutRegionAdaptivityAxisVertical]];
+    UIEdgeInsets insets = UIEdgeInsetsMake(MAX(horizontal.top, vertical.top),
+                                           MAX(horizontal.left, vertical.left),
+                                           MAX(horizontal.bottom, vertical.bottom),
+                                           MAX(horizontal.right, vertical.right));
+    // Allow the nearly square hinge-side corners, but preserve system exclusions.
+    UIEdgeInsets systemInsets = view.safeAreaInsets;
+    if (insets.top <= 3.0) insets.top = systemInsets.top;
+    if (insets.left <= 3.0) insets.left = systemInsets.left;
+    if (insets.bottom <= 3.0) insets.bottom = systemInsets.bottom;
+    if (insets.right <= 3.0) insets.right = systemInsets.right;
+    if (usesOuterDisplay) {
+        // Mirror the unobstructed rounded edge to ignore the outer camera cutout.
+        // Keep the hinge edge clear; share the inset budget only between landscape orientations.
+        UIInterfaceOrientation orientation = view.window.windowScene.interfaceOrientation;
+        switch (orientation) {
+            case UIInterfaceOrientationPortrait:
+                insets.left = 0.0;
+                insets.right = vertical.top;
+                break;
+            case UIInterfaceOrientationLandscapeRight:
+                insets.left = horizontal.right;
+                insets.top = MAX(insets.top, insets.bottom);
+                insets.bottom = 0.0;
+                break;
+            case UIInterfaceOrientationLandscapeLeft:
+                insets.right = horizontal.left;
+                insets.bottom = MAX(insets.top, insets.bottom);
+                insets.top = 0.0;
+                break;
+            default:
+                break;
+        }
+    }
+    return insets;
 }
 
 - (CGRect)integralRectInsideBounds:(CGRect)rect bounds:(CGRect)bounds {
